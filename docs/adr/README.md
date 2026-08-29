@@ -24,6 +24,7 @@ later ADR supersedes it and says so.
 | [0008](0008-restore-before-you-audit.md) | Restore before you audit, or refuse |
 | [0009](0009-segment-by-script-and-record-the-segmenter.md) | Segment by script, and record the segmenter on the report |
 | [0010](0010-label-the-response-not-the-ideal-answer.md) | Label the response, not the ideal answer |
+| [0011](0011-the-script-is-decided-at-the-boundary.md) | The script is decided at the boundary, not for the answer |
 
 [0004](0004-the-particular-is-the-unit-of-verification.md) is the one to read
 first. The rest of the design is arranged around it, and
