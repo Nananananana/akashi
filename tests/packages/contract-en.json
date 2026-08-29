@@ -1,0 +1,76 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:aa11bb22cc33dd44ee55ff6677889900aa11bb22cc33dd44ee55ff6677889900",
+  "created_at": "2026-08-30T11:20:00+09:00",
+  "query": "what is the notice period and the cap on liability?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "Section 4(b): either party may terminate on 30 days written notice.",
+      "anchor": {
+        "document_id": "doc_c001",
+        "source_path": "contracts/2024-msa.md",
+        "section": "Termination",
+        "start": 4120,
+        "end": 4187,
+        "text_hash": "sha256:6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e",
+        "document_hash": "sha256:708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "tsumugi.ingest/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.92,
+        "signals": ["heading_match", "term_density"]
+      },
+      "cost": 18
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "Liability under this agreement is capped at 45,000 dollars in aggregate, per Art. 12.",
+      "anchor": {
+        "document_id": "doc_c001",
+        "source_path": "contracts/2024-msa.md",
+        "section": "Liability",
+        "start": 8800,
+        "end": 8885,
+        "text_hash": "sha256:8192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f70",
+        "document_hash": "sha256:708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "tsumugi.ingest/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.88,
+        "signals": ["term_density"]
+      },
+      "cost": 21
+    }
+  ],
+  "omissions": [],
+  "budget": {
+    "unit": "tokens",
+    "limit": 400,
+    "estimate": 39,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "corpus_state": "sha256:92a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f7081",
+    "settings_hash": "sha256:a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192",
+    "providers": ["filesystem"],
+    "protection": null
+  }
+}

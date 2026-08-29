@@ -1,0 +1,143 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:9f2c1d4a7b3e5f8c0a2d6b9e1f4c7a0d3b6e9f2c5a8d1b4e7f0c3a6d9b2e5f8c",
+  "created_at": "2026-08-30T11:04:22+09:00",
+  "query": "テントの重量は?",
+  "instructions": {
+    "role": "You answer from the provided context only.",
+    "rules": [
+      "Quote the text you rely on. Do not report offsets.",
+      "If the context does not answer the question, say so."
+    ]
+  },
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "テントは 2.4kg、二人用。前回より 300g 軽い。ガスは 250g カートリッジを 1 本。",
+      "anchor": {
+        "document_id": "doc_4b1e",
+        "source_path": "notes/2025-06-03-装備メモ.md",
+        "section": "装備",
+        "start": 1204,
+        "end": 1253,
+        "text_hash": "sha256:1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809",
+        "document_hash": "sha256:0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "tsumugi.ingest/1",
+        "observed_at": "2026-06-03T09:11:02+09:00"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.81,
+        "signals": [
+          "heading_match",
+          "term_density",
+          "recency"
+        ]
+      },
+      "cost": 42
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "山行記録: 8月30日、参加者は 12人。総重量は 18.4kg だった。",
+      "anchor": {
+        "document_id": "doc_77a2",
+        "source_path": "notes/2025-05-20-山行記録.md",
+        "section": "記録",
+        "start": 0,
+        "end": 37,
+        "text_hash": "sha256:2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a",
+        "document_hash": "sha256:1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f00f"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "tsumugi.ingest/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.64,
+        "signals": [
+          "term_density"
+        ]
+      },
+      "cost": 31
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "おそらく次回はもう少し軽くできる。",
+      "anchor": {
+        "document_id": "doc_11c9",
+        "source_path": "notes/2025-06-10-所感.md",
+        "start": 88,
+        "end": 105,
+        "text_hash": "sha256:3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b",
+        "document_hash": "sha256:2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f00f1e"
+      },
+      "provenance": {
+        "layer": "interpretation",
+        "producer": "kiseki@0.10.0",
+        "confidence": 0.62
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.41,
+        "signals": [
+          "recency"
+        ]
+      },
+      "cost": 17
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_2f11",
+        "source_path": "notes/2024-11-08-キャンプ道具.md",
+        "start": 0,
+        "end": 2210
+      },
+      "rule": "budget_exhausted",
+      "reason": "ranked 7th; 2210 estimated tokens would exceed the 800 limit",
+      "score": 0.44,
+      "cost": 2210
+    },
+    {
+      "anchor": {
+        "document_id": "doc_8e30",
+        "source_path": "notes/2025-04-12-装備メモ.md",
+        "start": 300,
+        "end": 480
+      },
+      "rule": "redundant_candidate",
+      "reason": "94% overlap with itm_01; kept the later-dated source",
+      "score": 0.79
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 800,
+    "estimate": 90,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "corpus_state": "sha256:4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c",
+    "settings_hash": "sha256:5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d",
+    "providers": [
+      "filesystem",
+      "kiseki@0.10.0"
+    ],
+    "protection": null
+  }
+}
