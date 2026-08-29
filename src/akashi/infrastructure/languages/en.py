@@ -15,6 +15,7 @@ medical, technical and financial prose -- rather than a general-purpose one.
 from __future__ import annotations
 
 from akashi.domain.language import LanguagePack
+from akashi.domain.particular import ExtractionRule, ParticularKind
 
 __all__ = ["ENGLISH"]
 
@@ -129,4 +130,62 @@ ENGLISH = LanguagePack(
     # to know that is that nothing follows the stop but more text.
     needs_space_after=True,
     abbreviations=_ABBREVIATIONS,
+    rules=(
+        ExtractionRule(
+            kind=ParticularKind.REFERENCE,
+            pattern=(
+                r"(?<![A-Za-z])(?:Sections?|Secs?\.|Articles?|Arts?\.|Clauses?|"
+                r"Figs?\.|Figures?|Tables?|Chapters?|Chs?\.|Paragraphs?|Paras?\.|"
+                r"Appendix|Annex|Exhibit|Schedule|Items?|Nos?\.|Rules?|Claims?)"
+                r"\s*\d+(?:\.\d+)*(?:\s*\([a-z0-9]+\))*"
+            ),
+            priority=90,
+            note="Section 4(b) -> Section 4(d) is a different obligation, and reads the same",
+        ),
+        ExtractionRule(
+            kind=ParticularKind.DATE,
+            pattern=(
+                r"(?<![A-Za-z])(?:January|February|March|April|May|June|July|August|"
+                r"September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|"
+                r"Sept|Oct|Nov|Dec)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,\s*\d{4})?"
+            ),
+            priority=92,
+        ),
+        ExtractionRule(
+            kind=ParticularKind.DATE,
+            pattern=(
+                r"(?<![\d])\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|"
+                r"June|July|August|September|October|November|December)(?:,?\s*\d{4})?"
+            ),
+            priority=92,
+        ),
+        ExtractionRule(
+            kind=ParticularKind.DURATION,
+            pattern=(
+                r"(?<![\d])\d[\d,.]*\s*(?:days?|weeks?|months?|years?|hours?|minutes?|"
+                r"seconds?|business days?)(?![A-Za-z])"
+            ),
+            priority=60,
+        ),
+        ExtractionRule(
+            kind=ParticularKind.MONEY,
+            pattern=(
+                r"(?<![\d])\d[\d,]*(?:\.\d+)?\s*(?:trillion|billion|million|thousand)?"
+                r"\s*(?:dollars|euros|pounds|yen)(?![A-Za-z])"
+            ),
+            priority=75,
+        ),
+        ExtractionRule(
+            kind=ParticularKind.QUANTITY,
+            pattern=(
+                r"(?<![\d])\d[\d,.]*\s*(?:kilograms?|kilogrammes?|grams?|grammes?|"
+                r"milligrams?|tonnes?|tons?|pounds?|ounces?|kilometres?|kilometers?|"
+                r"metres?|meters?|centimetres?|centimeters?|millimetres?|millimeters?|"
+                r"litres?|liters?|millilitres?|milliliters?|percent|per cent|"
+                r"degrees?)(?![A-Za-z])"
+            ),
+            priority=76,
+            note="a unit spelled out, which the SI alternation in the common pack cannot match",
+        ),
+    ),
 )
