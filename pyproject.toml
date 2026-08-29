@@ -1,0 +1,105 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "akashi"
+version = "0.1.0.dev0"
+description = "Local-first response auditing for generative AI. Separate what an answer took from its evidence from what it made up, deterministically, and say which is which."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Nananananana" }]
+keywords = ["audit", "grounding", "hallucination", "attribution", "rag", "provenance", "llm", "local-first", "japanese"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Legal Industry",
+    "Natural Language :: Japanese",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
+]
+
+# Zero. Not "few". See docs/adr/0001-the-domain-depends-on-nothing.md -- an
+# auditor is the component a regulated buyer is asked to trust, and every
+# runtime dependency is a third party they did not agree to trust.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov",
+    "hypothesis>=6.90",
+    "ruff>=0.16",
+    "mypy>=1.10",
+    "import-linter>=2",
+    "pre-commit",
+    # Validates real reports against the published contract. There is no
+    # pydantic in the core (ADR-0001), so the schema and the dataclasses are
+    # kept in step by a test rather than derived from one another.
+    "jsonschema>=4",
+]
+
+# There is deliberately no `siblings` extra yet. The seam tests it would exist
+# for -- ADR-0008's restorer against the real `mamori`, ADR-0007's contract
+# against the reference producer -- land in v0.5, and neither project is
+# published to an index, so declaring them here would make the extra
+# unresolvable for everyone including CI. Until then those tests install their
+# siblings from source, skip when absent, and the architecture tests assert
+# that nothing under src/ imports either one.
+
+[project.urls]
+Homepage = "https://github.com/Nananananana/akashi"
+Repository = "https://github.com/Nananananana/akashi"
+Issues = "https://github.com/Nananananana/akashi/issues"
+Changelog = "https://github.com/Nananananana/akashi/blob/main/CHANGELOG.md"
+
+[project.scripts]
+akashi = "akashi.interfaces.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/akashi"]
+
+# The contract ships with the library: a consumer validating a report should
+# not have to fetch a schema from the internet, and an auditor whose schema
+# lives on someone else's server is not an auditor.
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "akashi/schemas"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "C4", "S", "RUF"]
+ignore = [
+    "S101",   # assert: this is a test suite convention
+    # Full-width and CJK characters are the subject matter, not a typo. The
+    # segmenter and the particular extractor exist because a Japanese digit
+    # can be written four ways and a Chinese sentence ends in a character that
+    # is not a full stop. Both forms appear in code, docstrings and fixtures
+    # on purpose. See ADR-0009.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S105", "S106", "S108"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/akashi"]
+strict = true
+warn_unreachable = true
+
+[tool.coverage.run]
+source = ["src/akashi"]

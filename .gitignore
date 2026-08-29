@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+.coverage
+.hypothesis/
+htmlcov/
+
+# An audit report quotes the answer it audited, and the answer quotes the
+# corpus. A report committed by accident publishes both. See
+# docs/threat-model.md once it exists; until then, treat every *.audit.json
+# as if it were the notes themselves.
+*.audit.json
+reports/

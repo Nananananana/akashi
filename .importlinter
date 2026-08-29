@@ -1,0 +1,111 @@
+[importlinter]
+include_external_packages = True
+root_packages =
+    akashi
+
+# The direction, asserted. The stdlib-only rule for the domain is a separate
+# check in tests/test_architecture.py, because import-linter cannot express
+# "everything except the standard library".
+#
+# The parentheses mark a layer as optional. Layers are named here before the
+# package exists so that the first module to appear in one is already governed
+# -- a layering rule written after the code is a rule written around it.
+[importlinter:contract:layers]
+name = Layer dependency direction
+type = layers
+layers =
+    (akashi.interfaces)
+    (akashi.evaluation)
+    (akashi.application)
+    (akashi.infrastructure)
+    (akashi.ports)
+    (akashi.domain)
+exhaustive = false
+
+# ADR-0003: an audit is reproducible, and a component that can reach the
+# network can neither be reproduced nor be run inside the networks that most
+# need it. akashi audits locally or it does not audit. Unlike tsumugi there is
+# no networked adapter to carve out an exception for -- there is nothing akashi
+# needs from anywhere else.
+[importlinter:contract:no-network]
+name = Nothing in akashi touches the network
+type = forbidden
+source_modules =
+    akashi
+forbidden_modules =
+    socket
+    ssl
+    http
+    urllib
+    asyncio
+
+# ADR-0007: akashi reads a ContextPackage as a document, against a published
+# schema, and imports tsumugi nowhere -- not even in an adapter. The seam tests
+# install the reference producer from source; nothing under src/ may name it.
+[importlinter:contract:the-producer-is-never-imported]
+name = akashi imports neither tsumugi nor kiseki, anywhere
+type = forbidden
+source_modules =
+    akashi
+forbidden_modules =
+    tsumugi
+    kiseki
+
+# --- Not yet resolvable ------------------------------------------------------
+#
+# The contracts below name packages that do not exist yet, and import-linter
+# refuses a contract whose modules it cannot find. They are written now and
+# commented rather than written later from memory, because a boundary drawn
+# after the code is a boundary drawn around it.
+#
+# Nothing is unenforced in the meantime: tests/test_architecture.py asserts
+# every one of these rules by parsing the source, and it applies to a package
+# the moment that package appears. And tests/test_layering_config.py fails the
+# build as soon as a package named below exists while its contract is still
+# commented out -- a rule that has to be remembered is a rule that is off.
+#
+# [importlinter:contract:domain-purity]
+# name = The domain layer knows nothing below it
+# type = forbidden
+# source_modules =
+#     akashi.domain
+# forbidden_modules =
+#     akashi.ports
+#     akashi.application
+#     akashi.infrastructure
+#     akashi.interfaces
+#     akashi.evaluation
+#
+# ADR-0008: a response still carrying placeholders is restored before it is
+# audited, or it is refused. The optional adapter that can do the restoring is
+# the one place allowed to know mamori exists; everything above it is handed a
+# restorer or nothing. Listed layer by layer rather than by excluding the
+# adapters, so that a new infrastructure package has to be added here -- the
+# same maintenance obligation as the layer table, and the same reason for it.
+#
+# [importlinter:contract:the-redactor-is-optional]
+# name = Only the adapters may know about mamori
+# type = forbidden
+# source_modules =
+#     akashi.domain
+#     akashi.ports
+#     akashi.application
+#     akashi.evaluation
+#     akashi.interfaces
+# forbidden_modules =
+#     mamori
+#
+# The domain does its own I/O nowhere. Reading a package is the filesystem
+# adapter's job; where a report is written is the interface's job.
+#
+# [importlinter:contract:domain-no-io]
+# name = The domain layer does not touch the filesystem
+# type = forbidden
+# source_modules =
+#     akashi.domain
+# forbidden_modules =
+#     pathlib
+#     os
+#     sqlite3
+#     tomllib
+#     argparse
