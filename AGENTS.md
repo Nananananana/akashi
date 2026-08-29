@@ -189,6 +189,17 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   package declaring reversible protection is refused unless a restorer runs or
   the caller passes `restored_by=...`. That assertion goes on the report as an
   assertion, attributed, and changes no verdict.
+- **The first eval run found things, which is what a first run is for.** Two
+  genuine extractor gaps (`℉` was not in the SI alternation; `percentage points`
+  was not an English unit) and three plants in the genre specs that were
+  mislabelled `entity_swap` when they were inventions. akashi was right about
+  those three and the corpus was wrong. Both classes are fixed.
+- **`akashi eval` scores 42/42 fabrication recall and 0/42 false positives on
+  the generated corpus.** That number is evidence the method does what it says
+  on material written against its stated design — not evidence about production
+  traffic. The corpus was authored for it. Issue #24's hand-labelled realistic
+  answers are the harder test, and `unbearing` at 13% here is optimistic for the
+  same reason.
 - **v0.3 is in progress, ahead of v0.2.** v0.3 is the milestone that decides
   whether ADR-0004 holds; freezing a report contract around a method whose
   extraction recall is unmeasured would be fixing a shape before knowing it

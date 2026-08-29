@@ -13,6 +13,20 @@ are committed and CI reads files (ADR-0003).
 
 from __future__ import annotations
 
-from .case import Case, Plant, PlantKind, Source, load_case, load_cases
+from .case import Case, Plant, PlantKind, Source, Split, load_case, load_cases
+from .metrics import Breakdown, Rate, Score
+from .runner import run
 
-__all__ = ["Case", "Plant", "PlantKind", "Source", "load_case", "load_cases"]
+__all__ = [
+    "Breakdown",
+    "Case",
+    "Plant",
+    "PlantKind",
+    "Rate",
+    "Score",
+    "Source",
+    "Split",
+    "load_case",
+    "load_cases",
+    "run",
+]

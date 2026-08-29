@@ -6,7 +6,9 @@
   "split": "held_out",
   "generator": "akashi.cases/1",
   "seed": 20260830,
-  "tier": [],
+  "tier": [
+    "ci"
+  ],
   "expect_refusal": true,
   "plants": [
     {

@@ -137,7 +137,8 @@ _SPEC = GenreSpec(
                 "本规格书规定外壳的技术要求，修订记录附于文末。",
                 "外形尺寸公差为{{F:tolerance}}0.02毫米{{/F}}，质量不超过{{F:mass}}2.4公斤{{/F}}。",
                 "工作温度范围为{{F:temp}}-20度{{/F}}至{{F:temp_max}}60度{{/F}}。",
-                "适用标准为{{F:standard}}ISO 9001{{/F}}，布局见{{F:drawing}}第4图{{/F}}。",
+                "适用标准为{{F:standard}}ISO 9001{{/F}}，布局见{{F:drawing}}第4图{{/F}}，"
+                "尺寸见{{F:table}}第2表{{/F}}。",
                 "装配与检验流程详见配套手册。",
             ),
         ),
@@ -164,8 +165,8 @@ _SPEC = GenreSpec(
         S(K.INVENTED_PARTICULAR, "耐压为350千帕。", "350千帕"),
         S(K.INVENTED_PARTICULAR, "ISO 14001同样适用。", "ISO 14001"),
         S(K.DERIVED_VALUE, "工作温度跨度为80度。", "80度"),
-        S(K.ENTITY_SWAP, "布局见第9图。", "第9图"),
-        S(K.ENTITY_SWAP, "质量上限为1.2公斤。", "1.2公斤"),
+        S(K.ENTITY_SWAP, "布局见第2表。", "第2表", "table"),
+        S(K.ENTITY_SWAP, "工作温度下限为60度。", "60度", "temp_max"),
         S(K.CROSS_DOCUMENT_STITCH, "版本1.2.3将公差改为0.02毫米。", expect_verdict="grounded"),
         S(K.NEGATION_FLIP, "质量并未限定为2.4公斤。", expect_verdict="grounded"),
         S(K.NEGATION_FLIP, "未规定尺寸公差。", expect_verdict="unbearing"),
@@ -194,7 +195,6 @@ _PROTECTED = GenreSpec(
         S(K.PLACEHOLDER_RESIDUE, "<PERSON_001>将接手本事项。", "<PERSON_001>"),
     ),
     protected=True,
-    tier=(),
 )
 
 CHINESE: tuple[GenreSpec, ...] = (_CONTRACT, _CLINICAL, _SPEC, _PROTECTED)

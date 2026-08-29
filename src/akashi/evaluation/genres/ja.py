@@ -158,7 +158,8 @@ _SPEC = GenreSpec(
                 "質量は {{F:mass}}2.4kg{{/F}} 以下とする。",
                 "動作温度範囲は {{F:temp}}-20℃{{/F}} から {{F:temp_max}}60℃{{/F}} とする。",
                 "適用規格は {{F:standard}}ISO 9001{{/F}}、"
-                "図面番号は {{F:drawing}}第4図{{/F}} を参照。",
+                "図面番号は {{F:drawing}}第4図{{/F}}、"
+                "寸法表は {{F:table}}第2表{{/F}} を参照。",
                 "組立手順および検査要領については別冊を参照すること。",
             ),
         ),
@@ -186,8 +187,8 @@ _SPEC = GenreSpec(
         S(K.INVENTED_PARTICULAR, "耐圧は 350kPa と規定されています。", "350kPa"),
         S(K.INVENTED_PARTICULAR, "適用規格には ISO 14001 も含まれます。", "ISO 14001"),
         S(K.DERIVED_VALUE, "動作温度の幅は80℃です。", "80℃"),
-        S(K.ENTITY_SWAP, "図面番号は第9図を参照してください。", "第9図"),
-        S(K.ENTITY_SWAP, "質量の上限は1.2kgです。", "1.2kg"),
+        S(K.ENTITY_SWAP, "図面番号は第2表を参照してください。", "第2表", "table"),
+        S(K.ENTITY_SWAP, "動作温度の下限は60℃です。", "60℃", "temp_max"),
         S(
             K.CROSS_DOCUMENT_STITCH,
             "版数1.2.3において、公差は±0.02mmに変更されました。",
@@ -220,7 +221,6 @@ _PROTECTED = GenreSpec(
         S(K.PLACEHOLDER_RESIDUE, "<PERSON_001>が本件を引き継ぎます。", "<PERSON_001>"),
     ),
     protected=True,
-    tier=(),
 )
 
 JAPANESE: tuple[GenreSpec, ...] = (_CONTRACT, _CLINICAL, _SPEC, _PROTECTED)

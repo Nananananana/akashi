@@ -181,7 +181,8 @@ ENGLISH = LanguagePack(
                 r"(?<![\d])\d[\d,.]*\s*(?:kilograms?|kilogrammes?|grams?|grammes?|"
                 r"milligrams?|tonnes?|tons?|pounds?|ounces?|kilometres?|kilometers?|"
                 r"metres?|meters?|centimetres?|centimeters?|millimetres?|millimeters?|"
-                r"litres?|liters?|millilitres?|milliliters?|percent|per cent|"
+                r"litres?|liters?|millilitres?|milliliters?|"
+                r"percentage points|percent|per cent|"
                 r"degrees?)(?![A-Za-z])"
             ),
             priority=76,

@@ -41,7 +41,7 @@ _SI = (
     r"ms|µs|ns|s|min|hr|hrs|h|"
     r"GHz|MHz|kHz|Hz|kW|MW|W|kV|V|mAh|mA|A|"
     r"TB|GB|MB|KB|kB|B|bit|"
-    r"°C|℃|°F|K|ppm|px|pt)"
+    r"°C|℃|°F|℉|K|ppm|px|pt)"
 )
 
 

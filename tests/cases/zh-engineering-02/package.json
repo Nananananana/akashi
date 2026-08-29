@@ -14,7 +14,7 @@
         "start": 25,
         "end": 50,
         "text_hash": "sha256:ff28bee6b7b6b276ffe07f9209bd68d182af3f67078966c1c14b1a3143f0405d",
-        "document_hash": "sha256:4bf783714229a16b0c3c9d629440ada869bedc9d1a5f6d0fa34eb37acdd75b39"
+        "document_hash": "sha256:a32e0081bd20b6aaaaf61ed23a31baf465e003c03996c8873d7192f976a83476"
       },
       "provenance": {
         "layer": "fact",
@@ -37,7 +37,7 @@
         "start": 52,
         "end": 68,
         "text_hash": "sha256:e1eea5b2b225b8456da3af591deea6b9c0e9393b94b4e045aa4f98d695cbff75",
-        "document_hash": "sha256:4bf783714229a16b0c3c9d629440ada869bedc9d1a5f6d0fa34eb37acdd75b39"
+        "document_hash": "sha256:a32e0081bd20b6aaaaf61ed23a31baf465e003c03996c8873d7192f976a83476"
       },
       "provenance": {
         "layer": "fact",
@@ -52,15 +52,15 @@
     {
       "item_id": "itm_03",
       "kind": "document_span",
-      "text": "适用标准为ISO 9001，布局见第4图。",
+      "text": "适用标准为ISO 9001，布局见第4图，尺寸见第2表。",
       "anchor": {
         "document_id": "doc_spec_zh",
         "source_path": "specs/2026-外壳规格.md",
         "section": "要求",
         "start": 70,
-        "end": 91,
-        "text_hash": "sha256:c9ee0a6434d796c782b7a7b77d6c45fe727de3f516472af3476aba8aca693e35",
-        "document_hash": "sha256:4bf783714229a16b0c3c9d629440ada869bedc9d1a5f6d0fa34eb37acdd75b39"
+        "end": 98,
+        "text_hash": "sha256:aa7dfcfdabc7ebadf92e2550b28aec82a8966b21c9f457f7190fa1948e489bda",
+        "document_hash": "sha256:a32e0081bd20b6aaaaf61ed23a31baf465e003c03996c8873d7192f976a83476"
       },
       "provenance": {
         "layer": "fact",
@@ -70,7 +70,7 @@
         "rank": 3,
         "score": 0.9
       },
-      "cost": 10
+      "cost": 14
     },
     {
       "item_id": "itm_04",
@@ -112,8 +112,8 @@
       "anchor": {
         "document_id": "doc_spec_zh",
         "source_path": "specs/2026-外壳规格.md",
-        "start": 93,
-        "end": 107
+        "start": 100,
+        "end": 114
       },
       "rule": "below_threshold",
       "reason": "carries no fact the question asked about",
@@ -134,7 +134,7 @@
   "budget": {
     "unit": "tokens",
     "limit": 2000,
-    "estimate": 42,
+    "estimate": 46,
     "estimator": "heuristic/cjk-aware@1",
     "measured_error": {
       "p50": 0.03,

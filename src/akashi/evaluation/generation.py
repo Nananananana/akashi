@@ -123,6 +123,10 @@ class GenreSpec:
     #: Written into every case's package. A case that declares protection also
     #: carries a placeholder in its response, and the runner expects a refusal.
     protected: bool = False
+    #: Which tiers a case belongs to. Every case is in ``ci`` today, because
+    #: the whole corpus audits in about a second and a tier that excluded
+    #: nothing useful would be a distinction pretending to be an optimisation.
+    #: The field is here for the corpus this one is a tenth the size of.
     tier: tuple[str, ...] = field(default_factory=lambda: ("ci",))
 
 
