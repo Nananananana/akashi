@@ -34,6 +34,14 @@ Two consequences are specific enough to state as rules:
   but the report says which omission it matched and under which rule. A model
   reproducing content that was withheld from it is a finding, not a pass.
 
+  > **Superseded in part by
+  > [ADR-0012](0012-an-omission-is-a-receipt-not-a-source.md).** The second
+  > sentence cannot be implemented: an omission carries an anchor and a reason
+  > and *not the omitted text*, so there is nothing to match against. The first
+  > sentence stands and the closed world is unchanged. This note is a pointer
+  > rather than an edit — the original wording is what ADR-0012 corrects, and
+  > removing it would erase the correction.
+
 - **The instructions are not evidence.** Text in `instructions`, `constraints`
   or `output_schema` is part of the prompt, not part of the corpus, and a
   particular resolving only there is `floating`. Otherwise a rule that happens to
