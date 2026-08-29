@@ -143,15 +143,23 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 - **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
-  `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world), and
-  the `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the ten
+  `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world),
+  `infrastructure/packages` (the ContextPackage reader), and the
+  `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the ten
   particular kinds have rules; `proper_noun` has none and says so.
+- **Fixture offsets are computed, never typed.** Three of the four hand-written
+  fixture anchors were wrong on the first run, which is `mamori`'s dataset rule
+  earning its keep. `tests/test_contract_conformance.py` validates every fixture
+  against the vendored `tsumugi` schema *and* checks that each anchor's length
+  matches its own text — the schema cannot express the second and every reported
+  offset rests on it.
 - **Two parts of `docs/proposals/0001-the-design.md` are out of date and the
   proposal stays as written.** Stage 6 there searches an omission index and
   names an `omitted_source` rule; ADR-0012 withdrew both, because an omission
   carries an anchor and a reason and not the text. The proposal is a record of
   what was proposed, not of what is true.
-- **Next:** verdicts, the package reader, `akashi audit`.
+- **Next:** verdicts and coverage, the protected-response refusal, `akashi
+  audit`.
   `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
   corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
