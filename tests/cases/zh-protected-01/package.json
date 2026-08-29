@@ -1,0 +1,66 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:86c29d316736f171d53373c299bab90db9d2754f2689bfa0ad3712545e5cbf87",
+  "query": "负责人和期限是?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "负责人为<PERSON_001>，期限为2026年8月30日。",
+      "anchor": {
+        "document_id": "doc_case_zh",
+        "source_path": "cases/2026-08-分工表.md",
+        "section": "分工",
+        "start": 16,
+        "end": 47,
+        "text_hash": "sha256:a7e888a24da540e7dc0320e56373f49aef5af9cf4a39e0d323731d8f7499b3be",
+        "document_hash": "sha256:3f3065ae6c5e83678b6aa13c4e098a48b8d47e8154ab1b345bb7774697eba5a9"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 15
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_case_zh",
+        "source_path": "cases/2026-08-分工表.md",
+        "start": 0,
+        "end": 14
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 15,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": {
+      "by": "mamori@0.17.0",
+      "scope": "sess_zh-protected-01",
+      "reversible": true
+    }
+  }
+}

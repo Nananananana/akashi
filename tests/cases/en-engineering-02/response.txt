@@ -1,0 +1,3 @@
+The applicable standard is ISO 9001. The revision is effective from 2026-08-13. The dimensional tolerance is 0.02mm.
+
+No dimensional tolerance is specified. Revision 1.2.3 is effective from 2026-08-30.

@@ -1,0 +1,3 @@
+The dimensional requirements are demanding by any measure. A ceiling on weight is a real constraint on the design. The dimensional tolerance is 0.2mm.
+
+Mass shall not exceed 2.4 grams.

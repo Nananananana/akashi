@@ -1,0 +1,153 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:603197d51c46c635ea903cab5404ce78b0c47809a3d58c1d9192c48135496ff0",
+  "query": "公差と質量の要求は?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "外形寸法の公差は ±0.02mm、質量は 2.4kg 以下とする。",
+      "anchor": {
+        "document_id": "doc_spec_ja",
+        "source_path": "specs/2026-筐体仕様.md",
+        "section": "仕様",
+        "start": 30,
+        "end": 63,
+        "text_hash": "sha256:75ef42fc99e8a792f6a3076970277a4aead8c4b83b96fe3ab2578c30e8d59f10",
+        "document_hash": "sha256:80ffb260d6e256707ddceecc5410766deffbe57139a568644fb652a6cf58a6c2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 16
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "動作温度範囲は -20℃ から 60℃ とする。",
+      "anchor": {
+        "document_id": "doc_spec_ja",
+        "source_path": "specs/2026-筐体仕様.md",
+        "section": "仕様",
+        "start": 65,
+        "end": 89,
+        "text_hash": "sha256:97bb0728650e5fc008f78bc9765a8cb8bb8a3a10e1af4f587e0287f10bda3d25",
+        "document_hash": "sha256:80ffb260d6e256707ddceecc5410766deffbe57139a568644fb652a6cf58a6c2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 12
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "適用規格は ISO 9001、図面番号は 第4図 を参照。",
+      "anchor": {
+        "document_id": "doc_spec_ja",
+        "source_path": "specs/2026-筐体仕様.md",
+        "section": "仕様",
+        "start": 91,
+        "end": 120,
+        "text_hash": "sha256:30e3747df44d5a0525dd43423f6c7f3953530dda661da72fcfa9aae38516a75a",
+        "document_hash": "sha256:80ffb260d6e256707ddceecc5410766deffbe57139a568644fb652a6cf58a6c2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 14
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "版数は 1.2.3、適用開始は 2026年8月30日 とする。",
+      "anchor": {
+        "document_id": "doc_rev_ja",
+        "source_path": "specs/2026-改訂通知.md",
+        "section": "改訂",
+        "start": 23,
+        "end": 54,
+        "text_hash": "sha256:cdb816b2ac54c13459ae5049f381888461366433ef56fd8f46ff5912408641b5",
+        "document_hash": "sha256:db7a41e44796883beb322ab625f40cbe24400102f7b776e0c0a017707e06f991"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 15
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_spec_ja",
+        "source_path": "specs/2026-筐体仕様.md",
+        "start": 0,
+        "end": 28
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_spec_ja",
+        "source_path": "specs/2026-筐体仕様.md",
+        "start": 122,
+        "end": 148
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_rev_ja",
+        "source_path": "specs/2026-改訂通知.md",
+        "start": 0,
+        "end": 21
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 57,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

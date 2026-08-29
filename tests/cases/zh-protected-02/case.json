@@ -1,0 +1,25 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-protected-02",
+  "language": "zh",
+  "genre": "protected",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [],
+  "expect_refusal": true,
+  "plants": [
+    {
+      "kind": "placeholder_residue",
+      "span": [
+        4,
+        16
+      ],
+      "text": "<PERSON_001>",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unverifiable"
+    }
+  ]
+}

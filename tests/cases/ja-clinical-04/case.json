@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-clinical-04",
+  "language": "ja",
+  "genre": "clinical",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        0,
+        25
+      ],
+      "text": "検査値については引き続き経過を見る必要があります。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        31,
+        35
+      ],
+      "text": "12.6",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        51,
+        54
+      ],
+      "text": "2週間",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "2週間",
+      "source": {
+        "document_id": "doc_chart_ja",
+        "span": [
+          108,
+          111
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        66,
+        70
+      ],
+      "text": "50mg",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_ja",
+        "span": [
+          39,
+          42
+        ]
+      }
+    }
+  ]
+}

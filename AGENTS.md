@@ -199,6 +199,14 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   the text from the span would make the check vacuous: an edited response would
   move every plant onto different words and the manifest would agree with itself
   all the way down.
+- **42 generated cases**, `tests/cases/`, three languages and four genres, 177
+  plants across ten kinds. `tools/generate_cases.py --check-only` re-derives
+  every one and runs in CI on every push: a generated case that is broken fails
+  a *correct* implementation, so the oracle is checked as often as the code.
+- **The prose is authored and the labels are computed.** A spec says what a
+  sentence *is*; `generation.py` derives what should follow. A spec that could
+  state its own expectations would be an annotation, and an annotated corpus
+  measures the annotator.
 - **A plant carries three booleans, and they are three questions.**
   `expect_detected` (should akashi flag it), `is_hallucination` (is the span
   actually wrong), `declared_miss` (is akashi's silence a stated limit). The

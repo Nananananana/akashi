@@ -37,6 +37,14 @@ jobs:
         env:
           PYTHONUTF8: "1"
 
+      # A generated case that is broken fails a *correct* implementation, so
+      # the oracle is checked as often as the code it is checking. Without
+      # this, a bad fixture looks exactly like a regression.
+      - name: Check the evaluation fixtures
+        run: python tools/generate_cases.py --check-only
+        env:
+          PYTHONUTF8: "1"
+
   lint:
     name: lint, types and layering
     runs-on: ubuntu-latest

@@ -1,0 +1,153 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:f3c1121a0aabb203ab1e1bf18d858498cdc07e7071e7be56acaabd694177a0c2",
+  "query": "投与量と経過観察の間隔は?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "内服は 5mg を1日 2回、14日間 継続とした。",
+      "anchor": {
+        "document_id": "doc_chart_ja",
+        "source_path": "clinical/2026-08-診療録.md",
+        "section": "経過",
+        "start": 35,
+        "end": 61,
+        "text_hash": "sha256:5de69abcd7d298303a0d17a6b406b4de752e87ec0d74e1e4234ca0e7e0f43e7f",
+        "document_hash": "sha256:6c7f3d4a7657914b65210ebe839f084ad96a24073b17ad35d599dd27593e65e2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 13
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "体重は 62.4kg、血圧は 128/82 であった。",
+      "anchor": {
+        "document_id": "doc_chart_ja",
+        "source_path": "clinical/2026-08-診療録.md",
+        "section": "経過",
+        "start": 63,
+        "end": 90,
+        "text_hash": "sha256:18de08f9ff2b9eea3dd1b03e360da62ca219bd5f21899163ef5ad364f9be481d",
+        "document_hash": "sha256:6c7f3d4a7657914b65210ebe839f084ad96a24073b17ad35d599dd27593e65e2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 13
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "次回受診は 4週間 後、採血は 2週間 後に実施する。",
+      "anchor": {
+        "document_id": "doc_chart_ja",
+        "source_path": "clinical/2026-08-診療録.md",
+        "section": "経過",
+        "start": 92,
+        "end": 119,
+        "text_hash": "sha256:f341829c076e6ea09a50877270dd9a9201421c44d93200ea1eeff0a7386d40c1",
+        "document_hash": "sha256:6c7f3d4a7657914b65210ebe839f084ad96a24073b17ad35d599dd27593e65e2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 13
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "HbA1c は 7.2%、eGFR は 68 であった。",
+      "anchor": {
+        "document_id": "doc_lab_ja",
+        "source_path": "clinical/2026-08-検査結果.md",
+        "section": "検査",
+        "start": 14,
+        "end": 42,
+        "text_hash": "sha256:4521520e0f5cf248e233d8ed9893f56401c84b6c6972b312d9e557b4fd65c3bf",
+        "document_hash": "sha256:219722c860fc3aa0109add2be78cee61ff4f45382d7fdce0ed04768d5aaa6103"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 14
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_chart_ja",
+        "source_path": "clinical/2026-08-診療録.md",
+        "start": 0,
+        "end": 33
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_chart_ja",
+        "source_path": "clinical/2026-08-診療録.md",
+        "start": 121,
+        "end": 148
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_lab_ja",
+        "source_path": "clinical/2026-08-検査結果.md",
+        "start": 0,
+        "end": 12
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 53,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

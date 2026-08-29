@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-engineering-01",
+  "language": "en",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "digit_drift",
+      "span": [
+        22,
+        27
+      ],
+      "text": "2.6kg",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2.4kg",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          192,
+          197
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        29,
+        38
+      ],
+      "text": "ISO 14001",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        92,
+        97
+      ],
+      "text": "2.4kg",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "2.4kg",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          192,
+          197
+        ]
+      }
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        117,
+        128
+      ],
+      "text": "0.02 metres",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "0.02mm",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          155,
+          161
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        130,
+        159
+      ],
+      "text": "Mass is not limited to 2.4kg.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    }
+  ]
+}

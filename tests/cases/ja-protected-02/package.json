@@ -1,0 +1,66 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:03335057f3bccfe6e4826af39b16e6181e0b13b600269499c2366852cfeb17e9",
+  "query": "担当者と期限は?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "担当は <PERSON_001>、期限は 2026年8月30日 とする。",
+      "anchor": {
+        "document_id": "doc_case_ja",
+        "source_path": "cases/2026-08-担当表.md",
+        "section": "担当",
+        "start": 19,
+        "end": 55,
+        "text_hash": "sha256:f59f27c31599ba229300548e04a2209c84df9187ca959483a330fa5331310b95",
+        "document_hash": "sha256:20672e59021a04506195efa35486a0dded3b00e11f66a39f5829a8e5dc9885b2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 18
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_case_ja",
+        "source_path": "cases/2026-08-担当表.md",
+        "start": 0,
+        "end": 17
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 18,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": {
+      "by": "mamori@0.17.0",
+      "scope": "sess_ja-protected-02",
+      "reversible": true
+    }
+  }
+}

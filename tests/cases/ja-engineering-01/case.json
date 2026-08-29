@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-engineering-01",
+  "language": "ja",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "digit_drift",
+      "span": [
+        3,
+        8
+      ],
+      "text": "2.6kg",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2.4kg",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          51,
+          56
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        27,
+        36
+      ],
+      "text": "ISO 14001",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        47,
+        52
+      ],
+      "text": "2.4kg",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "2.4kg",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          51,
+          56
+        ]
+      }
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        74,
+        77
+      ],
+      "text": "60℉",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "60℃",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          81,
+          84
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        80,
+        102
+      ],
+      "text": "質量は2.4kg以下とは定められていません。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    }
+  ]
+}

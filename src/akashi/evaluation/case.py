@@ -200,6 +200,11 @@ class Case:
     generator: str = ""
     seed: int = 0
     tier: tuple[str, ...] = field(default_factory=tuple)
+    #: The package declares reversible protection and the response still
+    #: carries a placeholder, so an audit must refuse rather than report
+    #: (ADR-0008). A whole-case expectation rather than a plant, because the
+    #: refusal is about the case and there is no report to point a span into.
+    expect_refusal: bool = False
 
     def __post_init__(self) -> None:
         if not self.case_id:
@@ -399,6 +404,7 @@ def load_case(folder: Path | str) -> Case:
             generator=str(manifest.get("generator", "")),
             seed=int(manifest.get("seed", 0)),
             tier=tuple(str(name) for name in manifest.get("tier", [])),
+            expect_refusal=bool(manifest.get("expect_refusal", False)),
         )
     except ValueError as error:
         raise ContractError(f"{case_id} is not a usable case: {error}") from error

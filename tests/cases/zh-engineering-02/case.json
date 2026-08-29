@@ -1,0 +1,107 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-engineering-02",
+  "language": "zh",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        5,
+        13
+      ],
+      "text": "ISO 9001",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "ISO 9001",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          75,
+          83
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        15,
+        25
+      ],
+      "text": "2026年8月13日",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2026年8月30日",
+      "source": {
+        "document_id": "doc_rev_zh",
+        "span": [
+          26,
+          36
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        36,
+        42
+      ],
+      "text": "0.02毫米",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "0.02毫米",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          32,
+          38
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        45,
+        53
+      ],
+      "text": "未规定尺寸公差。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        55,
+        60
+      ],
+      "text": "1.2.3",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "1.2.3",
+      "source": {
+        "document_id": "doc_rev_zh",
+        "span": [
+          19,
+          24
+        ]
+      }
+    }
+  ]
+}

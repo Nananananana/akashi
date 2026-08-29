@@ -1,0 +1,25 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-protected-01",
+  "language": "en",
+  "genre": "protected",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [],
+  "expect_refusal": true,
+  "plants": [
+    {
+      "kind": "placeholder_residue",
+      "span": [
+        0,
+        12
+      ],
+      "text": "<PERSON_001>",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unverifiable"
+    }
+  ]
+}

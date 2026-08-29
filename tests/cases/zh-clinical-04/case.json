@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-clinical-04",
+  "language": "zh",
+  "genre": "clinical",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        0,
+        11
+      ],
+      "text": "检验结果仍需持续观察。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        18,
+        22
+      ],
+      "text": "12.6",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        23,
+        25
+      ],
+      "text": "2周",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "2周",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          73,
+          75
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        33,
+        37
+      ],
+      "text": "50mg",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          30,
+          33
+        ]
+      }
+    }
+  ]
+}

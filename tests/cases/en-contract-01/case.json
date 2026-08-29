@@ -1,0 +1,91 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-contract-01",
+  "language": "en",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        20,
+        41
+      ],
+      "text": "3.5 percentage points",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "3.5%",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          346,
+          350
+        ]
+      }
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        53,
+        95
+      ],
+      "text": "Art. 12 provides that the term is 3 years.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        132,
+        139
+      ],
+      "text": "90 days",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        148,
+        160
+      ],
+      "text": "Section 4(d)",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "Section 4(b)",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          141,
+          153
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        190,
+        235
+      ],
+      "text": "Liability under this agreement is not capped.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    }
+  ]
+}

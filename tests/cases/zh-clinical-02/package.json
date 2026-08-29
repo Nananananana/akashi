@@ -1,0 +1,153 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:c498f934a6055e0298d97a36e90305227233d7408bcd05d95ebcc2d4da82056d",
+  "query": "用药剂量和复诊间隔是多少?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "口服5mg，每日2次，连续14天。",
+      "anchor": {
+        "document_id": "doc_chart_zh",
+        "source_path": "clinical/2026-08-病历.md",
+        "section": "经过",
+        "start": 28,
+        "end": 45,
+        "text_hash": "sha256:be2d72a6e7b5dc294d47ba80ccf370233abc2bc397e9fd64e794f69bcdf9c569",
+        "document_hash": "sha256:ef80c7d6ed6fea9d4c90a1468c80443a69c01cbbc50d8757606f3d942d86b3b2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 8
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "体重62.4公斤，血压128/82。",
+      "anchor": {
+        "document_id": "doc_chart_zh",
+        "source_path": "clinical/2026-08-病历.md",
+        "section": "经过",
+        "start": 47,
+        "end": 65,
+        "text_hash": "sha256:03cb688bfd48bbe2623ba7334f229260821d65a7f6f7ced08c474c1d61f713e7",
+        "document_hash": "sha256:ef80c7d6ed6fea9d4c90a1468c80443a69c01cbbc50d8757606f3d942d86b3b2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 9
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "4周后复诊，2周后复查血常规。",
+      "anchor": {
+        "document_id": "doc_chart_zh",
+        "source_path": "clinical/2026-08-病历.md",
+        "section": "经过",
+        "start": 67,
+        "end": 82,
+        "text_hash": "sha256:298c979d1cd4f6255ea6956515de66a0b05b93eb203a92003aa9b25822c7fe0b",
+        "document_hash": "sha256:ef80c7d6ed6fea9d4c90a1468c80443a69c01cbbc50d8757606f3d942d86b3b2"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 7
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "糖化血红蛋白为7.2%，eGFR为68。",
+      "anchor": {
+        "document_id": "doc_lab_zh",
+        "source_path": "clinical/2026-08-检验.md",
+        "section": "检验",
+        "start": 10,
+        "end": 30,
+        "text_hash": "sha256:e236d6fe6bc8b956b14da4b81242d72168b70c8e68024e2bf7c1cbb7ee89ca1c",
+        "document_hash": "sha256:305071e09a00ecfe738a567f7ec421547613ed646bb0e5f07153897c01d3026b"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 10
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_chart_zh",
+        "source_path": "clinical/2026-08-病历.md",
+        "start": 0,
+        "end": 26
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_chart_zh",
+        "source_path": "clinical/2026-08-病历.md",
+        "start": 84,
+        "end": 103
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_lab_zh",
+        "source_path": "clinical/2026-08-检验.md",
+        "start": 0,
+        "end": 8
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 34,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

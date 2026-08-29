@@ -1,0 +1,91 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-contract-01",
+  "language": "ja",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        8,
+        15
+      ],
+      "text": "1,200億円",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "1,200万円",
+      "source": {
+        "document_id": "doc_msa_ja",
+        "span": [
+          98,
+          105
+        ]
+      }
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        18,
+        41
+      ],
+      "text": "第12条により、契約期間は3年とされています。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        56,
+        59
+      ],
+      "text": "90日",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        67,
+        71
+      ],
+      "text": "第13条",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "第30条",
+      "source": {
+        "document_id": "doc_msa_ja",
+        "span": [
+          40,
+          44
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        90,
+        108
+      ],
+      "text": "賠償責任に上限は設けられていません。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    }
+  ]
+}

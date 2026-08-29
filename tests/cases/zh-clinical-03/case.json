@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-clinical-03",
+  "language": "zh",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        0,
+        2
+      ],
+      "text": "4天",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "4周",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          67,
+          69
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        13,
+        17
+      ],
+      "text": "7.2%",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "7.2%",
+      "source": {
+        "document_id": "doc_lab_zh",
+        "span": [
+          17,
+          21
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        25,
+        29
+      ],
+      "text": "7.9%",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "7.2%",
+      "source": {
+        "document_id": "doc_lab_zh",
+        "span": [
+          17,
+          21
+        ]
+      }
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        39,
+        42
+      ],
+      "text": "28次",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        43,
+        54
+      ],
+      "text": "目前的方案是继续服药。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    }
+  ]
+}

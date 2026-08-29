@@ -1,0 +1,153 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:32749108c07e9084e2ac4e6105d897d4861465ce1b3bcf178ed3a46f148e689e",
+  "query": "公差和质量要求是多少?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "外形尺寸公差为0.02毫米，质量不超过2.4公斤。",
+      "anchor": {
+        "document_id": "doc_spec_zh",
+        "source_path": "specs/2026-外壳规格.md",
+        "section": "要求",
+        "start": 25,
+        "end": 50,
+        "text_hash": "sha256:ff28bee6b7b6b276ffe07f9209bd68d182af3f67078966c1c14b1a3143f0405d",
+        "document_hash": "sha256:4bf783714229a16b0c3c9d629440ada869bedc9d1a5f6d0fa34eb37acdd75b39"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 12
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "工作温度范围为-20度至60度。",
+      "anchor": {
+        "document_id": "doc_spec_zh",
+        "source_path": "specs/2026-外壳规格.md",
+        "section": "要求",
+        "start": 52,
+        "end": 68,
+        "text_hash": "sha256:e1eea5b2b225b8456da3af591deea6b9c0e9393b94b4e045aa4f98d695cbff75",
+        "document_hash": "sha256:4bf783714229a16b0c3c9d629440ada869bedc9d1a5f6d0fa34eb37acdd75b39"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 8
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "适用标准为ISO 9001，布局见第4图。",
+      "anchor": {
+        "document_id": "doc_spec_zh",
+        "source_path": "specs/2026-外壳规格.md",
+        "section": "要求",
+        "start": 70,
+        "end": 91,
+        "text_hash": "sha256:c9ee0a6434d796c782b7a7b77d6c45fe727de3f516472af3476aba8aca693e35",
+        "document_hash": "sha256:4bf783714229a16b0c3c9d629440ada869bedc9d1a5f6d0fa34eb37acdd75b39"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 10
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "版本为1.2.3，自2026年8月30日起适用。",
+      "anchor": {
+        "document_id": "doc_rev_zh",
+        "source_path": "specs/2026-修订通知.md",
+        "section": "修订",
+        "start": 16,
+        "end": 40,
+        "text_hash": "sha256:5104de26a12eefae427b50f1431d01c617f67a0c9f7653623aeb70cb97dfdddf",
+        "document_hash": "sha256:75f1ec1a04f6e8d9695e2553c51d221951a520e61938dafda4572ac6a6fe6540"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 12
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_spec_zh",
+        "source_path": "specs/2026-外壳规格.md",
+        "start": 0,
+        "end": 23
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_spec_zh",
+        "source_path": "specs/2026-外壳规格.md",
+        "start": 93,
+        "end": 107
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_rev_zh",
+        "source_path": "specs/2026-修订通知.md",
+        "start": 0,
+        "end": 14
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 42,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

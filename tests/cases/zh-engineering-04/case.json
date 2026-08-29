@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-engineering-04",
+  "language": "zh",
+  "genre": "engineering",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        0,
+        12
+      ],
+      "text": "尺寸方面的要求相当严格。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        12,
+        28
+      ],
+      "text": "重量上限对设计构成了实际的约束。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        35,
+        40
+      ],
+      "text": "0.2毫米",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "0.02毫米",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          32,
+          38
+        ]
+      }
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        48,
+        52
+      ],
+      "text": "2.4克",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2.4公斤",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          44,
+          49
+        ]
+      }
+    }
+  ]
+}

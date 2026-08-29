@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-contract-02",
+  "language": "ja",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        5,
+        7
+      ],
+      "text": "3年",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "3年",
+      "source": {
+        "document_id": "doc_amend_ja",
+        "span": [
+          30,
+          32
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        30,
+        37
+      ],
+      "text": "1,200万円",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "1,200万円",
+      "source": {
+        "document_id": "doc_msa_ja",
+        "span": [
+          98,
+          105
+        ]
+      }
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        40,
+        70
+      ],
+      "text": "要するに、どちらの側からでも契約を終わらせることができます。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        72,
+        99
+      ],
+      "text": "賠償の範囲には上限が設けられている点に留意が必要です。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        108,
+        118
+      ],
+      "text": "2026年4月10日",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2026年4月1日",
+      "source": {
+        "document_id": "doc_amend_ja",
+        "span": [
+          71,
+          80
+        ]
+      }
+    }
+  ]
+}

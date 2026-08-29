@@ -1,0 +1,91 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-clinical-01",
+  "language": "en",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "negation_flip",
+      "span": [
+        0,
+        32
+      ],
+      "text": "The dose is not 5mg twice daily.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        33,
+        59
+      ],
+      "text": "No follow-up was arranged.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        60,
+        112
+      ],
+      "text": "eGFR was 68 and weight was 62.4kg at the same visit.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        126,
+        133
+      ],
+      "text": "5 grams",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_en",
+        "span": [
+          117,
+          120
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        159,
+        162
+      ],
+      "text": "5mg",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_en",
+        "span": [
+          117,
+          120
+        ]
+      }
+    }
+  ]
+}

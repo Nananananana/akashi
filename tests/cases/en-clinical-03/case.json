@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-clinical-03",
+  "language": "en",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        23,
+        29
+      ],
+      "text": "4 days",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "4 weeks",
+      "source": {
+        "document_id": "doc_chart_en",
+        "span": [
+          223,
+          230
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        41,
+        45
+      ],
+      "text": "7.2%",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "7.2%",
+      "source": {
+        "document_id": "doc_lab_en",
+        "span": [
+          39,
+          43
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        74,
+        78
+      ],
+      "text": "7.9%",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "7.2%",
+      "source": {
+        "document_id": "doc_lab_en",
+        "span": [
+          39,
+          43
+        ]
+      }
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        119,
+        127
+      ],
+      "text": "28 doses",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        138,
+        191
+      ],
+      "text": "The medication is to be continued for the time being.",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    }
+  ]
+}

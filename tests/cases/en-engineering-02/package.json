@@ -1,0 +1,153 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:363334eb39fca6e3cf9e36b0d22b49f22dc99d6ef83305a1053a3b164e09ec88",
+  "query": "what are the tolerance and the mass requirement?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "The dimensional tolerance is 0.02mm and the mass shall not exceed 2.4kg.",
+      "anchor": {
+        "document_id": "doc_spec_en",
+        "source_path": "specs/2026-enclosure.md",
+        "section": "Requirements",
+        "start": 126,
+        "end": 198,
+        "text_hash": "sha256:738c29ceb417c6cb88a4cc0105115fe14d5f04923391516e4ee801c9f5b4cc00",
+        "document_hash": "sha256:3fdbbec7f00220f1aa7077d2024d674c1cbc588e1b35f1a9f11336798c2112c1"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 36
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "The operating range is -20 degrees to 60 degrees.",
+      "anchor": {
+        "document_id": "doc_spec_en",
+        "source_path": "specs/2026-enclosure.md",
+        "section": "Requirements",
+        "start": 200,
+        "end": 249,
+        "text_hash": "sha256:332f6742e430efff2996536c00bd60fcab10bfb47123e45775d5b5ebe49e327b",
+        "document_hash": "sha256:3fdbbec7f00220f1aa7077d2024d674c1cbc588e1b35f1a9f11336798c2112c1"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 24
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "The applicable standard is ISO 9001; see Fig. 4 for the layout.",
+      "anchor": {
+        "document_id": "doc_spec_en",
+        "source_path": "specs/2026-enclosure.md",
+        "section": "Requirements",
+        "start": 251,
+        "end": 314,
+        "text_hash": "sha256:29f9cb8443acc6c57aae7eb9658fadf17657955c312341d90d28ba0486092fd2",
+        "document_hash": "sha256:3fdbbec7f00220f1aa7077d2024d674c1cbc588e1b35f1a9f11336798c2112c1"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 31
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "The revision is 1.2.3, effective 2026-08-30.",
+      "anchor": {
+        "document_id": "doc_rev_en",
+        "source_path": "specs/2026-revision.md",
+        "section": "Revision",
+        "start": 60,
+        "end": 104,
+        "text_hash": "sha256:7fef1d7dab21adad0b53e3bdb9ca36588b6eba7ead481b4b69124eb5718ba37b",
+        "document_hash": "sha256:b0ed8167b6b3f3f7bdcfce7100a251dc06e053424b5f23f1946570e87a75069a"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 22
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_spec_en",
+        "source_path": "specs/2026-enclosure.md",
+        "start": 0,
+        "end": 124
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_spec_en",
+        "source_path": "specs/2026-enclosure.md",
+        "start": 316,
+        "end": 387
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_rev_en",
+        "source_path": "specs/2026-revision.md",
+        "start": 0,
+        "end": 58
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 113,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}
