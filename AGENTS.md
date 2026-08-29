@@ -136,16 +136,23 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 
 ## Current state
 
-- Version `0.1.0.dev0`. **Nothing is built.** The repository contains the design,
-  ten ADRs, and the tooling that will enforce them.
+- Version `0.1.0.dev0`. v0.1 is in progress; nothing is released.
 - **License: Apache-2.0. Python: 3.12+. Runtime dependencies: 0**, checked in CI
   by installing without extras and asserting nothing came along.
-- **Built:** nothing beyond `akashi.errors` and the package skeleton.
-- **Next:** v0.1, the spine — segmentation, particular extraction, strict
-  matching, the closed world, `akashi audit`. `contradicted` is deliberately not
-  in v0.1; it ships in v0.4, after there is a corpus to price its false positives
-  against. `docs/proposals/0001-the-design.md` §9 has the order and §10 has what
-  would falsify the whole thing.
+- **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
+  the map back to original offsets), `domain/language`, `domain/segment`
+  (structure pass then sentence pass), and the `en`/`ja`/`zh` packs in
+  `infrastructure/languages/`.
+- **Next:** particular extraction, the closed world, verdicts, the package
+  reader, `akashi audit`. `contradicted` is deliberately not in v0.1; it ships
+  in v0.4, after there is a corpus to price its false positives against.
+  `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
+  falsify the whole thing.
+- **Segmentation merges where it is unsure**, deliberately: an ellipsis and a
+  terminator inside brackets are not boundaries. Merging two sentences moves a
+  denominator; splitting one invents a segment, and only the second can invent a
+  finding. Every such choice is a comment naming the trade, and they are the
+  first thing to re-examine when the v0.3 corpus produces a segmentation number.
 - **Unmeasured, and the documentation says so:** extraction recall, segmenter
   disagreement, the share of real answers that are `unbearing`. All three are
   v0.3, and the third one can change the roadmap.
