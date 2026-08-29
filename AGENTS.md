@@ -137,18 +137,31 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 
 ## Current state
 
-- Version `0.1.0.dev0`. v0.1 is in progress; nothing is released.
+- Version `0.1.0.dev0`. **v0.1 is done**; nothing is released and the public API
+  is not stable.
 - **License: Apache-2.0. Python: 3.12+. Runtime dependencies: 0**, checked in CI
   by installing without extras and asserting nothing came along.
+- 658 tests, 98% coverage. `ruff`, `mypy --strict` and four live `import-linter`
+  contracts all green; two more are parked in `.importlinter` until the packages
+  they name exist, with `tests/test_layering_config.py` watching for that.
 - **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
   `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world),
   `infrastructure/packages` (the ContextPackage reader), `domain/package`,
-  `domain/verdict`, `domain/coverage`, `domain/protection`, `ports/restorer`,
-  `application/admit`, and the `und`/`en`/`ja`/`zh` packs in
-  `infrastructure/languages/`. Nine of the ten particular kinds have rules;
-  `proper_noun` has none and says so.
+  `domain/verdict`, `domain/coverage`, `domain/protection`, `domain/report`,
+  `ports/restorer`, `application/admit`, `application/audit`,
+  `infrastructure/rendering` (text and JSON), `interfaces/cli`, and the
+  `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the ten
+  particular kinds have rules; `proper_noun` has none and says so.
+- **One command: `akashi audit`**, with `--json`, `--language`, `--restored-by`
+  and `--fail-on-findings`. Exit codes: `0` audited, `1` refused, `2` misused,
+  `3` audited-with-findings (only under `--fail-on-findings`). Finding things is
+  what an auditor does, so it is not a failure by default.
+- **The text rendering has a `Traced` section**, and it is not decoration. The
+  README promises a reader *this figure comes from your document, at this
+  offset*; a report that printed only what went wrong would not deliver it, and
+  for a compliance artefact the traceable half is the half somebody signs.
 - **`ContextPackage` is a domain value; only its *parsing* is infrastructure.**
   The application layer may not import infrastructure (the table above), and the
   audit is a function of the package — so the value lives in `domain/package.py`
@@ -176,7 +189,9 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   package declaring reversible protection is refused unless a restorer runs or
   the caller passes `restored_by=...`. That assertion goes on the report as an
   assertion, attributed, and changes no verdict.
-- **Next:** `akashi audit` — the CLI and the use case that runs the stages.
+- **Next:** v0.2 — `akashi.audit-report/1` as a published schema, `report_id`
+  over exactly the inputs, and `akashi recheck`. The contract freezes once a
+  second program has produced and consumed a report, not on a date (ADR-0002).
   `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
   corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would

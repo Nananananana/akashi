@@ -5,9 +5,11 @@ you and the context it was given, and separate what the answer took from its
 evidence from what it produced on its own — deterministically, offline, with no
 model in the path and nothing installed alongside it.
 
-> **Status: design.** Nothing is built yet. This repository currently contains
-> the design, the decisions behind it, and the tooling that will enforce them.
-> Start with [`docs/proposals/0001-the-design.md`](docs/proposals/0001-the-design.md).
+> **Status: v0.1, the spine.** `akashi audit` works: segmentation, particular
+> extraction, strict matching against the closed world, verdicts, and the
+> account of what was not checked. Nothing is released and the API is not
+> stable. The design and the rest of the roadmap are in
+> [`docs/proposals/0001-the-design.md`](docs/proposals/0001-the-design.md).
 
 ---
 
@@ -26,12 +28,36 @@ A *particular* is a load-bearing token — a quantity, a date, a name, a dosage,
 article number, a unit. Those are the things that get falsified in the failures
 that cost money, and a string is either in the source or it is not.
 
-```text
-テントは 2.6kg で、前回より 300g 軽い。
-        ~~~~~                ~~~~
-        floating             grounded  → notes/design/gear.md:1240
-        contradicted: the source says 2.4kg, at notes/design/gear.md:1204
+```bash
+akashi audit --package package.json --response answer.txt
 ```
+
+Real output, from the fixtures in this repository:
+
+```text
+akashi — 3 segments, 0 not checked, 4 particulars checked, 75% grounded
+
+Not checked
+  no rule covers: proper_noun
+
+Findings
+  seg_003  floating
+    The cap was raised in 2025.
+    2025  [134:138]  is in none of the text that was sent
+
+Traced
+  seg_001  30 days  [31:38]  -> contracts/2024-msa.md (Termination)[4164:4171]
+  seg_001  Section 4(b)  [59:71]  -> contracts/2024-msa.md (Termination)[4120:4132]
+  seg_002  45,000 dollars  [96:110]  -> contracts/2024-msa.md (Liability)[8844:8858]
+
+Coverage
+  3 segments: 3 bearing, 0 unbearing, 0 unexamined; 4 of 4 particulars checked
+  3 of 4 particulars grounded (75%)
+```
+
+It leads with what was **not** checked and ends with what the report does not
+establish. That is a deliberate reversal of what every dashboard in this
+category does, and it is why the page can be handed to a reviewer.
 
 ## What it will not tell you
 

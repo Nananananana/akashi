@@ -111,5 +111,16 @@ class LanguagePack:
 
     @property
     def name(self) -> str:
-        """How this pack identifies itself on a report."""
+        """How this pack identifies itself as a segmenter, on a report."""
         return f"akashi.segmenter/{self.code}@{self.version}"
+
+    @property
+    def extractor_name(self) -> str:
+        """How it identifies itself as an extractor.
+
+        Two names for one pack, because a pack can contribute to one stage and
+        not the other -- the shared numeric pack claims rules and no
+        punctuation -- and a report that named it under both would say it took
+        part in something it did not.
+        """
+        return f"akashi.extractor/{self.code}@{self.version}"

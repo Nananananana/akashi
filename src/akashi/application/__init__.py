@@ -8,5 +8,6 @@ domain's assessment to the package it was made against.
 from __future__ import annotations
 
 from .admit import Admission, admit
+from .audit import audit
 
-__all__ = ["Admission", "admit"]
+__all__ = ["Admission", "admit", "audit"]
