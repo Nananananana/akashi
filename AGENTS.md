@@ -141,9 +141,9 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   is not stable.
 - **License: Apache-2.0. Python: 3.12+. Runtime dependencies: 0**, checked in CI
   by installing without extras and asserting nothing came along.
-- 658 tests, 98% coverage. `ruff`, `mypy --strict` and four live `import-linter`
-  contracts all green; two more are parked in `.importlinter` until the packages
-  they name exist, with `tests/test_layering_config.py` watching for that.
+- `ruff`, `mypy --strict` and **six** `import-linter` contracts all green. The
+  two that were parked in `.importlinter` went live when `evaluation/` appeared,
+  which is what `tests/test_layering_config.py` exists to force.
 - **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
@@ -189,9 +189,21 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   package declaring reversible protection is refused unless a restorer runs or
   the caller passes `restored_by=...`. That assertion goes on the report as an
   assertion, attributed, and changes no verdict.
-- **Next:** v0.2 — `akashi.audit-report/1` as a published schema, `report_id`
-  over exactly the inputs, and `akashi recheck`. The contract freezes once a
-  second program has produced and consumed a report, not on a date (ADR-0002).
+- **v0.3 is in progress, ahead of v0.2.** v0.3 is the milestone that decides
+  whether ADR-0004 holds; freezing a report contract around a method whose
+  extraction recall is unmeasured would be fixing a shape before knowing it
+  works. ADR-0002 does not object — the freeze waits for a second consumer, not
+  for a date.
+- **The case format is `akashi.case/1`.** A manifest carries each plant's text
+  *and* its span, and the loader refuses a case where they disagree. Deriving
+  the text from the span would make the check vacuous: an edited response would
+  move every plant onto different words and the manifest would agree with itself
+  all the way down.
+- **A plant carries three booleans, and they are three questions.**
+  `expect_detected` (should akashi flag it), `is_hallucination` (is the span
+  actually wrong), `declared_miss` (is akashi's silence a stated limit). The
+  plants where they disagree are the reason the corpus is worth more than a
+  hallucination benchmark.
   `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
   corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
