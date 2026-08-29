@@ -441,5 +441,9 @@ def segment_answer(answer: str, packs: Sequence[LanguagePack]) -> Segmentation:
     return Segmentation(
         answer=answer,
         segments=tuple(segments),
-        segmenters=tuple(sorted(pack.name for pack in packs)),
+        # Only the packs that actually claimed a terminator. The shared numeric
+        # pack contributes extraction rules and no punctuation, and naming it
+        # here would tell a reader that something took part in segmentation
+        # when it did not.
+        segmenters=tuple(sorted(pack.name for pack in packs if pack.terminators)),
     )

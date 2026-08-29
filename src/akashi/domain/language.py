@@ -14,10 +14,11 @@ one English sentence in it is the ordinary case and not the exception.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+from .particular import ExtractionRule
 
 __all__ = ["LanguagePack", "Script", "script_of"]
-
-from enum import Enum
 
 
 class Script(Enum):
@@ -64,10 +65,14 @@ def script_of(text: str) -> Script:
 class LanguagePack:
     """The rules one language contributes to segmentation.
 
-    ``terminators`` is what the pack claims. Two packs claiming the same
-    character must agree about how it behaves -- ``。`` ends a sentence the same
-    way in Japanese and in Chinese -- and a test asserts that rather than
-    letting a load order decide.
+    ``terminators`` is what the pack claims for segmentation. Two packs
+    claiming the same character must agree about how it behaves -- ``。`` ends a
+    sentence the same way in Japanese and in Chinese -- and that is refused at
+    construction rather than settled by load order (ADR-0011).
+
+    ``rules`` is what it contributes to extraction. A pack may carry only one
+    of the two: the shared numeric pack claims no terminator, because an ISO
+    date and a percentage are not anybody's punctuation.
     """
 
     code: str
@@ -82,10 +87,16 @@ class LanguagePack:
     #: Lower-cased and including the full stop: ``{"fig.", "no.", "e.g."}``.
     #: Only consulted for terminators that need a space after them.
     abbreviations: frozenset[str] = field(default_factory=frozenset)
+    #: What this pack finds. Ordering is irrelevant -- overlaps are resolved
+    #: by a total order in ``extraction.py``, not by which rule ran first.
+    rules: tuple[ExtractionRule, ...] = ()
 
     def __post_init__(self) -> None:
-        if not self.terminators:
-            raise ValueError(f"the {self.code!r} pack claims no terminators")
+        if not self.terminators and not self.rules:
+            raise ValueError(
+                f"the {self.code!r} pack claims neither a terminator nor an extraction "
+                f"rule, so loading it would change nothing"
+            )
         if any(len(terminator) != 1 for terminator in self.terminators):
             raise ValueError(
                 f"the {self.code!r} pack claims a terminator that is not one character"

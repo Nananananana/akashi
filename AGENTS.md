@@ -141,18 +141,29 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   by installing without extras and asserting nothing came along.
 - **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
   the map back to original offsets), `domain/language`, `domain/segment`
-  (structure pass then sentence pass), and the `en`/`ja`/`zh` packs in
-  `infrastructure/languages/`.
-- **Next:** particular extraction, the closed world, verdicts, the package
-  reader, `akashi audit`. `contradicted` is deliberately not in v0.1; it ships
-  in v0.4, after there is a corpus to price its false positives against.
+  (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
+  and the `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the
+  ten particular kinds have rules; `proper_noun` has none and says so.
+- **Next:** the closed world, verdicts, the package reader, `akashi audit`.
+  `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
+  corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
   falsify the whole thing.
+- **`proper_noun` is declared and extracted by nothing.** Recognising a name
+  without a dictionary or a model is guessing. It appears in every report's
+  `kinds_not_extracted`; the structural cases — a token in front of `Inc.` or
+  `株式会社` — are evidence rather than a guess and are worth building later.
 - **Segmentation merges where it is unsure**, deliberately: an ellipsis and a
   terminator inside brackets are not boundaries. Merging two sentences moves a
   denominator; splitting one invents a segment, and only the second can invent a
   finding. Every such choice is a comment naming the trade, and they are the
   first thing to re-examine when the v0.3 corpus produces a segmentation number.
+- **Extraction prefers a miss to a false find**, for the same asymmetry read the
+  other way. A bare CJK numeral is not a quantity — `一部` is "a portion" far
+  more often than "one copy" and `一个` is the indefinite article — so a kanji
+  numeral is only admitted with a magnitude character in it, or between two
+  markers like `第…条`. The price is that `三人` is missed, and a test asserts
+  that price so it stays a known quantity rather than a surprise.
 - **Unmeasured, and the documentation says so:** extraction recall, segmenter
   disagreement, the share of real answers that are `unbearing`. All three are
   v0.3, and the third one can change the roadmap.

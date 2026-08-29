@@ -22,7 +22,14 @@ from akashi.domain.segment import (
     segment_answer,
 )
 from akashi.domain.span import Span
-from akashi.infrastructure.languages import CHINESE, DEFAULT, ENGLISH, JAPANESE, packs
+from akashi.infrastructure.languages import (
+    CHINESE,
+    COMMON,
+    DEFAULT,
+    ENGLISH,
+    JAPANESE,
+    packs,
+)
 
 
 def cut(answer: str) -> list[str]:
@@ -232,6 +239,9 @@ def test_the_fallback_share_is_by_characters_not_by_segments() -> None:
 
 
 def test_a_segmentation_names_the_packs_that_produced_it() -> None:
+    """Only the packs that claimed a terminator. The shared numeric pack
+    contributes extraction rules and no punctuation, and naming it here would
+    say it took part in segmentation when it did not."""
     segmentation = segment_answer("It is light.", DEFAULT)
     assert segmentation.segmenters == (
         "akashi.segmenter/en@1",
@@ -333,8 +343,8 @@ def test_packs_that_disagree_about_a_shared_terminator_are_refused() -> None:
         segment_answer("テントは軽い。", [JAPANESE, contradictory])
 
 
-def test_a_pack_must_claim_a_terminator() -> None:
-    with pytest.raises(ValueError, match="claims no terminators"):
+def test_a_pack_must_contribute_a_terminator_or_a_rule() -> None:
+    with pytest.raises(ValueError, match="neither a terminator nor an extraction rule"):
         LanguagePack(code="xx", version=1, terminators=frozenset(), needs_space_after=False)
 
 
@@ -355,9 +365,11 @@ def test_abbreviations_without_a_space_rule_would_never_be_read() -> None:
 
 
 def test_narrowing_the_pack_set_is_possible_for_measurement() -> None:
-    assert packs("ja") == (JAPANESE,)
+    """``COMMON`` is always there and cannot be dropped: an ISO date and a
+    percentage belong to no language."""
+    assert packs("ja") == (COMMON, JAPANESE)
     assert packs() == DEFAULT
-    assert packs("zh", "en") == (ENGLISH, CHINESE)
+    assert packs("zh", "en") == (COMMON, ENGLISH, CHINESE)
 
 
 def test_an_unknown_language_is_refused_rather_than_ignored() -> None:

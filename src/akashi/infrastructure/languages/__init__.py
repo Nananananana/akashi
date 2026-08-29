@@ -15,18 +15,25 @@ from __future__ import annotations
 
 from akashi.domain.language import LanguagePack
 
+from .common import COMMON
 from .en import ENGLISH
 from .ja import JAPANESE
 from .zh import CHINESE
 
-__all__ = ["CHINESE", "DEFAULT", "ENGLISH", "JAPANESE", "packs"]
+__all__ = ["CHINESE", "COMMON", "DEFAULT", "ENGLISH", "JAPANESE", "packs"]
 
 #: Sorted by code, so that anything derived from the order is reproducible.
-DEFAULT: tuple[LanguagePack, ...] = (ENGLISH, JAPANESE, CHINESE)
+DEFAULT: tuple[LanguagePack, ...] = (COMMON, ENGLISH, JAPANESE, CHINESE)
+
+_LANGUAGES: dict[str, LanguagePack] = {pack.code: pack for pack in DEFAULT if pack is not COMMON}
 
 
 def packs(*codes: str) -> tuple[LanguagePack, ...]:
     """The named packs, in a fixed order. Everything, when nothing is named.
+
+    ``COMMON`` is always included and cannot be excluded: an ISO date and a
+    percentage belong to no language, and a pack set without them would find no
+    particulars at all in an answer written entirely in figures.
 
     Narrowing the set is for measurement -- what does segmentation cost when
     only one language is loaded -- and not for production. An audit that loaded
@@ -35,8 +42,7 @@ def packs(*codes: str) -> tuple[LanguagePack, ...]:
     """
     if not codes:
         return DEFAULT
-    known = {pack.code: pack for pack in DEFAULT}
-    unknown = sorted(set(codes) - set(known))
+    unknown = sorted(set(codes) - set(_LANGUAGES))
     if unknown:
-        raise ValueError(f"no language pack for {unknown}; known: {sorted(known)}")
-    return tuple(known[code] for code in sorted(set(codes)))
+        raise ValueError(f"no language pack for {unknown}; known: {sorted(_LANGUAGES)}")
+    return (COMMON, *(_LANGUAGES[code] for code in sorted(set(codes))))
