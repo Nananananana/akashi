@@ -8,13 +8,9 @@ produce one, including a pipeline written in another language.
 
 from __future__ import annotations
 
-from .contextpackage import (
-    ACCEPTED_CONTRACT,
-    ContextPackage,
-    Protection,
-    load_package,
-    read_package,
-)
+from akashi.domain.package import ContextPackage, Protection
+
+from .contextpackage import ACCEPTED_CONTRACT, load_package, read_package
 
 __all__ = [
     "ACCEPTED_CONTRACT",

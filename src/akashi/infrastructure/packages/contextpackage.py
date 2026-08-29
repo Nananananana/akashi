@@ -24,12 +24,12 @@ can refuse rather than assume.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from akashi.domain.anchor import Anchor, Layer
 from akashi.domain.evidence import Evidence, EvidenceItem, Withheld
+from akashi.domain.package import ContextPackage, Protection
 from akashi.domain.span import Span
 from akashi.errors import ContractError
 
@@ -46,48 +46,6 @@ __all__ = [
 #: evidence over a version string would be the wrong trade.
 ACCEPTED_CONTRACT = "tsumugi.context-package"
 ACCEPTED_MAJOR = "1"
-
-
-@dataclass(frozen=True, slots=True)
-class Protection:
-    """What a redactor did to this package before it was sent.
-
-    ``reversible`` is the field ADR-0008 turns on. A pseudonymized package can
-    be restored and then audited; a masked one cannot, and its segments are
-    ``unverifiable`` rather than ``floating`` -- unknown and false are
-    different, and an auditor that conflates them teaches its user to ignore it.
-    """
-
-    by: str
-    scope: str = ""
-    reversible: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class ContextPackage:
-    """What was sent, as akashi needs it.
-
-    Deliberately smaller than the contract. The budget, the selection scores
-    and the instructions are all real fields that akashi has no use for, and a
-    reader that parsed them would be a second place for the contract to drift.
-    """
-
-    contract: str
-    package_id: str
-    query: str
-    evidence: Evidence
-    protection: Protection | None = None
-    #: False when the package said nothing about protection at all. Absent is
-    #: not the same as ``null``: one is a package that did not tell akashi, and
-    #: the other is a package that told akashi it was not protected.
-    declares_protection: bool = False
-    producer_version: str = ""
-    providers: tuple[str, ...] = ()
-    corpus_state: str = ""
-
-    @property
-    def is_protected(self) -> bool:
-        return self.protection is not None
 
 
 def _require(data: dict[str, Any], key: str, where: str) -> Any:

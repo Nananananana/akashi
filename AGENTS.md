@@ -144,10 +144,15 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
   `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world),
-  `infrastructure/packages` (the ContextPackage reader), `domain/verdict`,
-  `domain/coverage`, and the `und`/`en`/`ja`/`zh` packs in
+  `infrastructure/packages` (the ContextPackage reader), `domain/package`,
+  `domain/verdict`, `domain/coverage`, `domain/protection`, `ports/restorer`,
+  `application/admit`, and the `und`/`en`/`ja`/`zh` packs in
   `infrastructure/languages/`. Nine of the ten particular kinds have rules;
   `proper_noun` has none and says so.
+- **`ContextPackage` is a domain value; only its *parsing* is infrastructure.**
+  The application layer may not import infrastructure (the table above), and the
+  audit is a function of the package — so the value lives in `domain/package.py`
+  and `infrastructure/packages/` produces it.
 - **Six verdicts, and three of them mean "nothing wrong" differently.**
   `grounded` / `floating` / `contradicted` / `unbearing` (looked, nothing to
   check) / `unchecked` (did not look) / `unverifiable` (could not look).
@@ -165,7 +170,13 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   names an `omitted_source` rule; ADR-0012 withdrew both, because an omission
   carries an anchor and a reason and not the text. The proposal is a record of
   what was proposed, not of what is true.
-- **Next:** the protected-response refusal, `akashi audit`.
+- **A restoration akashi did not watch is a claim** (ADR-0013). An answer with
+  no placeholders in it is *not* evidence of restoration — `mamori` can
+  substitute surrogates, which are designed to look like real values — so a
+  package declaring reversible protection is refused unless a restorer runs or
+  the caller passes `restored_by=...`. That assertion goes on the report as an
+  assertion, attributed, and changes no verdict.
+- **Next:** `akashi audit` — the CLI and the use case that runs the stages.
   `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
   corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
