@@ -66,46 +66,34 @@ forbidden_modules =
     tomllib
     argparse
 
-# --- Not yet resolvable ------------------------------------------------------
-#
-# The contracts below name packages that do not exist yet, and import-linter
-# refuses a contract whose modules it cannot find. They are written now and
-# commented rather than written later from memory, because a boundary drawn
-# after the code is a boundary drawn around it.
-#
-# Nothing is unenforced in the meantime: tests/test_architecture.py asserts
-# every one of these rules by parsing the source, and it applies to a package
-# the moment that package appears. And tests/test_layering_config.py fails the
-# build as soon as every package a contract names exists while the contract is
-# still commented out -- a rule that has to be remembered is a rule that is off.
-#
-# [importlinter:contract:domain-purity]
-# name = The domain layer knows nothing below it
-# type = forbidden
-# source_modules =
-#     akashi.domain
-# forbidden_modules =
-#     akashi.ports
-#     akashi.application
-#     akashi.infrastructure
-#     akashi.interfaces
-#     akashi.evaluation
-#
+# ADR-0001 and the layer table in AGENTS.md. The domain knows about no layer
+# above it, which is what makes it testable with nothing else constructed.
+[importlinter:contract:domain-purity]
+name = The domain layer knows nothing below it
+type = forbidden
+source_modules =
+    akashi.domain
+forbidden_modules =
+    akashi.ports
+    akashi.application
+    akashi.infrastructure
+    akashi.interfaces
+    akashi.evaluation
+
 # ADR-0008: a response still carrying placeholders is restored before it is
 # audited, or it is refused. The optional adapter that can do the restoring is
 # the one place allowed to know mamori exists; everything above it is handed a
 # restorer or nothing. Listed layer by layer rather than by excluding the
 # adapters, so that a new infrastructure package has to be added here -- the
 # same maintenance obligation as the layer table, and the same reason for it.
-#
-# [importlinter:contract:the-redactor-is-optional]
-# name = Only the adapters may know about mamori
-# type = forbidden
-# source_modules =
-#     akashi.domain
-#     akashi.ports
-#     akashi.application
-#     akashi.evaluation
-#     akashi.interfaces
-# forbidden_modules =
-#     mamori
+[importlinter:contract:the-redactor-is-optional]
+name = Only the adapters may know about mamori
+type = forbidden
+source_modules =
+    akashi.domain
+    akashi.ports
+    akashi.application
+    akashi.evaluation
+    akashi.interfaces
+forbidden_modules =
+    mamori
