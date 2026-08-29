@@ -194,9 +194,17 @@ and the one whose confidence rules are written down as data.
 ### Normalization tolerance, stated once
 
 NFKC, case-folded, runs of whitespace collapsed to one space. Full-width `２.４`
-and half-width `2.4` are the same particular; `2.4` and `2.40` are not; `2.4kg`
-and `2.4 kg` are, because whitespace collapses; `2.4kg` and `2400g` are not, and
-ADR-0004's cost section owns that.
+and half-width `2.4` are the same string; `2.4` and `2.40` are not; `2.4kg` and
+`2400g` are not, and ADR-0004's cost section owns that.
+
+**Collapsing is not deleting.** `2.4kg` and `2.4 kg` are *different* strings
+under this tolerance, and that is deliberate — deleting spaces for prose would
+make `a b` and `ab` the same sentence. Whether a particular should compare equal
+across an internal space is a narrower question about the extractor: the answer
+is likely yes for a quantity and its unit, and it needs its own decision with
+its own trap kind rather than being smuggled in here. Until it is made, a
+`2.4 kg` in the answer against a `2.4kg` in the source reports `floating`, and
+that is a false positive the corpus is expected to find.
 
 Unit-aware comparison is deliberately **not** in v0.1. It is a real feature and
 it is also the first step onto a slope that ends in fuzzy matching, so it gets

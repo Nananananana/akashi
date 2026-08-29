@@ -22,7 +22,16 @@ SRC = ROOT / "src" / "akashi"
 #: Contract name -> the packages it needs in order to resolve. When every
 #: package in the value exists, the contract must be live.
 DEPENDS_ON: dict[str, tuple[str, ...]] = {
-    "domain-purity": ("domain",),
+    # A `forbidden` contract has to resolve both sides, so these wait on every
+    # package they name and not only the one they are about.
+    "domain-purity": (
+        "domain",
+        "ports",
+        "application",
+        "infrastructure",
+        "interfaces",
+        "evaluation",
+    ),
     "the-redactor-is-optional": ("domain", "ports", "application", "evaluation", "interfaces"),
     "domain-no-io": ("domain",),
 }

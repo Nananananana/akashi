@@ -51,6 +51,21 @@ forbidden_modules =
     tsumugi
     kiseki
 
+# The domain does its own I/O nowhere. Reading a package is the filesystem
+# adapter's job; where a report is written is the interface's job. Where a
+# *segment* is written is nobody's -- the domain is handed strings.
+[importlinter:contract:domain-no-io]
+name = The domain layer does not touch the filesystem
+type = forbidden
+source_modules =
+    akashi.domain
+forbidden_modules =
+    pathlib
+    os
+    sqlite3
+    tomllib
+    argparse
+
 # --- Not yet resolvable ------------------------------------------------------
 #
 # The contracts below name packages that do not exist yet, and import-linter
@@ -61,8 +76,8 @@ forbidden_modules =
 # Nothing is unenforced in the meantime: tests/test_architecture.py asserts
 # every one of these rules by parsing the source, and it applies to a package
 # the moment that package appears. And tests/test_layering_config.py fails the
-# build as soon as a package named below exists while its contract is still
-# commented out -- a rule that has to be remembered is a rule that is off.
+# build as soon as every package a contract names exists while the contract is
+# still commented out -- a rule that has to be remembered is a rule that is off.
 #
 # [importlinter:contract:domain-purity]
 # name = The domain layer knows nothing below it
@@ -94,18 +109,3 @@ forbidden_modules =
 #     akashi.interfaces
 # forbidden_modules =
 #     mamori
-#
-# The domain does its own I/O nowhere. Reading a package is the filesystem
-# adapter's job; where a report is written is the interface's job.
-#
-# [importlinter:contract:domain-no-io]
-# name = The domain layer does not touch the filesystem
-# type = forbidden
-# source_modules =
-#     akashi.domain
-# forbidden_modules =
-#     pathlib
-#     os
-#     sqlite3
-#     tomllib
-#     argparse
