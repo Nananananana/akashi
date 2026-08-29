@@ -75,7 +75,7 @@ fixture fails the build rather than failing a correct implementation.
 | `unit_swap` | kg→g, 万円→億円, % → percentage points | that the unit is part of the particular |
 | `entity_swap` | a proper noun from another document in the same package | resolution is per-particular, not per-package |
 | `invented_particular` | a number or name present nowhere | `floating` |
-| `omitted_source` | a particular that appears only in `omissions[]` | ADR-0006: still `floating`, and the omission is named |
+| `omitted_source` | a particular that appears only in `omissions[]` | ADR-0006: still `floating`, and the omission is named — **withdrawn by [ADR-0012](0012-an-omission-is-a-receipt-not-a-source.md)**, which found the omitted text is not in the package to plant against |
 | `negation_flip` | "does not" ↔ "does" with particulars intact | a declared miss — must appear in `unchecked[]`, not as a pass |
 | `cross_document_stitch` | subject from A, predicate from B, both verbatim | the sharpest declared miss (ADR-0004) |
 | `faithful_paraphrase` | a true restatement with no shared substring | false positives |

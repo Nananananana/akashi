@@ -30,8 +30,9 @@ The constitution, to be enforced by construction rather than by promise:
   required on every report. A partial check reported as a single number reads as
   a total check (ADR-0005).
 - **The world is what was sent.** `items[]` of the package and nothing else. A
-  particular that resolves only in `omissions[]`, only in the instructions, or
-  only in the wider corpus is still floating (ADR-0006).
+  particular that resolves only in the instructions or only in the wider corpus
+  is still floating (ADR-0006). `omissions[]` is counted and reported and
+  **never searched** — it does not carry the omitted text (ADR-0012).
 - **Fail closed.** An unrecognised contract version is refused. A protected
   answer with no restorer is refused rather than audited into nonsense
   (ADR-0007, ADR-0008).
@@ -142,9 +143,15 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 - **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
-  and the `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the
-  ten particular kinds have rules; `proper_noun` has none and says so.
-- **Next:** the closed world, verdicts, the package reader, `akashi audit`.
+  `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world), and
+  the `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the ten
+  particular kinds have rules; `proper_noun` has none and says so.
+- **Two parts of `docs/proposals/0001-the-design.md` are out of date and the
+  proposal stays as written.** Stage 6 there searches an omission index and
+  names an `omitted_source` rule; ADR-0012 withdrew both, because an omission
+  carries an anchor and a reason and not the text. The proposal is a record of
+  what was proposed, not of what is true.
+- **Next:** verdicts, the package reader, `akashi audit`.
   `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
   corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
