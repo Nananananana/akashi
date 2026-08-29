@@ -26,14 +26,22 @@
     {
       "kind": "entity_swap",
       "span": [
-        27,
+        29,
         32
       ],
-      "text": "1.2kg",
+      "text": "60℃",
       "expect_detected": false,
       "is_hallucination": true,
       "declared_miss": true,
-      "expect_verdict": "grounded"
+      "expect_verdict": "grounded",
+      "was": "60℃",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          81,
+          84
+        ]
+      }
     },
     {
       "kind": "cross_document_stitch",
@@ -53,11 +61,19 @@
         73,
         76
       ],
-      "text": "第9図",
+      "text": "第2表",
       "expect_detected": false,
       "is_hallucination": true,
       "declared_miss": true,
-      "expect_verdict": "grounded"
+      "expect_verdict": "grounded",
+      "was": "第2表",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          121,
+          124
+        ]
+      }
     },
     {
       "kind": "derived_value",

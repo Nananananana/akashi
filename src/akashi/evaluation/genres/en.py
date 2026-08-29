@@ -200,7 +200,8 @@ _SPEC = GenreSpec(
                 "The operating range is {{F:temp}}-20 degrees{{/F}} to "
                 "{{F:temp_max}}60 degrees{{/F}}.",
                 "The applicable standard is {{F:standard}}ISO 9001{{/F}}; see "
-                "{{F:drawing}}Fig. 4{{/F}} for the layout.",
+                "{{F:drawing}}Fig. 4{{/F}} for the layout and "
+                "{{F:table}}Table 2{{/F}} for the dimensions.",
                 "Assembly and inspection procedures are covered in the companion volume.",
             ),
         ),
@@ -227,8 +228,8 @@ _SPEC = GenreSpec(
         S(K.INVENTED_PARTICULAR, "The pressure rating is 350 kilopascals.", "350 kilopascals"),
         S(K.INVENTED_PARTICULAR, "ISO 14001 also applies to the enclosure.", "ISO 14001"),
         S(K.DERIVED_VALUE, "The operating range spans 80 degrees.", "80 degrees"),
-        S(K.ENTITY_SWAP, "See Fig. 9 for the layout of the enclosure.", "Fig. 9"),
-        S(K.ENTITY_SWAP, "Mass shall not exceed 1.2kg.", "1.2kg"),
+        S(K.ENTITY_SWAP, "See Table 2 for the layout of the enclosure.", "Table 2", "table"),
+        S(K.ENTITY_SWAP, "The lower operating limit is 60 degrees.", "60 degrees", "temp_max"),
         S(
             K.CROSS_DOCUMENT_STITCH,
             "Revision 1.2.3 changed the tolerance to 0.02mm.",
@@ -261,7 +262,6 @@ _PROTECTED = GenreSpec(
         S(K.PLACEHOLDER_RESIDUE, "<PERSON_001> will be taking this one over.", "<PERSON_001>"),
     ),
     protected=True,
-    tier=(),
 )
 
 ENGLISH: tuple[GenreSpec, ...] = (_CONTRACT, _CLINICAL, _SPEC, _PROTECTED)

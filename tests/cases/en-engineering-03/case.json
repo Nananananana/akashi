@@ -26,20 +26,28 @@
     {
       "kind": "entity_swap",
       "span": [
-        62,
-        67
+        69,
+        79
       ],
-      "text": "1.2kg",
+      "text": "60 degrees",
       "expect_detected": false,
       "is_hallucination": true,
       "declared_miss": true,
-      "expect_verdict": "grounded"
+      "expect_verdict": "grounded",
+      "was": "60 degrees",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          238,
+          248
+        ]
+      }
     },
     {
       "kind": "cross_document_stitch",
       "span": [
-        69,
-        116
+        81,
+        128
       ],
       "text": "Revision 1.2.3 changed the tolerance to 0.02mm.",
       "expect_detected": false,
@@ -50,20 +58,28 @@
     {
       "kind": "entity_swap",
       "span": [
-        122,
-        128
+        134,
+        141
       ],
-      "text": "Fig. 9",
+      "text": "Table 2",
       "expect_detected": false,
       "is_hallucination": true,
       "declared_miss": true,
-      "expect_verdict": "grounded"
+      "expect_verdict": "grounded",
+      "was": "Table 2",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          318,
+          325
+        ]
+      }
     },
     {
       "kind": "derived_value",
       "span": [
-        188,
-        198
+        201,
+        211
       ],
       "text": "80 degrees",
       "expect_detected": true,

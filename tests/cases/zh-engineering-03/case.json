@@ -26,14 +26,22 @@
     {
       "kind": "entity_swap",
       "span": [
-        14,
+        16,
         19
       ],
-      "text": "1.2公斤",
+      "text": "60度",
       "expect_detected": false,
       "is_hallucination": true,
       "declared_miss": true,
-      "expect_verdict": "grounded"
+      "expect_verdict": "grounded",
+      "was": "60度",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          64,
+          67
+        ]
+      }
     },
     {
       "kind": "cross_document_stitch",
@@ -53,11 +61,19 @@
         44,
         47
       ],
-      "text": "第9图",
+      "text": "第2表",
       "expect_detected": false,
       "is_hallucination": true,
       "declared_miss": true,
-      "expect_verdict": "grounded"
+      "expect_verdict": "grounded",
+      "was": "第2表",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          94,
+          97
+        ]
+      }
     },
     {
       "kind": "derived_value",

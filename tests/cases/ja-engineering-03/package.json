@@ -14,7 +14,7 @@
         "start": 30,
         "end": 63,
         "text_hash": "sha256:75ef42fc99e8a792f6a3076970277a4aead8c4b83b96fe3ab2578c30e8d59f10",
-        "document_hash": "sha256:80ffb260d6e256707ddceecc5410766deffbe57139a568644fb652a6cf58a6c2"
+        "document_hash": "sha256:62418d1d57162c0389fef3acac7a0eb4b4d59a632e2915511d9da68996c40701"
       },
       "provenance": {
         "layer": "fact",
@@ -37,7 +37,7 @@
         "start": 65,
         "end": 89,
         "text_hash": "sha256:97bb0728650e5fc008f78bc9765a8cb8bb8a3a10e1af4f587e0287f10bda3d25",
-        "document_hash": "sha256:80ffb260d6e256707ddceecc5410766deffbe57139a568644fb652a6cf58a6c2"
+        "document_hash": "sha256:62418d1d57162c0389fef3acac7a0eb4b4d59a632e2915511d9da68996c40701"
       },
       "provenance": {
         "layer": "fact",
@@ -52,15 +52,15 @@
     {
       "item_id": "itm_03",
       "kind": "document_span",
-      "text": "適用規格は ISO 9001、図面番号は 第4図 を参照。",
+      "text": "適用規格は ISO 9001、図面番号は 第4図、寸法表は 第2表 を参照。",
       "anchor": {
         "document_id": "doc_spec_ja",
         "source_path": "specs/2026-筐体仕様.md",
         "section": "仕様",
         "start": 91,
-        "end": 120,
-        "text_hash": "sha256:30e3747df44d5a0525dd43423f6c7f3953530dda661da72fcfa9aae38516a75a",
-        "document_hash": "sha256:80ffb260d6e256707ddceecc5410766deffbe57139a568644fb652a6cf58a6c2"
+        "end": 129,
+        "text_hash": "sha256:66864a38664676d9943d93f9dcf33eeb31112585d4e1c40b4ca199aa99642073",
+        "document_hash": "sha256:62418d1d57162c0389fef3acac7a0eb4b4d59a632e2915511d9da68996c40701"
       },
       "provenance": {
         "layer": "fact",
@@ -70,7 +70,7 @@
         "rank": 3,
         "score": 0.9
       },
-      "cost": 14
+      "cost": 19
     },
     {
       "item_id": "itm_04",
@@ -112,8 +112,8 @@
       "anchor": {
         "document_id": "doc_spec_ja",
         "source_path": "specs/2026-筐体仕様.md",
-        "start": 122,
-        "end": 148
+        "start": 131,
+        "end": 157
       },
       "rule": "below_threshold",
       "reason": "carries no fact the question asked about",
@@ -134,7 +134,7 @@
   "budget": {
     "unit": "tokens",
     "limit": 2000,
-    "estimate": 57,
+    "estimate": 62,
     "estimator": "heuristic/cjk-aware@1",
     "measured_error": {
       "p50": 0.03,

@@ -14,7 +14,7 @@
         "start": 126,
         "end": 198,
         "text_hash": "sha256:738c29ceb417c6cb88a4cc0105115fe14d5f04923391516e4ee801c9f5b4cc00",
-        "document_hash": "sha256:3fdbbec7f00220f1aa7077d2024d674c1cbc588e1b35f1a9f11336798c2112c1"
+        "document_hash": "sha256:b005e197534a90b4313362ba1e38631a2424c540862af1ea6747dcb37c306cca"
       },
       "provenance": {
         "layer": "fact",
@@ -37,7 +37,7 @@
         "start": 200,
         "end": 249,
         "text_hash": "sha256:332f6742e430efff2996536c00bd60fcab10bfb47123e45775d5b5ebe49e327b",
-        "document_hash": "sha256:3fdbbec7f00220f1aa7077d2024d674c1cbc588e1b35f1a9f11336798c2112c1"
+        "document_hash": "sha256:b005e197534a90b4313362ba1e38631a2424c540862af1ea6747dcb37c306cca"
       },
       "provenance": {
         "layer": "fact",
@@ -52,15 +52,15 @@
     {
       "item_id": "itm_03",
       "kind": "document_span",
-      "text": "The applicable standard is ISO 9001; see Fig. 4 for the layout.",
+      "text": "The applicable standard is ISO 9001; see Fig. 4 for the layout and Table 2 for the dimensions.",
       "anchor": {
         "document_id": "doc_spec_en",
         "source_path": "specs/2026-enclosure.md",
         "section": "Requirements",
         "start": 251,
-        "end": 314,
-        "text_hash": "sha256:29f9cb8443acc6c57aae7eb9658fadf17657955c312341d90d28ba0486092fd2",
-        "document_hash": "sha256:3fdbbec7f00220f1aa7077d2024d674c1cbc588e1b35f1a9f11336798c2112c1"
+        "end": 345,
+        "text_hash": "sha256:23b9fbcdc4ce8f984d27443a0dcb8793c6311cdbd0f28f858a3bd517259c2d33",
+        "document_hash": "sha256:b005e197534a90b4313362ba1e38631a2424c540862af1ea6747dcb37c306cca"
       },
       "provenance": {
         "layer": "fact",
@@ -70,7 +70,7 @@
         "rank": 3,
         "score": 0.9
       },
-      "cost": 31
+      "cost": 47
     },
     {
       "item_id": "itm_04",
@@ -112,8 +112,8 @@
       "anchor": {
         "document_id": "doc_spec_en",
         "source_path": "specs/2026-enclosure.md",
-        "start": 316,
-        "end": 387
+        "start": 347,
+        "end": 418
       },
       "rule": "below_threshold",
       "reason": "carries no fact the question asked about",
@@ -134,7 +134,7 @@
   "budget": {
     "unit": "tokens",
     "limit": 2000,
-    "estimate": 113,
+    "estimate": 129,
     "estimator": "heuristic/cjk-aware@1",
     "measured_error": {
       "p50": 0.03,

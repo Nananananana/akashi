@@ -19,6 +19,7 @@ case look like a failure. A caller who wants the build to go red asks for it.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -27,6 +28,10 @@ from typing import TextIO
 from akashi import __version__
 from akashi.application import audit
 from akashi.errors import AkashiError
+from akashi.evaluation import load_cases, run
+from akashi.evaluation.case import Split
+from akashi.evaluation.rendering import as_dict as evaluation_dict
+from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
 from akashi.infrastructure.rendering import as_json, as_text
@@ -94,6 +99,34 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help=f"exit {FOUND} when anything floats, for a pipeline that gates on it",
     )
+
+    eval_command = commands.add_parser(
+        "eval",
+        help="run the labelled corpus and print what it establishes",
+        description=(
+            "Audits every case in the corpus and counts what happened. All "
+            "arithmetic: no grader, no rubric, no model. Every rate prints its "
+            "counts, because a share on its own is a share a reader supplies a "
+            "generous denominator for."
+        ),
+    )
+    eval_command.add_argument(
+        "--cases", default="tests/cases", metavar="DIR", help="the corpus directory"
+    )
+    eval_command.add_argument(
+        "--tier", default="", metavar="NAME", help="run only the cases in this tier"
+    )
+    eval_command.add_argument(
+        "--held-out",
+        action="store_true",
+        help="read the held-out split as well. It is not read by default, and a "
+        "held-out split that anything touches by default is a training split "
+        "with a different name",
+    )
+    eval_command.add_argument("--json", action="store_true", help="emit the numbers as JSON")
+    eval_command.add_argument(
+        "--language", action="append", metavar="CODE", help="restrict the language packs"
+    )
     return parser
 
 
@@ -129,6 +162,24 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
     return AUDITED
 
 
+def _eval(arguments: argparse.Namespace, out: TextIO) -> int:
+    splits = (Split.TRAIN, Split.HELD_OUT) if arguments.held_out else (Split.TRAIN,)
+    cases = load_cases(arguments.cases, splits=splits, tier=arguments.tier)
+    if not cases:
+        print("akashi: no cases matched", file=sys.stderr)
+        return REFUSED
+
+    chosen = packs(*arguments.language) if arguments.language else DEFAULT
+    breakdown, notes = run(cases, chosen)
+    if arguments.json:
+        body = evaluation_dict(breakdown, notes, cases=len(cases))
+        rendered = json.dumps(body, ensure_ascii=False, indent=2) + "\n"
+    else:
+        rendered = evaluation_text(breakdown, notes, cases=len(cases))
+    print(rendered, end="", file=out)
+    return AUDITED
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI. Returns an exit code rather than calling ``sys.exit``.
 
@@ -139,6 +190,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
 
     try:
+        if arguments.command == "eval":
+            return _eval(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first
             parser.error(f"unknown command {arguments.command!r}")
         return _audit(arguments, sys.stdout)
