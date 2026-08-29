@@ -92,6 +92,30 @@ def test_there_is_no_architecture_document_yet() -> None:
     )
 
 
+def test_a_published_schema_is_packaged_with_the_wheel() -> None:
+    """ADR-0002: the contract ships inside the wheel.
+
+    The ``force-include`` block in ``pyproject.toml`` is commented out while
+    ``schemas/`` is empty, because hatchling refuses to build against a
+    force-include that resolves to nothing. This is what stops that comment
+    from outliving its reason.
+    """
+    if not list((ROOT / "schemas").glob("*.json")):
+        pytest.skip("no schema published yet; v0.2")
+
+    pyproject = ROOT / "pyproject.toml"
+    live = [
+        line
+        for line in pyproject.read_text(encoding="utf-8").splitlines()
+        if not line.lstrip().startswith("#")
+    ]
+    assert "[tool.hatch.build.targets.wheel.force-include]" in live, (
+        "schemas/ now holds a published contract, so the force-include block in "
+        "pyproject.toml must be uncommented. A consumer validating a report should not "
+        "have to fetch a schema from the internet."
+    )
+
+
 @pytest.mark.parametrize("word", FORBIDDEN_IN_OUTPUT)
 def test_the_forbidden_vocabulary_is_absent_from_the_readme(word: str) -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
