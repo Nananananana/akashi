@@ -144,9 +144,16 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
   `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world),
-  `infrastructure/packages` (the ContextPackage reader), and the
-  `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the ten
-  particular kinds have rules; `proper_noun` has none and says so.
+  `infrastructure/packages` (the ContextPackage reader), `domain/verdict`,
+  `domain/coverage`, and the `und`/`en`/`ja`/`zh` packs in
+  `infrastructure/languages/`. Nine of the ten particular kinds have rules;
+  `proper_noun` has none and says so.
+- **Six verdicts, and three of them mean "nothing wrong" differently.**
+  `grounded` / `floating` / `contradicted` / `unbearing` (looked, nothing to
+  check) / `unchecked` (did not look) / `unverifiable` (could not look).
+  `contradicted` is defined and produced by nothing until v0.4, and a test
+  asserts it cannot ship by accident. `grounded_share` is `None` rather than
+  `1.0` when nothing was checkable — a number there would be read as a pass.
 - **Fixture offsets are computed, never typed.** Three of the four hand-written
   fixture anchors were wrong on the first run, which is `mamori`'s dataset rule
   earning its keep. `tests/test_contract_conformance.py` validates every fixture
@@ -158,8 +165,7 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   names an `omitted_source` rule; ADR-0012 withdrew both, because an omission
   carries an anchor and a reason and not the text. The proposal is a record of
   what was proposed, not of what is true.
-- **Next:** verdicts and coverage, the protected-response refusal, `akashi
-  audit`.
+- **Next:** the protected-response refusal, `akashi audit`.
   `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
   corpus to price its false positives against.
   `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
