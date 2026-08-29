@@ -1,0 +1,107 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-engineering-02",
+  "language": "en",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        27,
+        35
+      ],
+      "text": "ISO 9001",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "ISO 9001",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          278,
+          286
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        68,
+        78
+      ],
+      "text": "2026-08-13",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2026-08-30",
+      "source": {
+        "document_id": "doc_rev_en",
+        "span": [
+          93,
+          103
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        109,
+        115
+      ],
+      "text": "0.02mm",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "0.02mm",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          155,
+          161
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        118,
+        156
+      ],
+      "text": "No dimensional tolerance is specified.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        166,
+        171
+      ],
+      "text": "1.2.3",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "1.2.3",
+      "source": {
+        "document_id": "doc_rev_en",
+        "span": [
+          76,
+          81
+        ]
+      }
+    }
+  ]
+}

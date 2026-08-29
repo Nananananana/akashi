@@ -1,0 +1,91 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-contract-01",
+  "language": "zh",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        7,
+        14
+      ],
+      "text": "1,200亿元",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "1,200万元",
+      "source": {
+        "document_id": "doc_msa_zh",
+        "span": [
+          73,
+          80
+        ]
+      }
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        15,
+        29
+      ],
+      "text": "第12条规定合同期限为3年。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        39,
+        42
+      ],
+      "text": "90天",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        47,
+        51
+      ],
+      "text": "第13条",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "第30条",
+      "source": {
+        "document_id": "doc_msa_zh",
+        "span": [
+          31,
+          35
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        63,
+        75
+      ],
+      "text": "本协议未设赔偿责任上限。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    }
+  ]
+}

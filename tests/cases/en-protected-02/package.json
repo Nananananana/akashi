@@ -1,0 +1,66 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:225056ec5da8a16a93b9fbe264d1ba8a6c97a70f0bb7a3a7efd495ebb3a9ea08",
+  "query": "who is assigned and by when?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "Assigned to <PERSON_001>, due 2026-08-30.",
+      "anchor": {
+        "document_id": "doc_case_en",
+        "source_path": "cases/2026-08-assignments.md",
+        "section": "Assignments",
+        "start": 38,
+        "end": 79,
+        "text_hash": "sha256:7352b1b51c0ecac0f76d266056fda1ce1d2554d6f2674342ac361ad9e4da60a0",
+        "document_hash": "sha256:ef1d0dc506e531c61b8d1ad81fcd6f9ea65b45c74a58ab09569226a8df4ad70b"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 20
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_case_en",
+        "source_path": "cases/2026-08-assignments.md",
+        "start": 0,
+        "end": 36
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 20,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": {
+      "by": "mamori@0.17.0",
+      "scope": "sess_en-protected-02",
+      "reversible": true
+    }
+  }
+}

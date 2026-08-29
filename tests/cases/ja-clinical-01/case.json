@@ -1,0 +1,91 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-clinical-01",
+  "language": "ja",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "negation_flip",
+      "span": [
+        0,
+        21
+      ],
+      "text": "内服は5mgを1日2回とはされていません。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        21,
+        38
+      ],
+      "text": "経過観察の予定は組まれていません。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        38,
+        61
+      ],
+      "text": "eGFR は68で、体重は62.4kgでした。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        66,
+        68
+      ],
+      "text": "5g",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_ja",
+        "span": [
+          39,
+          42
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        84,
+        87
+      ],
+      "text": "5mg",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_ja",
+        "span": [
+          39,
+          42
+        ]
+      }
+    }
+  ]
+}

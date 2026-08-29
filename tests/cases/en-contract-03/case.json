@@ -1,0 +1,107 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-contract-03",
+  "language": "en",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        6,
+        18
+      ],
+      "text": "Section 4(b)",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "Section 4(b)",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          141,
+          153
+        ]
+      }
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        101,
+        113
+      ],
+      "text": "Section 4(b)",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "Section 4(b)",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          141,
+          153
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        138,
+        152
+      ],
+      "text": "54,000 dollars",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "45,000 dollars",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          247,
+          261
+        ]
+      }
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        193,
+        200
+      ],
+      "text": "60 days",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "60 days",
+      "source": {
+        "document_id": "doc_amend_en",
+        "span": [
+          111,
+          118
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        213,
+        272
+      ],
+      "text": "Section 4(b) does not permit termination on written notice.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    }
+  ]
+}

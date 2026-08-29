@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-engineering-01",
+  "language": "zh",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "digit_drift",
+      "span": [
+        5,
+        10
+      ],
+      "text": "2.6公斤",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2.4公斤",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          44,
+          49
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        11,
+        20
+      ],
+      "text": "ISO 14001",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        30,
+        35
+      ],
+      "text": "2.4公斤",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "2.4公斤",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          44,
+          49
+        ]
+      }
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        41,
+        46
+      ],
+      "text": "0.02米",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "0.02毫米",
+      "source": {
+        "document_id": "doc_spec_zh",
+        "span": [
+          32,
+          38
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        47,
+        60
+      ],
+      "text": "质量并未限定为2.4公斤。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    }
+  ]
+}

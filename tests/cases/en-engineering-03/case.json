@@ -1,0 +1,75 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-engineering-03",
+  "language": "en",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "invented_particular",
+      "span": [
+        23,
+        38
+      ],
+      "text": "350 kilopascals",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        62,
+        67
+      ],
+      "text": "1.2kg",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        69,
+        116
+      ],
+      "text": "Revision 1.2.3 changed the tolerance to 0.02mm.",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        122,
+        128
+      ],
+      "text": "Fig. 9",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        188,
+        198
+      ],
+      "text": "80 degrees",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    }
+  ]
+}

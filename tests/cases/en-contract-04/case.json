@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-contract-04",
+  "language": "en",
+  "genre": "contract",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        30,
+        39
+      ],
+      "text": "30 months",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "30 days",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          185,
+          192
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        79,
+        86
+      ],
+      "text": "Art. 41",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        130,
+        137
+      ],
+      "text": "45 days",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "45 days",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          302,
+          309
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        166,
+        180
+      ],
+      "text": "12,500 dollars",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    }
+  ]
+}

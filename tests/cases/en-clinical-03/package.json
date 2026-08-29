@@ -1,0 +1,153 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:ce84d48f4e98917d5c8c9ea581a594e5b8a3b802c7e25a25b62427b58fa61264",
+  "query": "what is the dose and the follow-up interval?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "The dose is 5mg taken twice daily for 14 days.",
+      "anchor": {
+        "document_id": "doc_chart_en",
+        "source_path": "clinical/2026-08-notes.md",
+        "section": "Progress",
+        "start": 105,
+        "end": 151,
+        "text_hash": "sha256:d606d22fb879c88c27a11962fabf2e0a6da91883f3a4625ac0a7bd1ee846d307",
+        "document_hash": "sha256:e5d809b431d0c62526a194757936f68f7ea7d165d38a68df1a14eaaf4e026df6"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 23
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "Weight was 62.4kg and blood pressure 128/82 at this visit.",
+      "anchor": {
+        "document_id": "doc_chart_en",
+        "source_path": "clinical/2026-08-notes.md",
+        "section": "Progress",
+        "start": 153,
+        "end": 211,
+        "text_hash": "sha256:e7467c2e1b084d393834dc64de02c3a0255961d1261a50a491427c6fc7f097d5",
+        "document_hash": "sha256:e5d809b431d0c62526a194757936f68f7ea7d165d38a68df1a14eaaf4e026df6"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 29
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "Review in 4 weeks, with bloods drawn at 2 weeks.",
+      "anchor": {
+        "document_id": "doc_chart_en",
+        "source_path": "clinical/2026-08-notes.md",
+        "section": "Progress",
+        "start": 213,
+        "end": 261,
+        "text_hash": "sha256:4ec90bee4d512f77d4824bad2860075c028342827ef5bf036fc89131f98a89fe",
+        "document_hash": "sha256:e5d809b431d0c62526a194757936f68f7ea7d165d38a68df1a14eaaf4e026df6"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 24
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "HbA1c was 7.2% and eGFR was 68.",
+      "anchor": {
+        "document_id": "doc_lab_en",
+        "source_path": "clinical/2026-08-labs.md",
+        "section": "Results",
+        "start": 29,
+        "end": 60,
+        "text_hash": "sha256:9a5a2c05fd85f1ed2d75d88f3eab3e0efe7b7dba092e98ad2147da4e164a7086",
+        "document_hash": "sha256:08a5d1146cee4acb86cd17e5375049c0f5415cdbe796f7c47329c8d3fc309d51"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 15
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_chart_en",
+        "source_path": "clinical/2026-08-notes.md",
+        "start": 0,
+        "end": 103
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_chart_en",
+        "source_path": "clinical/2026-08-notes.md",
+        "start": 263,
+        "end": 317
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_lab_en",
+        "source_path": "clinical/2026-08-labs.md",
+        "start": 0,
+        "end": 27
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 91,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

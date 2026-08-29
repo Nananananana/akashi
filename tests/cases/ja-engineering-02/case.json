@@ -1,0 +1,107 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-engineering-02",
+  "language": "ja",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        5,
+        13
+      ],
+      "text": "ISO 9001",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "ISO 9001",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          97,
+          105
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        21,
+        31
+      ],
+      "text": "2026年8月13日",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2026年8月30日",
+      "source": {
+        "document_id": "doc_rev_ja",
+        "span": [
+          39,
+          49
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        42,
+        49
+      ],
+      "text": "±0.02mm",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "±0.02mm",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          39,
+          46
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        54,
+        70
+      ],
+      "text": "公差についての規定はありません。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        73,
+        78
+      ],
+      "text": "1.2.3",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "1.2.3",
+      "source": {
+        "document_id": "doc_rev_ja",
+        "span": [
+          27,
+          32
+        ]
+      }
+    }
+  ]
+}

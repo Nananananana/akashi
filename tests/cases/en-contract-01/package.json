@@ -1,0 +1,176 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:c8a64467393834acee08e0c8996c5082b962861e69103d5facdb6a2558eda14c",
+  "query": "what is the notice period and the cap on liability?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "Under Section 4(b), either party may terminate on 30 days written notice.",
+      "anchor": {
+        "document_id": "doc_msa_en",
+        "source_path": "contracts/2025-msa.md",
+        "section": "Terms",
+        "start": 135,
+        "end": 208,
+        "text_hash": "sha256:804f184c17841b8e4f76b2f47703b87e5c3cea3e6bc2c362857108c1df64037d",
+        "document_hash": "sha256:6f2f77f20e822a7096783b5d379ce151c1156e3260141480e20d41c564f08b07"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 36
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "Liability under Art. 12 is capped at 45,000 dollars in aggregate.",
+      "anchor": {
+        "document_id": "doc_msa_en",
+        "source_path": "contracts/2025-msa.md",
+        "section": "Terms",
+        "start": 210,
+        "end": 275,
+        "text_hash": "sha256:412a516840457226ae88996bc159ccebec2508ebf2698ab496dbed6b22c45d1e",
+        "document_hash": "sha256:6f2f77f20e822a7096783b5d379ce151c1156e3260141480e20d41c564f08b07"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 32
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "Invoices fall due within 45 days of receipt, and interest accrues at 3.5% per annum.",
+      "anchor": {
+        "document_id": "doc_msa_en",
+        "source_path": "contracts/2025-msa.md",
+        "section": "Terms",
+        "start": 277,
+        "end": 361,
+        "text_hash": "sha256:50804f563bafd000a03a43de4d86e4baccb42a71c4212171633623c3d98ea3db",
+        "document_hash": "sha256:6f2f77f20e822a7096783b5d379ce151c1156e3260141480e20d41c564f08b07"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 42
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "The term is 3 years, renewing automatically unless notice is given 60 days in advance.",
+      "anchor": {
+        "document_id": "doc_amend_en",
+        "source_path": "contracts/2026-amendment.md",
+        "section": "Amendment",
+        "start": 44,
+        "end": 130,
+        "text_hash": "sha256:921e3cce9b21b27c7aa034ae09cb982eeb4cbc21ec30df8ad1f33bfd00c22af2",
+        "document_hash": "sha256:da3baef223f6bc2f31a4186aab60c03087a77ea08301ac2c6e5aba5266f11047"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 43
+    },
+    {
+      "item_id": "itm_05",
+      "kind": "document_span",
+      "text": "The amendment takes effect on April 1, 2026.",
+      "anchor": {
+        "document_id": "doc_amend_en",
+        "source_path": "contracts/2026-amendment.md",
+        "section": "Amendment",
+        "start": 132,
+        "end": 176,
+        "text_hash": "sha256:74aab363c271676db7b5625cfff6e0979db75d15dc75f9c122701484c3ac0fc8",
+        "document_hash": "sha256:da3baef223f6bc2f31a4186aab60c03087a77ea08301ac2c6e5aba5266f11047"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 5,
+        "score": 0.9
+      },
+      "cost": 22
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_msa_en",
+        "source_path": "contracts/2025-msa.md",
+        "start": 0,
+        "end": 133
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_msa_en",
+        "source_path": "contracts/2025-msa.md",
+        "start": 363,
+        "end": 422
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_amend_en",
+        "source_path": "contracts/2026-amendment.md",
+        "start": 0,
+        "end": 42
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 175,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

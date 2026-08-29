@@ -1,0 +1,107 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-clinical-02",
+  "language": "zh",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        0,
+        2
+      ],
+      "text": "4周",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "4周",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          67,
+          69
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        11,
+        17
+      ],
+      "text": "62.8公斤",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "62.4公斤",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          49,
+          55
+        ]
+      }
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        25,
+        27
+      ],
+      "text": "4周",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "4周",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          67,
+          69
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        35,
+        41
+      ],
+      "text": "62.4公斤",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "62.4公斤",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          49,
+          55
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        45,
+        50
+      ],
+      "text": "250mg",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    }
+  ]
+}

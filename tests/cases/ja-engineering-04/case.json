@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-engineering-04",
+  "language": "ja",
+  "genre": "engineering",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        0,
+        24
+      ],
+      "text": "寸法についてはかなり厳しい要求が置かれています。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        24,
+        51
+      ],
+      "text": "重量の上限が設けられている点は設計上の制約になります。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        59,
+        65
+      ],
+      "text": "±0.2mm",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "±0.02mm",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          39,
+          46
+        ]
+      }
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        73,
+        77
+      ],
+      "text": "2.4g",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2.4kg",
+      "source": {
+        "document_id": "doc_spec_ja",
+        "span": [
+          51,
+          56
+        ]
+      }
+    }
+  ]
+}

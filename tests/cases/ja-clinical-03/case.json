@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-clinical-03",
+  "language": "ja",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        5,
+        8
+      ],
+      "text": "4日間",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "4週間",
+      "source": {
+        "document_id": "doc_chart_ja",
+        "span": [
+          98,
+          101
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        22,
+        26
+      ],
+      "text": "7.2%",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "7.2%",
+      "source": {
+        "document_id": "doc_lab_ja",
+        "span": [
+          22,
+          26
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        37,
+        41
+      ],
+      "text": "7.9%",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "7.2%",
+      "source": {
+        "document_id": "doc_lab_ja",
+        "span": [
+          22,
+          26
+        ]
+      }
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        54,
+        57
+      ],
+      "text": "28回",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        66,
+        88
+      ],
+      "text": "服薬は当面のあいだ続ける方針とされています。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    }
+  ]
+}

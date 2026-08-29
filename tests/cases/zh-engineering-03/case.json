@@ -1,0 +1,75 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-engineering-03",
+  "language": "zh",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "invented_particular",
+      "span": [
+        3,
+        8
+      ],
+      "text": "350千帕",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        14,
+        19
+      ],
+      "text": "1.2公斤",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        20,
+        39
+      ],
+      "text": "版本1.2.3将公差改为0.02毫米。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        44,
+        47
+      ],
+      "text": "第9图",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        55,
+        58
+      ],
+      "text": "80度",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    }
+  ]
+}

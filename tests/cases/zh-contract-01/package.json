@@ -1,0 +1,176 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:421c7cd60c4da7eb2b514db248288119c54d28dd5ce405d8dbab3632f74bb14d",
+  "query": "通知期限和赔偿上限是多少?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "根据第30条，任何一方均可提前30天书面通知解除本协议。",
+      "anchor": {
+        "document_id": "doc_msa_zh",
+        "source_path": "contracts/2025-服务协议.md",
+        "section": "条款",
+        "start": 29,
+        "end": 57,
+        "text_hash": "sha256:3b8eb1b3d1613be3969e8b07574a084c7fca0ce94211bf78f41845ace9c9bb7a",
+        "document_hash": "sha256:24fcf16c6086ad11b32f83592082351455d31325d5d06764036dc833206ab75d"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 14
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "第12条规定的赔偿责任上限为1,200万元。",
+      "anchor": {
+        "document_id": "doc_msa_zh",
+        "source_path": "contracts/2025-服务协议.md",
+        "section": "条款",
+        "start": 59,
+        "end": 81,
+        "text_hash": "sha256:9a1a90b6137e7b84077a9391484d2a1a92185262732ef500b7d4a3e2cd6a34d0",
+        "document_hash": "sha256:24fcf16c6086ad11b32f83592082351455d31325d5d06764036dc833206ab75d"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 11
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "付款期限为收到发票后45天内，逾期利率为年3.5%。",
+      "anchor": {
+        "document_id": "doc_msa_zh",
+        "source_path": "contracts/2025-服务协议.md",
+        "section": "条款",
+        "start": 83,
+        "end": 109,
+        "text_hash": "sha256:2897eb0d8784e41fb214f6bd985e289d0d10c856e4902f7506ffe30cefe929eb",
+        "document_hash": "sha256:24fcf16c6086ad11b32f83592082351455d31325d5d06764036dc833206ab75d"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 13
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "合同期限为3年，除非提前60天提出异议，否则自动续约。",
+      "anchor": {
+        "document_id": "doc_amend_zh",
+        "source_path": "contracts/2026-补充协议.md",
+        "section": "补充",
+        "start": 17,
+        "end": 44,
+        "text_hash": "sha256:f04520bccd833ff5b51b0e3c9c70dbdaccd4428845a0cd713537531027055dcc",
+        "document_hash": "sha256:6de1a5322dd3a21fa8bced94074ffc5241106b6ffa6f7438521e4bc216d4a8ee"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 13
+    },
+    {
+      "item_id": "itm_05",
+      "kind": "document_span",
+      "text": "变更自2026年4月1日起生效。",
+      "anchor": {
+        "document_id": "doc_amend_zh",
+        "source_path": "contracts/2026-补充协议.md",
+        "section": "补充",
+        "start": 46,
+        "end": 62,
+        "text_hash": "sha256:ad75c120da042f0292bea5765c9f2812540286842c737d8dd734660ce4c55dcb",
+        "document_hash": "sha256:6de1a5322dd3a21fa8bced94074ffc5241106b6ffa6f7438521e4bc216d4a8ee"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 5,
+        "score": 0.9
+      },
+      "cost": 8
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_msa_zh",
+        "source_path": "contracts/2025-服务协议.md",
+        "start": 0,
+        "end": 27
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_msa_zh",
+        "source_path": "contracts/2025-服务协议.md",
+        "start": 111,
+        "end": 130
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_amend_zh",
+        "source_path": "contracts/2026-补充协议.md",
+        "start": 0,
+        "end": 15
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 59,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "contract": "tsumugi.context-package/1",
+  "package_id": "sha256:e0b97e7c38464f2582a8c9f3406690c997ef02272d9d2abfdd20f979190bbf5a",
+  "query": "解約通知の期間と賠償の上限は?",
+  "items": [
+    {
+      "item_id": "itm_01",
+      "kind": "document_span",
+      "text": "第30条により、いずれの当事者も30日前の書面通知をもって本契約を解約できる。",
+      "anchor": {
+        "document_id": "doc_msa_ja",
+        "source_path": "contracts/2025-業務委託契約.md",
+        "section": "契約条項",
+        "start": 40,
+        "end": 79,
+        "text_hash": "sha256:2fb689734bedf6b11a9ad80b39c73d89ebfb2ba18d0858d65290ab671102c668",
+        "document_hash": "sha256:442b6273352cb663537deeb88ea65101ee21d7fbaa6fe290585f4d5ee50d24d3"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 1,
+        "score": 0.9
+      },
+      "cost": 19
+    },
+    {
+      "item_id": "itm_02",
+      "kind": "document_span",
+      "text": "第12条に定める賠償責任の上限額は1,200万円とする。",
+      "anchor": {
+        "document_id": "doc_msa_ja",
+        "source_path": "contracts/2025-業務委託契約.md",
+        "section": "契約条項",
+        "start": 81,
+        "end": 109,
+        "text_hash": "sha256:09d466bb5996695125b09c0271fe24a44f27eec2890cdd72bff330dc57f06024",
+        "document_hash": "sha256:442b6273352cb663537deeb88ea65101ee21d7fbaa6fe290585f4d5ee50d24d3"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 2,
+        "score": 0.9
+      },
+      "cost": 14
+    },
+    {
+      "item_id": "itm_03",
+      "kind": "document_span",
+      "text": "支払期日は請求書受領後 45日 以内、遅延利率は年 3.5% とする。",
+      "anchor": {
+        "document_id": "doc_msa_ja",
+        "source_path": "contracts/2025-業務委託契約.md",
+        "section": "契約条項",
+        "start": 111,
+        "end": 146,
+        "text_hash": "sha256:0989b1993272a74a61ddd14d1fc7878d43210aab73df824c85a98eb81cd0b095",
+        "document_hash": "sha256:442b6273352cb663537deeb88ea65101ee21d7fbaa6fe290585f4d5ee50d24d3"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 3,
+        "score": 0.9
+      },
+      "cost": 17
+    },
+    {
+      "item_id": "itm_04",
+      "kind": "document_span",
+      "text": "契約期間を 3年 とし、60日 前までに申し出がない限り自動更新する。",
+      "anchor": {
+        "document_id": "doc_amend_ja",
+        "source_path": "contracts/2026-覚書.md",
+        "section": "覚書",
+        "start": 24,
+        "end": 59,
+        "text_hash": "sha256:1f62326d491fea0515588181178fed1a5648f35ed513dd48622178531e7f0251",
+        "document_hash": "sha256:bc3412c38f9a730660eb7c4b37a401040aefdc784e9da5b9ee8f35493f9d7e58"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 4,
+        "score": 0.9
+      },
+      "cost": 17
+    },
+    {
+      "item_id": "itm_05",
+      "kind": "document_span",
+      "text": "変更の効力発生日は 2026年4月1日 とする。",
+      "anchor": {
+        "document_id": "doc_amend_ja",
+        "source_path": "contracts/2026-覚書.md",
+        "section": "覚書",
+        "start": 61,
+        "end": 85,
+        "text_hash": "sha256:8068b839132e0e98087b3a13ce057a67fd3110f3f31bb866a32b416cdd765566",
+        "document_hash": "sha256:bc3412c38f9a730660eb7c4b37a401040aefdc784e9da5b9ee8f35493f9d7e58"
+      },
+      "provenance": {
+        "layer": "fact",
+        "producer": "akashi.cases/1"
+      },
+      "selection": {
+        "rank": 5,
+        "score": 0.9
+      },
+      "cost": 12
+    }
+  ],
+  "omissions": [
+    {
+      "anchor": {
+        "document_id": "doc_msa_ja",
+        "source_path": "contracts/2025-業務委託契約.md",
+        "start": 0,
+        "end": 38
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_msa_ja",
+        "source_path": "contracts/2025-業務委託契約.md",
+        "start": 148,
+        "end": 181
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    },
+    {
+      "anchor": {
+        "document_id": "doc_amend_ja",
+        "source_path": "contracts/2026-覚書.md",
+        "start": 0,
+        "end": 22
+      },
+      "rule": "below_threshold",
+      "reason": "carries no fact the question asked about",
+      "score": 0.11
+    }
+  ],
+  "budget": {
+    "unit": "tokens",
+    "limit": 2000,
+    "estimate": 79,
+    "estimator": "heuristic/cjk-aware@1",
+    "measured_error": {
+      "p50": 0.03,
+      "p95": 0.11,
+      "against": "cl100k_base",
+      "dataset": "ja-mixed-500"
+    }
+  },
+  "provenance": {
+    "tsumugi_version": "0.2.0",
+    "providers": [
+      "filesystem"
+    ],
+    "protection": null
+  }
+}

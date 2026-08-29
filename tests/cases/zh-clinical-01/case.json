@@ -1,0 +1,91 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-clinical-01",
+  "language": "zh",
+  "genre": "clinical",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "negation_flip",
+      "span": [
+        0,
+        12
+      ],
+      "text": "并非口服5mg每日2次。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        12,
+        18
+      ],
+      "text": "未安排复诊。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        18,
+        36
+      ],
+      "text": "eGFR为68，体重为62.4公斤。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        40,
+        42
+      ],
+      "text": "5克",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          30,
+          33
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        50,
+        53
+      ],
+      "text": "5mg",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_zh",
+        "span": [
+          30,
+          33
+        ]
+      }
+    }
+  ]
+}

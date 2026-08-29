@@ -1,0 +1,107 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-contract-03",
+  "language": "zh",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        2,
+        6
+      ],
+      "text": "第30条",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "第30条",
+      "source": {
+        "document_id": "doc_msa_zh",
+        "span": [
+          31,
+          35
+        ]
+      }
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        34,
+        38
+      ],
+      "text": "第30条",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "第30条",
+      "source": {
+        "document_id": "doc_msa_zh",
+        "span": [
+          31,
+          35
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        46,
+        53
+      ],
+      "text": "1,300万元",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "1,200万元",
+      "source": {
+        "document_id": "doc_msa_zh",
+        "span": [
+          73,
+          80
+        ]
+      }
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        66,
+        69
+      ],
+      "text": "60天",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "60天",
+      "source": {
+        "document_id": "doc_amend_zh",
+        "span": [
+          29,
+          32
+        ]
+      }
+    },
+    {
+      "kind": "negation_flip",
+      "span": [
+        71,
+        88
+      ],
+      "text": "第30条不允许以书面通知解除协议。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    }
+  ]
+}

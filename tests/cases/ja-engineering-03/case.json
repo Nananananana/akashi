@@ -1,0 +1,75 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-engineering-03",
+  "language": "ja",
+  "genre": "engineering",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "invented_particular",
+      "span": [
+        4,
+        10
+      ],
+      "text": "350kPa",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        27,
+        32
+      ],
+      "text": "1.2kg",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "cross_document_stitch",
+      "span": [
+        35,
+        66
+      ],
+      "text": "版数1.2.3において、公差は±0.02mmに変更されました。",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        73,
+        76
+      ],
+      "text": "第9図",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded"
+    },
+    {
+      "kind": "derived_value",
+      "span": [
+        93,
+        96
+      ],
+      "text": "80℃",
+      "expect_detected": true,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    }
+  ]
+}

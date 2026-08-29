@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-clinical-04",
+  "language": "en",
+  "genre": "clinical",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        0,
+        54
+      ],
+      "text": "The results will need watching over the coming period.",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        83,
+        93
+      ],
+      "text": "12.6 units",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "entity_swap",
+      "span": [
+        118,
+        125
+      ],
+      "text": "2 weeks",
+      "expect_detected": false,
+      "is_hallucination": true,
+      "declared_miss": true,
+      "expect_verdict": "grounded",
+      "was": "2 weeks",
+      "source": {
+        "document_id": "doc_chart_en",
+        "span": [
+          253,
+          260
+        ]
+      }
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        140,
+        144
+      ],
+      "text": "50mg",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "5mg",
+      "source": {
+        "document_id": "doc_chart_en",
+        "span": [
+          117,
+          120
+        ]
+      }
+    }
+  ]
+}

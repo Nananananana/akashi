@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-contract-02",
+  "language": "en",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        12,
+        19
+      ],
+      "text": "3 years",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "3 years",
+      "source": {
+        "document_id": "doc_amend_en",
+        "span": [
+          56,
+          63
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        69,
+        83
+      ],
+      "text": "45,000 dollars",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "45,000 dollars",
+      "source": {
+        "document_id": "doc_msa_en",
+        "span": [
+          247,
+          261
+        ]
+      }
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        98,
+        156
+      ],
+      "text": "In short, either side can bring the arrangement to an end.",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        158,
+        223
+      ],
+      "text": "It is worth noting that the exposure is bounded rather than open.",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        254,
+        268
+      ],
+      "text": "April 11, 2026",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "April 1, 2026",
+      "source": {
+        "document_id": "doc_amend_en",
+        "span": [
+          162,
+          175
+        ]
+      }
+    }
+  ]
+}

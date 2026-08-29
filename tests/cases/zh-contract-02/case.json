@@ -1,0 +1,99 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "zh-contract-02",
+  "language": "zh",
+  "genre": "contract",
+  "split": "train",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "grounded",
+      "span": [
+        5,
+        7
+      ],
+      "text": "3年",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "3年",
+      "source": {
+        "document_id": "doc_amend_zh",
+        "span": [
+          22,
+          24
+        ]
+      }
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        22,
+        29
+      ],
+      "text": "1,200万元",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "1,200万元",
+      "source": {
+        "document_id": "doc_msa_zh",
+        "span": [
+          73,
+          80
+        ]
+      }
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        30,
+        48
+      ],
+      "text": "简言之，任何一方都可以终止这项安排。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        50,
+        68
+      ],
+      "text": "值得注意的是，赔偿的范围是有边界的。",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        71,
+        81
+      ],
+      "text": "2026年4月10日",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2026年4月1日",
+      "source": {
+        "document_id": "doc_amend_zh",
+        "span": [
+          49,
+          58
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "ja-contract-04",
+  "language": "ja",
+  "genre": "contract",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "unit_swap",
+      "span": [
+        8,
+        12
+      ],
+      "text": "30ヶ月",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "30日",
+      "source": {
+        "document_id": "doc_msa_ja",
+        "span": [
+          56,
+          59
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        28,
+        32
+      ],
+      "text": "第41条",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    },
+    {
+      "kind": "grounded",
+      "span": [
+        52,
+        55
+      ],
+      "text": "45日",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "grounded",
+      "was": "45日",
+      "source": {
+        "document_id": "doc_msa_ja",
+        "span": [
+          123,
+          126
+        ]
+      }
+    },
+    {
+      "kind": "invented_particular",
+      "span": [
+        67,
+        72
+      ],
+      "text": "250万円",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "floating"
+    }
+  ]
+}

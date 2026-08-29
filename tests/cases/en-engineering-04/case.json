@@ -1,0 +1,79 @@
+{
+  "format": "akashi.case/1",
+  "case_id": "en-engineering-04",
+  "language": "en",
+  "genre": "engineering",
+  "split": "held_out",
+  "generator": "akashi.cases/1",
+  "seed": 20260830,
+  "tier": [
+    "ci"
+  ],
+  "expect_refusal": false,
+  "plants": [
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        0,
+        58
+      ],
+      "text": "The dimensional requirements are demanding by any measure.",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "faithful_paraphrase",
+      "span": [
+        59,
+        114
+      ],
+      "text": "A ceiling on weight is a real constraint on the design.",
+      "expect_detected": false,
+      "is_hallucination": false,
+      "declared_miss": false,
+      "expect_verdict": "unbearing"
+    },
+    {
+      "kind": "digit_drift",
+      "span": [
+        144,
+        149
+      ],
+      "text": "0.2mm",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "0.02mm",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          155,
+          161
+        ]
+      }
+    },
+    {
+      "kind": "unit_swap",
+      "span": [
+        174,
+        183
+      ],
+      "text": "2.4 grams",
+      "expect_detected": true,
+      "is_hallucination": true,
+      "declared_miss": false,
+      "expect_verdict": "contradicted",
+      "was": "2.4kg",
+      "source": {
+        "document_id": "doc_spec_en",
+        "span": [
+          192,
+          197
+        ]
+      }
+    }
+  ]
+}
