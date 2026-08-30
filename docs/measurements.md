@@ -249,6 +249,89 @@ right.
 
 ---
 
+## The unit check that did not ship
+
+Issue #42 proposed a check needing no unit table. A unit the extractor does not
+know makes a swap **invisible**: `2.4 furlongs` extracts as the bare number
+`2.4`, that number grounds against the `2.4` inside a source's `2.4kg`, and
+nothing floats. The proposed rule: *if a number grounds, and the token after it
+in the answer differs from the token after the matched number in the source,
+something was swapped.* The issue required it be priced before its scope was
+fixed, and that if precision were poor it would not ship and the measurement
+would be published anyway. This is that measurement.
+
+### The material is 7 numbers, and that is the first finding
+
+Across all 42 cases in both splits there are **7 grounded bare numbers**. In the
+nine hand-marked answers there are 9, and every one is followed by a space or a
+full stop. That is not an accident of authorship: a number extracts as *bare*
+exactly when the extractor saw no unit after it, so the tail of a bare number is
+something akashi has already decided is not a unit.
+
+The case the check exists for — a unit akashi does not know — **does not occur
+in either corpus**, because the person who wrote the unit lists also wrote the
+sentences.
+
+### What the naive rule does
+
+Every firing below is a false positive; there are no true positives to find.
+
+| how "the token after" is defined | fires | en | ja | zh |
+|---|---:|---:|---:|---:|
+| up to whitespace or punctuation | 5 of 7 | 0/1 | 3/3 | 2/3 |
+| exactly one character | 7 of 7 | 1/1 | 3/3 | 3/3 |
+| Latin letters only | 0 of 7 | 0/1 | 0/3 | 0/3 |
+
+The reason is visible in the data. **Japanese and Chinese have no whitespace**,
+so what follows a bare number is a particle or a verb phrase, not a unit:
+`68` → `で`, `1.2.3` → `において`, `1.2.3` → `将公差改为`. The only definition
+that stays quiet is "Latin letters only" — which is a unit table wearing a
+different hat, and is blind to `2.4 千克` and `2.4 ファーロング`, the cases in the
+two languages akashi exists to handle alongside English.
+
+### A narrowing that works, and the thing it cannot see
+
+Use the unit table on the **source** side only, where it need not be complete:
+fire when the source demonstrably has a *quantity* at that position and the
+answer's following word differs. This catches both motivating cases and fires on
+**0 of 7** in the corpus:
+
+```
+The mass is 2.4 furlongs.       FLAGS  answer 'furlongs'  source 'kg'
+重量は 2.4 ファーロング です。      FLAGS  answer 'ファーロング'  source 'kg'
+```
+
+It cannot distinguish a **swapped** unit from a **re-worded** one. `2.4
+kilogrammes` and `2.4 furlongs` are structurally identical — a bare number
+followed by a word the extractor does not know, where the source has a known
+unit — and separating them needs a unit table with synonyms, which is the thing
+the check exists to avoid. One is a faithful answer and the other is a
+hallucination, and akashi would flag both identically.
+
+### Why it does not ship
+
+That ambiguity cannot be measured here, and **expanding this corpus would not
+fix it — it would only move it.** New sentences would be written by the same
+author as the unit lists, and the rate would measure that author's imagination.
+
+This is the same self-reference that
+[ADR-0015](adr/0015-the-digits-are-the-evidence.md) names, and it is not
+confined to akashi: `tsumugi`'s `proposals/0003` calls its own section *"Ten
+genres was not a corpus, it was a mirror"*, and `iriguchi` and `mamori` have the
+same structure. Four libraries, one blind spot, no external ruler.
+
+The exit is the v0.6 public corpus, and the honest position until then is that
+the check has an **unmeasured** precision rather than a poor one. Shipping a
+flag whose false-positive behaviour on unit synonyms is unknown would contradict
+ADR-0015, written the same day.
+
+**One thing this did establish, independent of the feature.** The corpus's 100%
+fabrication recall is flattered: every unit in it is a unit the extractor knows,
+so a swap into an unknown unit is currently invisible *and untested*. That gap
+is real whether or not #42 ever ships.
+
+---
+
 ## The floors
 
 Set on 2026-08-30 against the run above, in

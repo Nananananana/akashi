@@ -208,7 +208,15 @@ about making a finding say more.
   misdirection 0 of 12. akashi explains a swapped unit and refuses to explain a
   drifted digit ([ADR-0015](../adr/0015-the-digits-are-the-evidence.md)).
 - **The unit check that needs no unit table**: a grounded number whose
-  following token differs from the source's following token.
+  following token differs from the source's following token. **Measured and not
+  shipped**, which is what the issue asked for. The naive rule fires on 5 of the
+  7 grounded bare numbers in the corpus and every firing is noise, because
+  Japanese and Chinese have no whitespace and the "token after a number" is a
+  particle. A narrowing that uses the unit table on the source side only makes
+  no noise at all and catches both motivating cases — but it cannot tell a
+  *swapped* unit from a *re-worded* one, and that cannot be measured on material
+  written by the author of the unit lists. `docs/measurements.md` has it; it
+  waits on the v0.6 corpus.
 - **Structural proper nouns**: a token in front of an organisational or
   honorific suffix, in three languages. Evidence, not a guess. **Shipped**:
   extraction recall over everything marked 91% -> 95%, unbearing 35% -> 30%,
@@ -309,3 +317,17 @@ fired.** One remains, and one is new.
   v0.6 run against a public human-labelled corpus scores far below the numbers
   here, the honest response is to say so in a third proposal and revise the
   roadmap from that measurement — which is what this document is for.
+
+  **This has already stopped a feature rather than merely qualifying a number.**
+  #42's unit check cannot be priced here, and expanding this corpus would move
+  the problem rather than fix it. It is also not akashi's alone: `tsumugi`'s
+  `proposals/0003` titles a section *"Ten genres was not a corpus, it was a
+  mirror"*, and `iriguchi` and `mamori` have the same structure. Four libraries,
+  one blind spot, no external ruler.
+
+  That raises what v0.6 is for. **RAGTruth is the specific candidate**: 18k
+  chunks with word-level spans annotated by people other than us, and the only
+  public RAG benchmark at a granularity that can score a particular-level
+  verdict at all. A sentence-level benchmark cannot evaluate akashi's output.
+  It is English only, so `ja` and `zh` stay on self-authored material and the
+  two are reported apart — which is what this roadmap already committed to.
