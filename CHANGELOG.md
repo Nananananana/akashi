@@ -15,6 +15,15 @@ API yet.
   reports which particulars of the answer are in the text that was sent, where
   each one was found, and everything that was not checked. Text and JSON
   output; `en`, `ja` and `zh`; zero runtime dependencies; no model anywhere.
+- **v0.3, the corpus and the floors.** `akashi eval` runs 42 generated cases
+  with 177 planted spans and nine hand-marked realistic answers, and gates on
+  floors set deliberately below what was measured.
+  [`docs/measurements.md`](docs/measurements.md) carries every number with the
+  command that produced it and what it does not say. The headline:
+  **extraction recall is 100% over the kinds akashi claims and 91% over
+  everything a person marked**, and about a third of a realistic answer is
+  prose akashi has nothing to check in — so ADR-0004 survives both of its
+  stated falsification conditions.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
