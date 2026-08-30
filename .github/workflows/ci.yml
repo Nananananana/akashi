@@ -78,8 +78,21 @@ jobs:
       - name: Install
         run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
 
-      - name: Ruff
-        run: python -m ruff check . && python -m ruff format --check .
+      # Every hook, over every file. `.pre-commit-config.yaml` had eleven and
+      # CI ran two of them -- the other nine existed only on a developer's
+      # machine, and only if that developer had installed pre-commit. Among
+      # them `check-yaml`, which is the one that matters most here: an invalid
+      # workflow file is not an error anybody is shown, it is a workflow that
+      # quietly does not run.
+      #
+      # This replaces the explicit `ruff check . && ruff format --check .`
+      # rather than joining it. Two definitions of the same check drift, and
+      # the narrower one runs first and says nothing -- which makes the wider
+      # one look capricious. The hook config pins an exact ruff and reads the
+      # same `pyproject.toml` rules, so nothing about the linting changed
+      # except how many of the checks beside it are enforced.
+      - name: Hooks
+        run: python -m pre_commit run --all-files --show-diff-on-failure
 
       - name: Types
         run: python -m mypy
