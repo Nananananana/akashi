@@ -208,16 +208,28 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   the generated corpus.** That number is evidence the method does what it says
   on material written against its stated design — not evidence about production
   traffic. The corpus was authored for it.
-- **Extraction recall on nine hand-marked realistic answers: 87 of 96 (91%)
-  over everything marked, 87 of 87 (100%) over the kinds akashi claims,
-  precision 100%, every span exact.** The nine misses are all `proper_noun`,
-  which akashi declares it does not extract. **ADR-0004 survives its
-  falsification condition.**
-- **`unbearing` is 35% on realistic answers and 13% on the generated corpus.**
-  The generated one was written to carry particulars; the 35% is the honest
-  figure. About a third of a real answer is prose akashi has nothing to say
-  about — mostly the model hedging or reporting what it could not find, which
-  is a different thing from a claim it cannot check.
+- **Extraction recall on nine hand-marked realistic answers: 91 of 96 (95%),
+  precision 100%, every span exact.** Five misses, all names with no title,
+  honorific or legal form beside them. **ADR-0004 survives its falsification
+  condition.**
+- **akashi reads structure, not names.** The proper-noun rules are three
+  families — a title, an honorific, a legal form — and nothing else. A
+  capitalised-word heuristic would put a particular on every sentence-initial
+  word in English, and akashi would be guessing rather than reading. `mamori`'s
+  much larger Japanese name detector is **recall-first by policy** (its
+  ADR-0013) and most of it must not be copied: here a false name is a floating
+  particular on every report that mentions an ordinary word.
+- **`様` is deliberately not an honorific here.** It ends 仕様, 模様, 多様 and
+  同様 — words that live in exactly the specification and contract documents
+  akashi is aimed at — and it put a name on `筐体仕様` on the first measured run.
+  Dropping it costs `佐藤様`. A precision-first extractor that is not precise is
+  worth nothing at all.
+- **`unbearing` is 30% on realistic answers and 13% on the generated corpus.**
+  The generated one was written to carry particulars; the 30% is the honest
+  figure. It was 35% before the structural name rules shipped, and that fall is
+  the clearest evidence that coverage and extraction are the same question asked
+  twice. What remains is mostly the model hedging or reporting what it could not
+  find, which is a different thing from a claim it cannot check.
 - **Marking those answers found three more extractor defects**, and one of them
   mattered: the sign was being dropped from `-20℃` and `±0.02mm`, so a flipped
   sign would have grounded against the value it was flipped from. Also a

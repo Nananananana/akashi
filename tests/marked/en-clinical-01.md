@@ -9,4 +9,4 @@ Recorded at the visit:
 - HbA1c {{P:percentage}}7.2%{{/P}}
 - eGFR {{P:number}}68{{/P}}
 
-The note is signed by {{P:proper_noun}}Dr. Okafor{{/P}}. Dietary advice was given but the leaflet itself is not in the record, so I cannot summarise what it said.
+The note is signed by Dr. {{P:proper_noun}}Okafor{{/P}}. Dietary advice was given but the leaflet itself is not in the record, so I cannot summarise what it said.

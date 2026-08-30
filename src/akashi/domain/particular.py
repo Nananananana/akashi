@@ -71,12 +71,31 @@ class ExtractionRule:
     #: Length decides first; this is only for the genuine ties, and it is what
     #: makes ``1.2.3`` an identifier rather than a number.
     priority: int = 0
+    #: Which capture group is the particular. ``0`` is the whole match.
+    #:
+    #: A name is a name because of what sits beside it, and the thing beside it
+    #: is usually not part of the name: ``田中`` in ``田中医師`` is the person
+    #: and ``医師`` is the role. The evidence has to be *matched* to be
+    #: evidence, and it must not be *captured*, so the pattern looks ahead and
+    #: the group is what comes out. Borrowed from ``mamori``, which needed the
+    #: same thing for the same reason.
+    group: int = 0
+    #: Matches to throw away, by their exact text. Data rather than a callable,
+    #: so a rule stays a value: a pattern with a function attached could not be
+    #: compared, printed or reasoned about from a report.
+    #:
+    #: This exists because the structural name rules need it. ``皆さん`` is
+    #: everyone and ``彼氏`` is a boyfriend, and one of those on every report is
+    #: what makes a precision-first extractor worthless.
+    reject: frozenset[str] = frozenset()
     #: For the person reading the pack. Reaches no output.
     note: str = ""
 
     def __post_init__(self) -> None:
         if not self.pattern:
             raise ValueError(f"the {self.kind.value} rule has no pattern")
+        if self.group < 0:
+            raise ValueError(f"the {self.kind.value} rule names group {self.group}")
 
 
 @dataclass(frozen=True, slots=True)

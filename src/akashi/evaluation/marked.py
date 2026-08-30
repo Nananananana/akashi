@@ -51,10 +51,19 @@ __all__ = [
 
 _MARK = re.compile(r"\{\{P:([a-z_]+)\}\}(.*?)\{\{/P\}\}", re.DOTALL)
 
-#: Kinds akashi says it does not extract. Reported separately rather than
+#: Kinds akashi does not attempt at all. Reported separately rather than
 #: excluded, because a declared limit counted as a defect is as misleading as a
 #: defect counted as a limit.
-DECLARED_ABSENT = frozenset({ParticularKind.PROPER_NOUN})
+#:
+#: **Empty since v0.4.** It held ``PROPER_NOUN`` until the structural rules
+#: shipped, and the two recalls below were far apart because of it. They are
+#: equal now, and that is worth seeing rather than worth collapsing: a kind
+#: added later that nothing extracts would pull them apart again.
+#:
+#: The *reason* akashi still misses names has not gone away -- it reads
+#: structure, not names -- and it is on ``STANDING_LIMITS``, which is where a
+#: permanent limit belongs.
+DECLARED_ABSENT: frozenset[ParticularKind] = frozenset()
 
 
 @dataclass(frozen=True, slots=True)

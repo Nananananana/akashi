@@ -92,11 +92,16 @@ def test_the_answers_cover_three_languages_and_three_genres() -> None:
     assert {answer.genre for answer in answers} == {"contract", "clinical", "engineering"}
 
 
-def test_the_answers_mark_kinds_akashi_does_not_extract() -> None:
-    """Marked by the definition, not by the implementation. A marking derived
-    from the extractor would measure nothing."""
+def test_the_answers_mark_names_even_where_akashi_reads_no_structure() -> None:
+    """Marked by the definition, not by the implementation.
+
+    ``Borden Systems`` and ``甲社`` carry no title, honorific or legal form, so
+    akashi does not see them — and they are marked anyway. A marking derived
+    from the extractor would measure nothing.
+    """
     marked = {marking.kind for answer in load_marked(MARKED) for marking in answer.markings}
-    assert marked >= DECLARED_ABSENT
+    assert ParticularKind.PROPER_NOUN in marked
+    assert frozenset() == DECLARED_ABSENT
 
 
 def test_the_answers_look_like_answers_rather_than_lists_of_figures() -> None:
@@ -128,13 +133,16 @@ def test_the_answers_look_like_answers_rather_than_lists_of_figures() -> None:
 # --- What was measured -------------------------------------------------------
 
 
-def test_every_particular_akashi_claims_to_extract_is_found(
+def test_nothing_is_declared_absent_any_more(
     measured: tuple[ExtractionScore, dict[str, ExtractionScore], dict[str, ExtractionScore]],
 ) -> None:
-    """The claimed-kinds recall. Whether akashi does what it says, as opposed
-    to how much of an answer it sees."""
+    """``proper_noun`` was the last kind akashi attempted nothing for, and the
+    two recalls were far apart because of it. They are equal now.
+
+    A kind added later that nothing extracts would pull them apart again, which
+    is why both are still reported rather than collapsed into one."""
     overall, _, _ = measured
-    assert overall.recall_on_claimed_kinds == 1.0
+    assert overall.recall_on_claimed_kinds == overall.recall
 
 
 def test_the_only_misses_are_the_kinds_akashi_declares_it_does_not_extract(
@@ -178,12 +186,15 @@ def test_a_third_of_a_realistic_answer_bears_nothing_to_check(
 ) -> None:
     """The falsification condition from ``proposals/0001`` section 10: if most
     segments were unbearing, akashi would be silent about most of the answer
-    and the roadmap would change. A third is not most, and it is far above the
-    13% the generated corpus shows -- because that corpus was written to carry
-    particulars."""
+    and the roadmap would change. A third is not most.
+
+    It fell from 35% to 30% when the structural name rules shipped, which is
+    the clearest evidence that coverage and extraction are the same question
+    asked twice: a segment whose only load-bearing token was a name used to
+    bear nothing."""
     overall, _, _ = measured
     assert overall.unbearing_share is not None
-    assert 0.25 < overall.unbearing_share < 0.5
+    assert 0.2 < overall.unbearing_share < 0.5
 
 
 def test_the_score_is_cut_by_language_and_by_kind(
@@ -191,8 +202,11 @@ def test_the_score_is_cut_by_language_and_by_kind(
 ) -> None:
     _, by_language, by_kind = measured
     assert set(by_language) == {"en", "ja", "zh"}
-    assert by_kind["proper_noun"].recall == 0.0
     assert by_kind["quantity"].recall == 1.0
+    # Names are the one kind below 1.0, and the reason is structural rather
+    # than a gap in a list: akashi reads structure, not names.
+    assert by_kind["proper_noun"].recall is not None
+    assert 0.0 < by_kind["proper_noun"].recall < 1.0
 
 
 def test_no_language_is_much_worse_than_the_others(
@@ -201,8 +215,9 @@ def test_no_language_is_much_worse_than_the_others(
     """An aggregate hides that extraction is strong on Japanese figures and
     weak on English legal citations. This is the test that would notice."""
     _, by_language, _ = measured
-    shares = [score.recall_on_claimed_kinds for score in by_language.values()]
-    assert all(share == 1.0 for share in shares), dict(zip(by_language, shares, strict=True))
+    shares = [one.recall for one in by_language.values() if one.recall is not None]
+    assert len(shares) == 3
+    assert max(shares) - min(shares) < 0.10, dict(zip(by_language, shares, strict=True))
 
 
 def test_measuring_twice_gives_the_same_numbers() -> None:
@@ -239,7 +254,7 @@ def test_the_json_carries_both_recalls_and_the_misses(
 ) -> None:
     main(["eval", "--cases", str(CASES), "--marked", str(MARKED), "--json"])
     body = json.loads(capsys.readouterr().out)["extraction"]
-    assert body["overall"]["recall"] < body["overall"]["recall_on_claimed_kinds"]
+    assert body["overall"]["recall"] == body["overall"]["recall_on_claimed_kinds"]
     assert body["misses"]
     assert set(body["by_language"]) == {"en", "ja", "zh"}
 

@@ -52,6 +52,8 @@ STANDING_LIMITS: tuple[str, ...] = (
     "A meaning reversed without changing any particular is not detected.",
     "A number correctly derived from grounded numbers is reported floating, "
     "because it is not in the sources. akashi does not do arithmetic.",
+    "A name with no title, honorific or legal form beside it is not extracted "
+    "and so is never checked. akashi reads structure, not names.",
 )
 
 

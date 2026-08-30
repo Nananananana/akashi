@@ -206,18 +206,18 @@ def test_a_segment_may_simply_have_no_particulars() -> None:
     assert texts("The tent was light and easy to carry.") == []
 
 
-def test_the_kinds_no_rule_covers_are_named() -> None:
-    """ADR-0005. A blind spot that is not named reads as an absence of
-    findings, and ``proper_noun`` is the one akashi refuses to guess at."""
-    assert kinds_not_extracted(DEFAULT) == (ParticularKind.PROPER_NOUN,)
+def test_every_kind_is_covered_by_some_rule_now() -> None:
+    """``proper_noun`` was the last one, until the structural rules shipped in
+    v0.4. An empty tuple here does *not* mean akashi sees every name: it reads
+    structure, not names, and that limit moved to ``STANDING_LIMITS`` where a
+    permanent one belongs."""
+    assert kinds_not_extracted(DEFAULT) == ()
 
 
 def test_narrowing_the_packs_widens_what_is_not_extracted() -> None:
     """A kind that only the Japanese pack finds is unfound without it, and the
     report has to say so rather than showing a clean sheet."""
-    missing = kinds_not_extracted(packs("en"))
-    assert ParticularKind.PROPER_NOUN in missing
-    assert ParticularKind.DURATION not in missing
+    assert ParticularKind.DURATION not in kinds_not_extracted(packs("en"))
     assert ParticularKind.DURATION in kinds_not_extracted(packs("ja"))
 
 

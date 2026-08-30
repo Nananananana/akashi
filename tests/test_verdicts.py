@@ -21,7 +21,6 @@ from akashi.domain.coverage import (
 )
 from akashi.domain.evidence import Evidence, item
 from akashi.domain.extraction import extract_from_segment, kinds_not_extracted
-from akashi.domain.particular import ParticularKind
 from akashi.domain.segment import Segmentation, segment_answer
 from akashi.domain.span import Span
 from akashi.domain.verdict import (
@@ -247,8 +246,11 @@ def test_more_particulars_cannot_be_checked_than_were_extracted() -> None:
 
 
 def test_the_kinds_no_rule_covers_are_on_the_coverage() -> None:
+    """Empty since v0.4, when the structural name rules covered the last kind.
+    The limit that remains is on ``STANDING_LIMITS``: akashi reads structure,
+    not names."""
     assessment = look("The tent weighs 2.4kg.")
-    assert assessment.coverage.kinds_not_extracted == (ParticularKind.PROPER_NOUN.value,)
+    assert assessment.coverage.kinds_not_extracted == ()
 
 
 def test_the_counts_include_the_verdicts_that_are_zero() -> None:
@@ -292,7 +294,7 @@ def test_the_limits_travel_with_the_assessment() -> None:
     the documentation does not."""
     assessment = look("The tent weighs 2.4kg.")
     assert assessment.limits == STANDING_LIMITS
-    assert len(assessment.limits) == 4
+    assert len(assessment.limits) == 5
 
 
 def test_the_limits_name_the_two_declared_misses_and_the_two_false_positives() -> None:
@@ -301,6 +303,7 @@ def test_the_limits_name_the_two_declared_misses_and_the_two_false_positives() -
     assert "reversed" in joined
     assert "arithmetic" in joined
     assert "not about truth" in joined
+    assert "structure, not names" in joined
 
 
 @pytest.mark.parametrize(
