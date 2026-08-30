@@ -49,7 +49,7 @@ CHINESE = LanguagePack(
     rules=(
         ExtractionRule(
             kind=ParticularKind.DATE,
-            pattern=r"(?<![\d])\d{4}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日",
+            pattern=r"(?<![\d])\d{4}\s*年\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*日)?",
             priority=95,
         ),
         ExtractionRule(

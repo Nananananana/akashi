@@ -32,6 +32,24 @@ __all__ = ["COMMON"]
 #: ``1,234``, and reporting it as one would ground a figure nobody wrote.
 _NUMBER = r"(?<![\d.,])\d(?:[\d,.]*\d)?(?![\d])"
 
+#: A sign, where one belongs to the value. ``-20℃`` and ``20℃`` are different
+#: temperatures and ``±0.02mm`` is a different tolerance from ``0.02mm``. The
+#: hand-marked answers found this: the sign was being left behind, so an answer
+#: that flipped one would have grounded against the value it was flipped from --
+#: precisely the failure ADR-0004 exists for.
+_SIGN = r"[-−+±]?"
+
+#: A bare number, kept away from a letter *before* it. ``HbA1c`` is not a
+#: figure and ``H2O`` is not a two, and a digit inside a word extracted as a
+#: number is a particular a reader has to explain away on every report.
+#:
+#: A letter *after* is allowed, and the corpus is why. Forbidding both lost
+#: ``350kPa`` entirely -- ``kPa`` is not in the SI alternation, so the bare rule
+#: was the only thing seeing it, and an invented pressure became invisible. The
+#: asymmetry is not arbitrary: a letter before a digit is a word carrying a
+#: digit, and a letter after one is a unit the extractor does not know yet.
+_BARE = r"(?<![A-Za-z])" + _NUMBER
+
 #: The unit alternations are longest-first, because ``re`` takes the first
 #: alternative that matches and ``m`` would otherwise win over ``mm``.
 _SI = (
@@ -98,13 +116,13 @@ COMMON = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
-            pattern=_NUMBER + r"\s*" + _SI + r"(?![A-Za-z0-9])",
+            pattern=_SIGN + _NUMBER + r"\s*" + _SI + r"(?![A-Za-z0-9])",
             priority=50,
             note="the unit is part of the particular; 2.4kg and 2.4mg differ by it",
         ),
         ExtractionRule(
             kind=ParticularKind.NUMBER,
-            pattern=_NUMBER,
+            pattern=_BARE,
             priority=0,
             note="the fallback, and the lowest priority: anything more specific wins",
         ),
