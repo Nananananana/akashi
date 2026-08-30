@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import itertools
 
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis import strategies as st
 
 from akashi.domain.coverage import Assessment, assess
@@ -237,6 +237,11 @@ def test_nothing_grounds_against_an_empty_package(answer: str) -> None:
 
 
 @given(source=SOURCES)
+# Pinned the moment it was drawn, before anything was looked at. `@example` is a
+# decorator and does not change what `function_digest` reads, so adding one
+# keeps the accumulated database -- while the first instinctive edit to print
+# the input would have orphaned it silently.
+@example(source="2026-08-30，2.4kg")
 @SLOW
 def test_every_particular_of_the_sources_grounds_in_the_sources(source: str) -> None:
     """The round trip. Everything akashi can extract from the text that was

@@ -98,6 +98,15 @@ API yet.
   value could not be restored is now `unverifiable`, says which token and why,
   carries no particulars, and counts as unexamined rather than as a finding.
   The rest of the answer is still audited.
+- **A comma binds two numbers only when it is a thousands separator.** The
+  boundary rule that stops `45` matching inside `45,000` treated every comma
+  between digits the same way — and NFKC turns the fullwidth `，` into `,`, so
+  `见第3，5，7条`, an ordinary Chinese enumeration, failed to resolve into the
+  document it was extracted from. An honest answer quoting that list would have
+  been reported as fabricated, in one of the three languages akashi claims to
+  read. Found by the property test that says everything extracted from the
+  evidence must ground back into it, and pinned there as the project's first
+  `@example`.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
