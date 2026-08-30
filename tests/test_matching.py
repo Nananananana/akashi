@@ -220,3 +220,55 @@ def test_a_span_of_a_hit_is_a_real_span() -> None:
     span = find_all("30", search_form("we counted 30 tents"))[0]
     assert isinstance(span, Span)
     assert len(span) == 2
+
+
+# --- A comma binds digits only when it is a thousands separator --------------
+#
+# The boundary rule exists so `45` does not match inside `45,000`. It did that
+# by treating every comma between digits as binding, which is right for a
+# thousands separator and wrong for a list.
+#
+# NFKC turns the fullwidth `，` into `,`, so `见第3，5，7条` -- an ordinary
+# Chinese enumeration -- became digit-comma-digit three times over, and every
+# clause number in it failed to resolve into the document it came from. An
+# honest answer quoting that list would have been reported as fabricated, in the
+# language akashi claims to read.
+#
+# Found by `test_every_particular_of_the_sources_grounds_in_the_sources`, the
+# property test asserting that anything extracted from the evidence resolves
+# back into it, on `2026-08-30，2.4kg`. It is pinned there as an `@example`.
+
+
+@pytest.mark.parametrize(
+    ("needle", "haystack", "matches", "why"),
+    [
+        ("45", "Liability is capped at 45,000 dollars.", 0, "inside a thousands group"),
+        ("000", "Liability is capped at 45,000 dollars.", 0, "the group itself"),
+        ("45,000", "Liability is capped at 45,000 dollars.", 1, "the whole number"),
+        ("234", "Revenue was 1,234,567 dollars.", 0, "a middle group"),
+        ("2.4", "The tolerance is 12.45mm.", 0, "inside a decimal"),
+        ("3", "见第3，5，7条。", 1, "an enumeration member"),
+        ("5", "见第3，5，7条。", 1, "and the one after it"),
+        ("7", "见第3，5，7条。", 1, "and the last"),
+        ("12", "寸法は 12，34 です。", 1, "japanese, fullwidth comma"),
+        ("30", "at 30,2 metres", 1, "two digits after the comma is not a group"),
+        ("30", "at 30,20 metres", 1, "nor is four"),
+        ("30", "at 30,200 metres", 0, "three digits is"),
+        ("30", "at 30,2000 metres", 1, "four digits is not"),
+    ],
+)
+def test_a_comma_binds_only_a_thousands_group(
+    needle: str, haystack: str, matches: int, why: str
+) -> None:
+    assert len(find_all(needle, search_form(haystack))) == matches, why
+
+
+def test_the_rule_is_symmetric() -> None:
+    """A separator on the left has to be read the same way as one on the right,
+    or `第3，5，7条` half works: `3` grounds and `5` does not."""
+    enumeration = search_form("见第3，5，7条。")
+    assert all(find_all(digit, enumeration) for digit in ("3", "5", "7"))
+
+    grouped = search_form("45,000")
+    assert not find_all("45", grouped)
+    assert not find_all("000", grouped)

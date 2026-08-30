@@ -111,15 +111,42 @@ def _bounded(form: SearchForm, span: Span) -> bool:
     if _continues(text[span.end - 1], after):
         return False
 
-    # A decimal separator is not a digit, so the class test alone misses ``2.4``
-    # inside ``12.45``: the character beside the match is ``.``, which continues
-    # nothing. Reject a number with a separator beside it and a digit on the far
-    # side of that.
-    if text[span.start].isdigit() and before in (".", ",") and _at(text, span.start - 2).isdigit():
+    # A separator is not a digit, so the class test alone misses ``2.4`` inside
+    # ``12.45``: the character beside the match is ``.``, which continues
+    # nothing. So a separator with a digit on the far side of it binds too.
+    if text[span.start].isdigit() and _binds(text, span.start - 1):
         return False
-    return not (
-        text[span.end - 1].isdigit() and after in (".", ",") and _at(text, span.end + 1).isdigit()
-    )
+    return not (text[span.end - 1].isdigit() and _binds(text, span.end))
+
+
+def _binds(text: str, index: int) -> bool:
+    """Whether the separator at ``index`` makes one number out of two runs.
+
+    ``.`` always does, between digits: ``12.45`` is one value.
+
+    **``,`` only does when it is a thousands separator**, and that is the whole
+    of this function. Treating every comma between digits as binding is what
+    made ``第3，5，7条`` -- an ordinary Chinese enumeration -- fail to resolve
+    into the very document it was extracted from. NFKC turns ``，`` into ``,``,
+    the rule saw digit-comma-digit, and every clause number in the list was
+    reported as fabricated. Found by the property test that says everything
+    extracted from the evidence must ground back into it, on ``2026-08-30，2.4kg``.
+
+    A thousands separator is a comma between digits with **exactly three**
+    digits after it: ``45,000`` and ``1,234,567`` bind, ``3,5`` and ``30,2.4``
+    do not. That is right for the three languages akashi reads, all of which
+    group by threes; it would be wrong where a comma is the decimal point, and
+    akashi does not claim those.
+    """
+    character = _at(text, index)
+    if not _at(text, index - 1).isdigit():
+        return False
+    if character == ".":
+        return _at(text, index + 1).isdigit()
+    if character != ",":
+        return False
+    group = text[index + 1 : index + 4]
+    return len(group) == 3 and group.isdigit() and not _at(text, index + 4).isdigit()
 
 
 def find_all(form: str, haystack: SearchForm) -> tuple[Span, ...]:
