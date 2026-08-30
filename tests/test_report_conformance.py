@@ -85,13 +85,18 @@ def test_the_schema_itself_is_a_valid_schema(schema: dict[str, Any]) -> None:
     jsonschema.Draft202012Validator.check_schema(schema)
 
 
-def test_the_schema_ships_inside_the_wheel() -> None:
-    """A consumer validating a report should not have to fetch a schema from
-    the internet, and an auditor whose schema lives on someone else's server is
-    not an auditor."""
-    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    live = [line for line in pyproject.splitlines() if not line.lstrip().startswith("#")]
-    assert "[tool.hatch.build.targets.wheel.force-include]" in live
+# The schema shipping inside the wheel was asserted here too, in the weaker of
+# the two forms that existed: filter the comment lines out of pyproject.toml and
+# look for the section header. It is gone rather than kept, because two tests
+# asserting the same fact at different strengths is worse than one -- the weak
+# one is what a reader finds first and it reads like coverage.
+#
+# ``test_documentation.py::test_a_published_schema_is_packaged_with_the_wheel``
+# is the one that stayed: it reads the effective configuration with ``tomllib``
+# so a commented-out block is simply absent, and it checks the *destination*,
+# which the version here could not. The artefact itself is opened in the
+# ``dependency count is zero`` CI job, which is the only place a real install
+# exists.
 
 
 # --- The enums, in both places -----------------------------------------------
