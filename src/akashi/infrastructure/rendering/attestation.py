@@ -30,7 +30,27 @@ STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
 #: purpose: a consumer selects on this URI before it reads a single field, and a
 #: URI that moved when the report contract did not would break that selection
 #: for no reason.
-PREDICATE_TYPE = "https://akashi.dev/audit-report/v1"
+#:
+#: **The namespace has to be one akashi holds.** in-toto's spec says a TypeURI
+#: is "a collision-resistant type identifier", that it need not resolve, and
+#: that "TypeURIs are not registered -- the natural namespacing of URIs is
+#: sufficient to prevent collisions". That guarantee is the namespace, and a
+#: namespace only prevents collisions if it is yours. This was `akashi.dev`,
+#: which anybody can buy: whoever bought it after a missed renewal could publish
+#: a different definition at the exact URI already-issued attestations name, and
+#: attestations cannot be recalled. A repository URL is held by an account
+#: rather than by a renewal, so its worst case is a dead link rather than a live
+#: one somebody else controls -- and the spec allows an unresolvable TypeURI.
+#:
+#: **It carries the draft status, because it is read first.** The report says
+#: ``akashi.audit-report/1-draft`` inside itself, and an in-toto verifier
+#: selects on this URI *before* parsing a single field -- so a verifier keying
+#: on a bare ``/v1`` would believe it had selected a frozen contract while
+#: holding a provisional one. The draft marker being here rather than only
+#: inside is what makes the freeze visible in the field that gets read first,
+#: and the identifier changing at the freeze is the signal rather than the cost:
+#: statements carrying ``v1-draft`` are exactly the ones that predate it.
+PREDICATE_TYPE = "https://github.com/Nananananana/akashi/audit-report/v1-draft"
 
 #: The subject when the caller named none. Not an empty string: a subject with
 #: no name is harder to read in a log than one that says it was unnamed.

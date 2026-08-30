@@ -107,6 +107,18 @@ API yet.
   read. Found by the property test that says everything extracted from the
   evidence must ground back into it, and pinned there as the project's first
   `@example`.
+- **The `predicateType` and the schema `$id` moved into a namespace akashi
+  holds.** They were under `akashi.dev`, a domain anybody can buy. in-toto's
+  guarantee for a `predicateType` *is* the namespace — *"TypeURIs are not
+  registered. The natural namespacing of URIs is sufficient to prevent
+  collisions"* — and a namespace only prevents collisions if it is yours. Since
+  an attestation travels, is keyed on before a field is read, and cannot be
+  recalled, a lapsed domain would let its next owner publish a different
+  definition at the exact URI issued statements name. A repository URL is held
+  by an account rather than by a renewal, so its worst case is a dead link,
+  which the spec permits. Done now because nothing has been issued yet: after
+  the freeze it would have cost the meaning of every certificate already
+  carrying the old value.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),

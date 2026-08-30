@@ -2,7 +2,7 @@
 
 **Status:** accepted
 
-Decides how far [ADR-0004](0004-the-particular-is-the-unit.md) may be pushed.
+Decides how far [ADR-0004](0004-the-particular-is-the-unit-of-verification.md) may be pushed.
 ADR-0004 says a particular that resolves nowhere is a finding. This says when
 akashi may go further and name the value the answer replaced — and it turns out
 to be a much smaller set of cases than the feature was specified for.

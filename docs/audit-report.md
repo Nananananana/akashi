@@ -310,7 +310,7 @@ Statement ([ADR-0014](adr/0014-akashi-emits-a-signable-statement-and-signs-nothi
 {
   "_type": "https://in-toto.io/Statement/v1",
   "subject": [{"name": "answer.txt", "digest": {"sha256": "e5a3b0ba…"}}],
-  "predicateType": "https://akashi.dev/audit-report/v1",
+  "predicateType": "https://github.com/Nananananana/akashi/audit-report/v1-draft",
   "predicate": { … the report above, unchanged … }
 }
 ```

@@ -43,7 +43,7 @@ teams already run.
 {
   "_type": "https://in-toto.io/Statement/v1",
   "subject": [{"name": "answer.txt", "digest": {"sha256": "e5a3b0ba…"}}],
-  "predicateType": "https://akashi.dev/audit-report/v1",
+  "predicateType": "https://github.com/Nananananana/akashi/audit-report/v1-draft",
   "predicate": { … the report, unchanged … }
 }
 ```
@@ -57,6 +57,65 @@ the same field, so the two cannot disagree.
 
 Keys, trust roots, revocation and verification are the caller's, with tooling
 they choose. akashi's contribution is the shape.
+
+## Amended while the contract was still a draft: the namespace has to be held
+
+The `predicateType` above was `https://akashi.dev/audit-report/v1`. It is now a
+repository URL, and the reason is the one line of the in-toto spec this decision
+rests on without having quoted it:
+
+> TypeURIs are not registered. The natural namespacing of URIs is sufficient to
+> prevent collisions.
+
+The guarantee **is** the namespace. A namespace only prevents collisions if it
+is yours, and `akashi.dev` is a domain anybody can buy.
+
+That matters more here than for a schema `$id`, for the reason this ADR exists.
+akashi emits and signs nothing, so an attestation is made to travel: somebody
+else signs it and a third party reads it later, without the package and without
+us. `predicateType` is what that reader keys on *before* looking at a single
+field. **An attestation cannot be recalled**, so whoever acquired the domain
+after a missed renewal could publish a different definition at the exact URI
+already-issued statements name — silently, years later, and landing on the
+reader.
+
+A repository URL is held by an account rather than by a renewal. Its worst case
+is that it stops resolving, which the spec explicitly permits — *"SHOULD resolve
+to a human-readable description, but MAY be unresolvable"* — and a dead link is
+not a live one somebody else controls.
+
+`urn:uuid:` was considered and declined: collision-resistant with no owner at
+all, and unreadable, which is the wrong trade for an artefact whose purpose is
+to be understood by somebody who was not there.
+
+The schema `$id` moved in the same change, because it is the same claim about
+the same namespace.
+
+**And the identifier now carries the draft status.** The report has always said
+`akashi.audit-report/1-draft` inside itself; `predicateType` said a bare `/v1`.
+That is the wrong way round, because a verifier selects on `predicateType`
+*before* it parses a field — so one keying on `/v1` would believe it had
+selected a frozen contract while holding a provisional one.
+
+It is not hypothetical. `contradiction` was added to this contract as an
+optional field, under `1-draft`, which is what a draft is for. But the schema
+sets `additionalProperties: false` in all thirteen places it appears, so a
+consumer holding a cached copy rejects the newer report — and all it receives is
+a `ValidationError`, which is exactly what a corrupt document produces. *"You
+are out of date"* and *"this document is broken"* need opposite responses and
+arrived as one exception.
+
+The addition did not need `/2`. Version numbers that climb for optional
+additions teach consumers to ignore version numbers, and a consumer ignoring
+them stops performing the check this whole decision leans on. What was missing
+is that the selector never said the contract was provisional. It does now, and
+the identifier changing at the freeze is the **signal** rather than the cost:
+statements carrying `v1-draft` are precisely the ones that predate it.
+
+**The window for this was open only because nothing had been issued.** The
+contract is still `1-draft` and no attestation has been emitted, so the change
+cost one commit. After the freeze it would have cost the meaning of every
+certificate already carrying the old identifier.
 
 ## Consequences
 

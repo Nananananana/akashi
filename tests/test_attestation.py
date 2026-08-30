@@ -126,11 +126,19 @@ def test_the_help_says_akashi_signs_nothing(capsys: pytest.CaptureFixture[str]) 
 def test_the_predicate_type_is_versioned_apart_from_the_report_contract() -> None:
     """A consumer selects on the predicate type before it reads a field, and a
     URI that moved when the report contract did not would break that selection
-    for no reason."""
+    for no reason.
+
+    It named the major version and nothing else, and this used to assert
+    `endswith("/v1")`. That was too tight in one direction: the *draft status*
+    is part of what a selector has to say, and the test below this one is why.
+    What still has to hold is that the two identifiers are different strings and
+    that this one names the same major version — moving it when the contract has
+    not moved is the failure the docstring is about."""
     from akashi.domain.report import CONTRACT
 
     assert PREDICATE_TYPE != CONTRACT
-    assert PREDICATE_TYPE.endswith("/v1")
+    assert "/v1" in PREDICATE_TYPE
+    assert PREDICATE_TYPE.rsplit("/v", 1)[-1].removesuffix("-draft") == "1"
 
 
 # --- Through the command line ------------------------------------------------
@@ -223,3 +231,151 @@ def test_the_statement_is_not_escaped_into_unreadability(
     printed = capsys.readouterr().out
     assert "テント" in printed
     assert "\\u30c6" not in printed
+
+
+# --- The identifier lives in a namespace akashi holds -------------------------
+
+
+def test_the_identifiers_are_not_in_a_namespace_somebody_could_buy() -> None:
+    """in-toto's guarantee for a `predicateType` is the namespace itself:
+
+        TypeURIs are not registered. The natural namespacing of URIs is
+        sufficient to prevent collisions.
+
+    A namespace only prevents collisions if it is yours. These were under
+    `akashi.dev`, a domain anybody can register — and the failure is worse than
+    a dead link. A `predicateType` is what a verifier keys on *before* it reads
+    a field, attestations are made to travel and cannot be recalled, so whoever
+    bought the domain after a missed renewal could publish a different
+    definition at the exact URI already-issued statements name.
+
+    Pinned as a property rather than as the string, so that reintroducing a
+    rentable namespace fails here rather than in somebody's verifier years from
+    now. The values are read from the code and the schema, never from prose.
+    """
+    import json
+    from pathlib import Path
+
+    from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
+
+    held = "https://github.com/Nananananana/akashi/"
+    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
+
+    for name, value in (("predicateType", PREDICATE_TYPE), ("$id", identifier)):
+        assert value.startswith(held), (
+            f"{name} is {value!r}. It has to sit in a namespace held by an account "
+            f"rather than by a renewal: a lapsed one becomes somebody else's, and "
+            f"an identifier that becomes somebody else's is worse than one that "
+            f"stops resolving."
+        )
+
+
+def test_the_route_the_contract_tells_a_consumer_to_take_actually_works() -> None:
+    """The published instruction, executed rather than trusted.
+
+    A sibling project found its `docs/contracts.md` telling consumers to reach
+    the schema through `importlib.resources` — true after `pip install`, **false
+    in every development checkout**, and nothing in the repository ran the
+    sentence, so nobody noticed. The audience for that sentence is the one group
+    the project has no other way to reach.
+
+    akashi's contract document names one path, in one markdown link. This walks
+    it: follow the link the way a reader would, and validate a real
+    attestation's predicate against whatever is at the other end.
+
+    The link target is parsed as a link — data — never matched out of the prose
+    around it, so the sentence explaining this test cannot satisfy it.
+    """
+    import json
+    import re
+    from pathlib import Path
+
+    jsonschema = pytest.importorskip("jsonschema")
+    contract = Path(__file__).parents[1] / "docs" / "audit-report.md"
+    links = re.findall(r"\]\((\.\./schemas/[^)]+)\)", contract.read_text(encoding="utf-8"))
+    assert len(links) == 1, f"the contract names {len(links)} schema paths; it should name one"
+
+    schema = (contract.parent / links[0]).resolve()
+    assert schema.is_file(), (
+        f"docs/audit-report.md sends a reader to {links[0]}, which is not there"
+    )
+    jsonschema.validate(as_statement(report())["predicate"], json.loads(schema.read_text("utf-8")))
+
+
+def test_the_two_identifiers_agree_on_the_version_they_name() -> None:
+    """`predicateType` and the schema `$id` are related by convention and by
+    nothing mechanical: one says `audit-report/v1`, the other
+    `audit-report-1.json`. A consumer selects on the first and validates against
+    the second.
+
+    So moving one and not the other is a silent divergence — the statement would
+    announce a predicate type whose schema describes something else, and every
+    test here would still pass, because each checks its own half. This is the
+    only place the halves are compared.
+
+    **It is not the weaker half of the test above it**, and that was measured
+    rather than argued.
+
+    The better general rule — pass a real document through both sides rather
+    than comparing identifiers — proves the *shapes* agree and is blind to every
+    field validation does not read. Four of them here, checked by swapping each
+    and revalidating:
+
+        $id           ignored — the document validates identically
+        title         ignored
+        description   ignored
+        $schema       ignored, even swapped to a different dialect
+
+    A consumer selects on a label *before* it validates anything (ADR-0014), so
+    the fields a validator ignores are the ones a reader meets first.
+
+    And the mechanical form of "not redundant": break something in a way no
+    existing check catches, and see whether only the new one fires. Rewriting
+    `$id` to name `audit-report-9.json`, with the namespace left alone so the
+    test above it stays quiet:
+
+        1 failed, everything else passed
+        FAILED test_the_two_identifiers_agree_on_the_version_they_name
+
+    A new check's worth is not that it can fail. It is that it fails on a break
+    nothing else notices.
+    """
+    import json
+    from pathlib import Path
+
+    from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
+
+    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
+
+    predicate_major = PREDICATE_TYPE.rsplit("/v", 1)[-1].removesuffix("-draft")
+    schema_major = identifier.rsplit("-", 1)[-1].removesuffix(".json")
+    assert predicate_major == schema_major, (
+        f"predicateType names v{predicate_major} and the schema names {schema_major}. "
+        f"A consumer selects on the first and validates against the second."
+    )
+
+
+def test_the_selector_says_the_contract_is_still_a_draft() -> None:
+    """The report says `1-draft` inside itself. `predicateType` has to say it
+    too, because that is the field read *first*.
+
+    An in-toto verifier selects on the predicate type before parsing anything,
+    so one keying on a bare `/v1` would believe it had selected a frozen
+    contract while holding a provisional one — and when a later akashi adds an
+    optional field, all it receives is a `ValidationError`, indistinguishable
+    from a corrupt document. `contradiction` was added to this contract exactly
+    that way. The addition was legitimate under a draft; what was missing is
+    that the selector never said "draft".
+
+    The identifier changing at the freeze is the **signal**, not the cost:
+    statements carrying `v1-draft` are precisely the ones that predate it.
+    """
+    from akashi.domain.report import CONTRACT
+    from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
+
+    assert CONTRACT.endswith("-draft") == PREDICATE_TYPE.endswith("-draft"), (
+        f"the report says {CONTRACT!r} and the selector says {PREDICATE_TYPE!r}. "
+        f"A verifier reads the second before it reads the first."
+    )
