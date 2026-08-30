@@ -33,6 +33,12 @@ marked `network`, deselected from the default run, and has its own CI job:
 python -m pytest tests/test_vendored_contracts.py -m network
 ```
 
+A **404 fails rather than skips.** The recorded `path` is where a refresher
+would look, and if it is not there the producer has reorganised — which is drift
+of the most consequential kind. Everything else the server can say (a rate
+limit, a bad gateway) is about the server and skips. That distinction was
+written after the check skipped on exactly the thing it exists to catch.
+
 Upstream having moved is *information*, not a defect in whatever change is
 being reviewed — so that job runs on a schedule and on demand rather than
 gating every pull request. A check that blocks unrelated work is a check that

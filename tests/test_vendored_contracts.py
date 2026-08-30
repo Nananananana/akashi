@@ -58,6 +58,21 @@ def ids(entries: list[dict[str, Any]]) -> list[str]:
     return [str(entry["file"]) for entry in entries]
 
 
+def is_drift(status: int) -> bool:
+    """Whether an HTTP status means the record is wrong rather than the day is.
+
+    The distinction that matters. A 404 is a *response*: the server answered,
+    and what it said is that the path this record sends a refresher to does not
+    exist. That is drift of the most consequential kind -- the producer
+    reorganised -- and treating it as an outage is how it goes unnoticed until
+    somebody happens to look.
+
+    Everything else the server can say is about the server. Skipping on those is
+    correct; a rate limit is not evidence about a contract.
+    """
+    return status in (404, 410)
+
+
 # --- What can be checked without asking anybody ------------------------------
 
 
@@ -105,6 +120,26 @@ def test_the_vendored_schema_is_the_one_the_fixtures_are_checked_against() -> No
     assert "context-package-1.json" in conformance
 
 
+@pytest.mark.parametrize(
+    ("status", "drift"),
+    [(404, True), (410, True), (500, False), (429, False), (503, False)],
+)
+def test_a_moved_file_is_drift_and_a_bad_day_is_not(status: int, drift: bool) -> None:
+    """Written after the networked check *skipped* on the exact thing it exists
+    to catch.
+
+    ``tsumugi`` moved its schema into its package tree. The content did not
+    change by a byte, so the offline hash stayed green -- and the networked
+    check caught ``HTTPError`` under ``URLError``, which it is a subclass of,
+    and reported "cannot reach". The producer had reorganised and akashi would
+    have said nothing.
+
+    This is the classification on its own, so that it can be checked without a
+    network and without waiting for a producer to move something again.
+    """
+    assert is_drift(status) is drift
+
+
 # --- What can only be checked by asking upstream -----------------------------
 
 
@@ -119,13 +154,28 @@ def test_the_copy_has_not_gone_stale_upstream(entry: dict[str, Any]) -> None:
     legitimately changed would otherwise block work that has nothing to do with
     it, and a check that blocks unrelated work gets disabled.
     """
-    from urllib.error import URLError
+    from urllib.error import HTTPError, URLError
     from urllib.request import urlopen
 
     url = f"https://raw.githubusercontent.com/{entry['repo']}/{entry['branch']}/{entry['path']}"
     try:
         with urlopen(url, timeout=30) as response:
             current = response.read()
+    except HTTPError as error:
+        # A response, not a failure to get one. **404 is a drift, not an
+        # outage:** the recorded path is where a refresher would look, and it
+        # is not there any more. Skipping here is how a schema that moved
+        # upstream goes unnoticed for as long as nobody happens to read it --
+        # which is the whole thing this test exists to prevent, and is exactly
+        # what happened the first time a producer reorganised its repository.
+        if is_drift(error.code):
+            pytest.fail(
+                f"{entry['file']} is no longer at {entry['path']} in {entry['repo']} "
+                f"(HTTP {error.code}). Find where it moved to, check the content is "
+                f"still what was vendored, and update 'path' and 'commit' in "
+                f"tests/contracts/upstream.json."
+            )
+        pytest.skip(f"{url} answered {error.code}; upstream trouble rather than drift")
     except (URLError, TimeoutError) as error:
         pytest.skip(f"cannot reach {url}: {error}")
 
