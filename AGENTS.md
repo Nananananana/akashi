@@ -249,10 +249,19 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   actually wrong), `declared_miss` (is akashi's silence a stated limit). The
   plants where they disagree are the reason the corpus is worth more than a
   hallucination benchmark.
-- **Next: v0.2** — `akashi.audit-report/1` as a published schema, `report_id`
-  over exactly the inputs, `akashi recheck`. Then v0.4's `contradicted`, which
-  now has a corpus to price its false positives against and a baseline to beat:
-  verdict correctness 35%, source localisation 0%.
+- **Contract: `akashi.audit-report/1-draft`.** `schemas/audit-report-1.json`
+  publishes it and ships inside the wheel; `docs/audit-report.md` is the
+  contract for producers and consumers; `tests/test_report_conformance.py`
+  checks seven rules against every report the corpus can produce, plus seven
+  that assert the enums in the code and the enums in the schema are the same
+  set. There is no pydantic (ADR-0001), so those are the only thing keeping the
+  two representations in step.
+  **Frozen when a second program has produced and consumed a report, not on a
+  date.** A test asserts the string still ends in `-draft`, and it changes in
+  the same commit that records why.
+- **Next in v0.2:** `akashi recheck` and `--attestation`. Then v0.4's
+  `contradicted`, which now has a corpus to price its false positives against
+  and a baseline to beat: verdict correctness 35%, source localisation 0%.
 - **The corpus does not exercise the structure pass.** Its 177 segments are all
   prose; the nine marked answers are the only material with tables and list
   items in it (53 prose, 15 table rows, 12 list items). Worth fixing when the
