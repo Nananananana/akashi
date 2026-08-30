@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://akashi.dev/schemas/audit-report-1.json",
+  "title": "akashi.audit-report/1",
+  "description": "One answer, audited against the ContextPackage that produced it. A report says which load-bearing strings of the answer are in the text that was sent, and where. It says nothing about whether the answer is true.",
+  "type": "object",
+  "required": [
+    "contract",
+    "report_id",
+    "audited",
+    "unchecked",
+    "coverage",
+    "limits",
+    "counts",
+    "segments",
+    "provenance",
+    "answer"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "contract": {
+      "description": "Read first. A consumer that does not recognise the value refuses the report rather than guessing at it. `1-draft` is emitted until a second program has produced and consumed one; the freeze is a condition, not a date.",
+      "type": "string",
+      "pattern": "^akashi\\.audit-report/1(-draft)?$"
+    },
+    "report_id": {
+      "description": "sha256 over exactly what determined the report: the response, the package, the akashi version, the segmenters, the extractors and the language packs. Not the clock, and not the findings -- a report whose id covered its own findings could not be used to check that they were re-derived correctly.",
+      "$ref": "#/$defs/hash"
+    },
+    "audited": {
+      "type": "object",
+      "required": [
+        "package_id",
+        "response_hash",
+        "response_length",
+        "segmenters",
+        "extractors",
+        "packs",
+        "akashi_version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "package_id": {
+          "description": "The ContextPackage this was audited against. Empty when the producer set none.",
+          "type": "string"
+        },
+        "response_hash": { "$ref": "#/$defs/hash" },
+        "response_length": { "type": "integer", "minimum": 0 },
+        "segmenters": {
+          "description": "Every count on this report has these in its denominator (ADR-0009), so a recheck that produced different numbers can attribute the difference.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "extractors": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "packs": {
+          "description": "The language packs that were loaded. Narrowing them changes the segmentation and therefore every count, which is why they are in the report_id.",
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "akashi_version": { "type": "string" }
+      }
+    },
+    "unchecked": {
+      "description": "Every span akashi did not examine, each with the rule that caused it. Required, and empty only when nothing was skipped: a partial check reported as a single number reads as a total check (ADR-0005).",
+      "type": "array",
+      "items": { "$ref": "#/$defs/skip" }
+    },
+    "coverage": {
+      "description": "The denominators, published so a reader cannot assume the wrong one -- and they assume the generous one.",
+      "type": "object",
+      "required": [
+        "segments",
+        "bearing",
+        "unbearing",
+        "unexamined",
+        "particulars",
+        "checked",
+        "kinds_not_extracted"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "segments": { "type": "integer", "minimum": 0 },
+        "bearing": {
+          "description": "Examined, and holding at least one particular.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "unbearing": {
+          "description": "Examined, and holding nothing to check. Not a pass.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "unexamined": {
+          "description": "Not examined at all. Different from unbearing, and kept apart because a check that treats 'I looked and found nothing wrong' the same as 'I did not look' lies by omission.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "particulars": { "type": "integer", "minimum": 0 },
+        "checked": { "type": "integer", "minimum": 0 },
+        "kinds_not_extracted": {
+          "description": "Kinds in the vocabulary that no loaded rule finds. A blind spot that is not named reads as an absence of findings.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/particular_kind" }
+        }
+      }
+    },
+    "limits": {
+      "description": "What the method cannot do, on the artefact rather than in the documentation. The artefact travels and the documentation does not. Fixed wording: a caller who could reword it could soften it.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["segments", "particulars", "grounded_share"],
+      "additionalProperties": false,
+      "properties": {
+        "segments": {
+          "description": "Every verdict, including the ones that are zero. A verdict missing from a summary reads as a verdict that cannot happen.",
+          "type": "object",
+          "required": [
+            "grounded",
+            "floating",
+            "contradicted",
+            "unbearing",
+            "unchecked",
+            "unverifiable"
+          ],
+          "additionalProperties": false,
+          "patternProperties": { "^.*$": { "type": "integer", "minimum": 0 } }
+        },
+        "particulars": {
+          "type": "object",
+          "required": ["grounded", "floating"],
+          "additionalProperties": false,
+          "patternProperties": { "^.*$": { "type": "integer", "minimum": 0 } }
+        },
+        "grounded_share": {
+          "description": "Grounded particulars over checked ones. **null when nothing was checkable** -- not 0 and not 1. An answer with nothing to check has not scored well and has not scored badly, and a number here would be read as one of the two.",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/segment" }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["restored_by", "restoration_asserted", "protection_by", "withheld"],
+      "additionalProperties": false,
+      "properties": {
+        "restored_by": { "type": "string" },
+        "restoration_asserted": {
+          "description": "True when restored_by is the caller's word rather than something akashi watched happen (ADR-0013). A renderer must keep the two apart in wording as well as in data.",
+          "type": "boolean"
+        },
+        "protection_by": { "type": "string" },
+        "withheld": {
+          "description": "How many candidates the package held back, per rule. Context for the reader and never an explanation of any finding: an omission carries no text, so akashi cannot check an answer against it (ADR-0012).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule", "count"],
+            "additionalProperties": false,
+            "properties": {
+              "rule": { "type": "string", "minLength": 1 },
+              "count": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "answer": {
+      "description": "The text that was audited, verbatim. A report is complete on its own: every span in it indexes this string, so a reader needs nothing else to follow a finding.",
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "hash": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "span": {
+      "description": "A half-open range of code-point offsets into `answer`, or into a source document where the object says so.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "integer", "minimum": 0 }
+    },
+    "verdict": {
+      "description": "Three of these mean akashi found nothing wrong, for three different reasons. `contradicted` is defined and produced by nothing before v0.4.",
+      "enum": [
+        "grounded",
+        "floating",
+        "contradicted",
+        "unbearing",
+        "unchecked",
+        "unverifiable"
+      ]
+    },
+    "standing": {
+      "enum": ["grounded", "floating"]
+    },
+    "particular_kind": {
+      "enum": [
+        "number",
+        "quantity",
+        "percentage",
+        "money",
+        "date",
+        "time",
+        "duration",
+        "reference",
+        "identifier",
+        "proper_noun"
+      ]
+    },
+    "skip_rule": {
+      "enum": ["not_prose", "no_particulars", "protected"]
+    },
+    "layer": {
+      "description": "kiseki's distinction, and it survives the crossing. A particular grounded in an interpretation is grounded in an interpretation.",
+      "enum": ["fact", "measure", "interpretation", null]
+    },
+    "skip": {
+      "type": "object",
+      "required": ["segment_id", "span", "rule", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "segment_id": { "type": "string" },
+        "span": { "$ref": "#/$defs/span" },
+        "rule": { "$ref": "#/$defs/skip_rule" },
+        "reason": {
+          "description": "Why this span met the rule. Required and non-empty: a skip with no reason is a silent gap.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "location": {
+      "description": "One place a particular was found, in document coordinates. Not item coordinates: a reader opens the file, and the file does not know it was cut into items.",
+      "type": "object",
+      "required": ["item_id", "document_id", "source_path", "section", "span", "layer"],
+      "additionalProperties": false,
+      "properties": {
+        "item_id": { "type": "string", "minLength": 1 },
+        "document_id": { "type": "string", "minLength": 1 },
+        "source_path": { "type": "string" },
+        "section": { "type": "string" },
+        "span": { "$ref": "#/$defs/span" },
+        "layer": { "$ref": "#/$defs/layer" }
+      }
+    },
+    "particular": {
+      "type": "object",
+      "required": ["kind", "text", "span", "standing"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "$ref": "#/$defs/particular_kind" },
+        "text": { "type": "string", "minLength": 1 },
+        "span": { "$ref": "#/$defs/span" },
+        "standing": { "$ref": "#/$defs/standing" },
+        "locations": {
+          "description": "Every place it stands alone in the text that was sent. Present only when it grounded, and more than one is information rather than an error.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/location" }
+        },
+        "in_an_interpretation": {
+          "description": "Grounded, and every place it was found was already a judgement.",
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "standing": { "const": "grounded" } } },
+          "then": { "required": ["locations", "in_an_interpretation"] },
+          "else": {
+            "not": { "anyOf": [{ "required": ["locations"] }, { "required": ["in_an_interpretation"] }] }
+          }
+        }
+      ]
+    },
+    "segment": {
+      "type": "object",
+      "required": ["segment_id", "span", "text", "kind", "script", "boundary", "verdict"],
+      "additionalProperties": false,
+      "properties": {
+        "segment_id": { "type": "string", "minLength": 1 },
+        "span": { "$ref": "#/$defs/span" },
+        "text": { "type": "string", "minLength": 1 },
+        "kind": {
+          "enum": ["prose", "heading", "list_item", "table_row", "quote", "code"]
+        },
+        "script": {
+          "description": "For reporting only. Nothing in segmentation depends on it (ADR-0011).",
+          "enum": ["ja", "zh", "en", "und"]
+        },
+        "boundary": {
+          "description": "Why the segment ended where it did. `line` is the weaker fallback rule, and a report can say how much of an answer it cut.",
+          "enum": ["terminator", "structure", "line", "end"]
+        },
+        "verdict": { "$ref": "#/$defs/verdict" },
+        "because": {
+          "description": "Why akashi did not examine this segment. Present exactly when the verdict is `unchecked` or `unverifiable`.",
+          "type": "string",
+          "minLength": 1
+        },
+        "particulars": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/particular" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "verdict": { "enum": ["unchecked", "unverifiable"] } },
+            "required": ["verdict"]
+          },
+          "then": {
+            "required": ["because"],
+            "not": { "required": ["particulars"] }
+          },
+          "else": { "not": { "required": ["because"] } }
+        }
+      ]
+    }
+  }
+}

@@ -23,7 +23,7 @@ learned it the expensive way.
 | `AGENTS.md` | For contributors and AI agents: the current rules, constraints and state |
 | `docs/concept.md` | The conceptual model, and the whole picture across four projects |
 | `docs/architecture.md` | The current architecture — **not written yet, on purpose** |
-| `docs/audit-report.md` | The AuditReport contract — **not written yet**; the shape is `1-draft` and freezes in v0.2 |
+| `docs/audit-report.md` | The AuditReport contract, for producers and consumers. `1-draft` until a second program has produced and consumed one |
 | `docs/threat-model.md` | What a report contains, and what it becomes if it leaks — **not written yet** |
 | `docs/evaluation-corpus.md` | The labelled dataset: its shape, its plants, and what it cannot tell you |
 | `docs/measurements.md` | What extraction and segmentation actually score, with the commands that produced the numbers |
