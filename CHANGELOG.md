@@ -88,6 +88,16 @@ API yet.
   be measured on material written by the author of the unit lists.
   [`docs/measurements.md`](docs/measurements.md) publishes it; the feature waits
   on the v0.6 public corpus.
+- **`unverifiable` is produced.** It was in the vocabulary, handled in
+  coverage, required by the report schema, promised by
+  [ADR-0008](docs/adr/0008-restore-before-you-audit.md) and described in three
+  docstrings — and no audit had ever emitted it. `admit()` computed the
+  placeholder residue and `audit()` never passed it on, so a value `mamori`
+  masked came back **`floating`**: an honest answer reported as probably
+  fabricated, by the component whose job is to be believed. A segment whose
+  value could not be restored is now `unverifiable`, says which token and why,
+  carries no particulars, and counts as unexamined rather than as a finding.
+  The rest of the answer is still audited.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),

@@ -37,6 +37,7 @@ from enum import Enum
 from .contradiction import Contradiction, SourceIndex
 from .evidence import Evidence, Location
 from .particular import Particular
+from .protection import PlaceholderResidue
 from .segment import Segment
 from .span import Span
 
@@ -183,6 +184,7 @@ def check_segment(
     particulars: Sequence[Particular],
     evidence: Evidence,
     sources: SourceIndex | None = None,
+    residue: Sequence[PlaceholderResidue] = (),
 ) -> CheckedSegment:
     """Resolve one segment's particulars against the text that was sent.
 
@@ -193,6 +195,13 @@ def check_segment(
     ``sources`` is what turns a floating particular into a contradicted one. It
     is optional and an absent one changes no verdict except that: without it
     every finding is ``floating``, which is exactly what v0.1 through v0.3 did.
+
+    ``residue`` is placeholder-shaped text a restorer could not put back, and it
+    is checked **before** anything is resolved. ADR-0008: a segment whose value
+    was masked is ``unverifiable`` and never ``floating``, because *unknown* and
+    *false* are different and an auditor that conflates them teaches its user to
+    ignore it. A floating particular says the figure is in none of the sources;
+    here nobody knows what the figure was.
     """
     if segment.is_code:
         return CheckedSegment(
@@ -200,6 +209,20 @@ def check_segment(
             verdict=Verdict.UNCHECKED,
             because="a fenced block; a number in code is as likely to be a line number "
             "or a hash as a claim about the world",
+        )
+
+    unrestored = [one for one in residue if segment.span.overlaps(one.span)]
+    if unrestored:
+        # No particulars, which ``CheckedSegment`` enforces: reporting findings
+        # from a segment akashi has just said it could not check would be the
+        # conflation this branch exists to prevent, one level down.
+        listed = ", ".join(one.token for one in unrestored[:3])
+        more = ", ..." if len(unrestored) > 3 else ""
+        return CheckedSegment(
+            segment=segment,
+            verdict=Verdict.UNVERIFIABLE,
+            because=f"a value here was redacted and could not be restored ({listed}{more}); "
+            f"akashi does not know what it was, which is not the same as knowing it is wrong",
         )
 
     resolved = tuple(

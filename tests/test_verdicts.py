@@ -330,3 +330,98 @@ def test_assessing_the_same_answer_twice_gives_the_same_assessment() -> None:
     """ADR-0003, at the level everything above this inherits it from."""
     answer = "The tent weighs 2.4kg. It was light. ```\nx=1\n```"
     assert look(answer) == look(answer)
+
+
+# --- unverifiable, which is not floating -------------------------------------
+#
+# `Verdict.UNVERIFIABLE` was in the enum, handled in `coverage`, documented in
+# `docs/audit-report.md` and promised by ADR-0008 and three docstrings -- and
+# nothing produced it. An irreversible protection left a masked value reported
+# as `floating`, which is the exact conflation ADR-0008 exists to prevent:
+# *unknown* and *false* are different, and an auditor that mixes them teaches
+# its user to ignore it.
+
+
+def residue_of(text: str):
+    from akashi.domain.protection import find_placeholders
+
+    return find_placeholders(text)
+
+
+def check_with_residue(answer: str, sources: list[str] | None = None):
+    from akashi.domain.evidence import Evidence, item
+    from akashi.domain.extraction import extract_from_segment
+    from akashi.domain.segment import segment_answer
+    from akashi.domain.verdict import check_segment
+
+    evidence = Evidence.of(
+        [item(f"itm_{n:02d}", text) for n, text in enumerate(sources or [], start=1)]
+    )
+    found = residue_of(answer)
+    return [
+        check_segment(segment, extract_from_segment(segment, DEFAULT), evidence, None, found)
+        for segment in segment_answer(answer, DEFAULT).segments
+    ]
+
+
+def test_a_segment_whose_value_was_masked_is_unverifiable_and_not_floating() -> None:
+    """The defect this was written for. A masked value is not a fabrication and
+    must never be reported as one."""
+    from akashi.domain.verdict import Verdict
+
+    [segment] = check_with_residue("担当は <PERSON_001> です。")
+    assert segment.verdict is Verdict.UNVERIFIABLE
+    assert segment.verdict is not Verdict.FLOATING
+
+
+def test_it_says_why_and_says_which_token() -> None:
+    """`because` is required exactly when a segment was not examined, and a
+    reason a reader cannot act on is a silent gap wearing a sentence."""
+    [segment] = check_with_residue("担当は <PERSON_001> です。")
+    assert "<PERSON_001>" in segment.because
+    assert "not the same as knowing it is wrong" in segment.because
+
+
+def test_an_unverifiable_segment_reports_no_particulars() -> None:
+    """Enforced by ``CheckedSegment`` and relied on here. Reporting findings
+    from a segment akashi has just said it could not check would be the same
+    conflation one level down."""
+    [segment] = check_with_residue("金額は <AMOUNT_003> 円、税別。")
+    assert segment.particulars == ()
+
+
+def test_only_the_segments_that_carry_residue_are_affected() -> None:
+    """akashi audits what it can and marks what it cannot -- it does not give up
+    on the whole answer because one sentence lost a value."""
+    from akashi.domain.verdict import Verdict
+
+    first, second = check_with_residue(
+        "担当は <PERSON_001> です。金額は 45,000 円でした。", ["金額は 45,000 円。"]
+    )
+    assert first.verdict is Verdict.UNVERIFIABLE
+    assert second.verdict is Verdict.GROUNDED
+
+
+def test_without_residue_nothing_changes() -> None:
+    """The regression guard in the other direction. ``residue`` defaults to
+    empty, so every audit that has no protection behaves exactly as before."""
+    from akashi.domain.verdict import Verdict
+
+    [segment] = check_with_residue("金額は 45,000 円でした。", ["金額は 45,000 円。"])
+    assert segment.verdict is Verdict.GROUNDED
+
+
+def test_the_masked_segment_counts_as_unexamined_rather_than_as_a_finding() -> None:
+    """It is not a finding and it is not a pass. Coverage is where an answer
+    akashi could only half-read says so."""
+    from akashi.domain.coverage import assess
+
+    assessment = assess(
+        check_with_residue(
+            "担当は <PERSON_001> です。金額は 45,000 円でした。", ["金額は 45,000 円。"]
+        ),
+        (),
+    )
+    assert assessment.findings == ()
+    assert assessment.coverage.unexamined == 1
+    assert [skip.rule.value for skip in assessment.skipped] == ["protected"]

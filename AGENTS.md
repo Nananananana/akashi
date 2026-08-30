@@ -151,7 +151,7 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   is not stable.
 - **License: Apache-2.0. Python: 3.12+. Runtime dependencies: 0**, checked in CI
   by installing without extras and asserting nothing came along.
-- 1,290 tests, 97% coverage. `ruff`, `mypy --strict` and six `import-linter`
+- 1,339 tests, 98% coverage. `ruff`, `mypy --strict` and six `import-linter`
   contracts all green. The two that were parked in `.importlinter` went live
   when `evaluation/` appeared, which is what `tests/test_layering_config.py`
   exists to force.
