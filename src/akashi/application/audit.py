@@ -64,6 +64,10 @@ def audit(
             response_length=len(text),
             segmenters=segmentation.segmenters,
             extractors=tuple(sorted(pack.extractor_name for pack in packs if pack.rules)),
+            # Narrowing the packs changes the segmentation and therefore every
+            # count, so the set that was loaded is part of what identifies the
+            # report rather than a note beside it.
+            packs=tuple(sorted(pack.code for pack in packs)),
             akashi_version=akashi_version,
         ),
         provenance=ReportProvenance(
