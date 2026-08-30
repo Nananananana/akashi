@@ -41,6 +41,11 @@ dev = [
     # pydantic in the core (ADR-0001), so the schema and the dataclasses are
     # kept in step by a test rather than derived from one another.
     "jsonschema>=4",
+    # Reads the CI and hook configuration structurally rather than by matching
+    # strings, so a guard cannot pass by finding its own explanation in a
+    # comment. It arrives with pre-commit anyway; declared because a test that
+    # depends on a transitive dependency breaks the day that dependency moves.
+    "pyyaml>=6",
 ]
 
 # There is deliberately no `siblings` extra, and the reason is stronger than it
