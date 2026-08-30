@@ -23,8 +23,10 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
+from typing import Any
 
 from .coverage import Assessment
+from .verdict import CheckedParticular, CheckedSegment
 
 __all__ = [
     "CONTRACT",
@@ -151,6 +153,74 @@ class AuditReport:
     def has_findings(self) -> bool:
         return bool(self.assessment.findings)
 
+    def to_dict(self) -> dict[str, Any]:
+        """The report as plain data, in the order a reader skims it.
+
+        Here rather than at the edge that happens to print it. A report is a
+        document (ADR-0002) -- it is what somebody keeps to show that an answer
+        was checked -- and a shape defined inside one CLI branch is a shape the
+        next consumer writes again, slightly differently. ``recheck`` compares
+        two of these, and it lives in a layer that cannot reach infrastructure.
+
+        Field order is insertion order and it is deliberate. ``contract`` is
+        first because a consumer reads it first and refuses what it does not
+        recognise; ``unchecked``, ``coverage`` and ``limits`` come before
+        ``segments`` for the same reason the text rendering does (ADR-0005).
+        JSON objects are unordered by specification and ordered in practice, and
+        a reader skimming the raw file is a real reader.
+        """
+        coverage = self.assessment.coverage
+        return {
+            "contract": self.contract,
+            "report_id": self.report_id,
+            "audited": {
+                "package_id": self.audited.package_id,
+                "response_hash": self.audited.response_hash,
+                "response_length": self.audited.response_length,
+                "segmenters": list(self.audited.segmenters),
+                "extractors": list(self.audited.extractors),
+                "packs": list(self.audited.packs),
+                "akashi_version": self.audited.akashi_version,
+            },
+            "unchecked": [
+                {
+                    "segment_id": skip.segment_id,
+                    "span": [skip.span.start, skip.span.end],
+                    "rule": skip.rule.value,
+                    "reason": skip.reason,
+                }
+                for skip in self.assessment.skipped
+            ],
+            "coverage": {
+                "segments": coverage.segments,
+                "bearing": coverage.bearing,
+                "unbearing": coverage.unbearing,
+                "unexamined": coverage.unexamined,
+                "particulars": coverage.particulars,
+                "checked": coverage.checked,
+                "kinds_not_extracted": list(coverage.kinds_not_extracted),
+            },
+            "limits": list(self.assessment.limits),
+            "counts": {
+                "segments": self.assessment.counts(),
+                "particulars": self.assessment.particular_counts(),
+                # ``null`` rather than 1.0 or 0.0 when nothing was checkable. A
+                # number there would be read as a pass or a failure, and it is
+                # neither.
+                "grounded_share": self.assessment.grounded_share,
+            },
+            "segments": [_segment_dict(segment) for segment in self.assessment.segments],
+            "provenance": {
+                "restored_by": self.provenance.restored_by,
+                "restoration_asserted": self.provenance.restoration_asserted,
+                "protection_by": self.provenance.protection_by,
+                "withheld": [
+                    {"rule": rule, "count": count} for rule, count in self.provenance.withheld
+                ],
+            },
+            "answer": self.answer,
+        }
+
     def summary(self) -> str:
         """One line, and it does not lead with the score.
 
@@ -165,3 +235,44 @@ class AuditReport:
             f"{coverage.unbearing + coverage.unexamined} not checked, "
             f"{coverage.checked} particulars checked, {scored}"
         )
+
+
+def _segment_dict(segment: CheckedSegment) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "segment_id": segment.segment.segment_id,
+        "span": [segment.span.start, segment.span.end],
+        "text": segment.segment.text,
+        "kind": segment.segment.kind.value,
+        "script": segment.segment.script.value,
+        "boundary": segment.segment.boundary.value,
+        "verdict": segment.verdict.value,
+    }
+    if segment.because:
+        body["because"] = segment.because
+    if segment.particulars:
+        body["particulars"] = [_particular_dict(one) for one in segment.particulars]
+    return body
+
+
+def _particular_dict(one: CheckedParticular) -> dict[str, Any]:
+    span = one.particular.span
+    body: dict[str, Any] = {
+        "kind": one.particular.kind.value,
+        "text": one.particular.text,
+        "span": [span.start, span.end],
+        "standing": one.standing.value,
+    }
+    if one.locations:
+        body["locations"] = [
+            {
+                "item_id": location.item_id,
+                "document_id": location.anchor.document_id,
+                "source_path": location.anchor.source_path,
+                "section": location.anchor.section,
+                "span": [location.anchor.span.start, location.anchor.span.end],
+                "layer": location.layer.value if location.layer else None,
+            }
+            for location in one.locations
+        ]
+        body["in_an_interpretation"] = one.in_an_interpretation
+    return body

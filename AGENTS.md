@@ -259,9 +259,19 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   **Frozen when a second program has produced and consumed a report, not on a
   date.** A test asserts the string still ends in `-draft`, and it changes in
   the same commit that records why.
-- **Next in v0.2:** `akashi recheck` and `--attestation`. Then v0.4's
-  `contradicted`, which now has a corpus to price its false positives against
-  and a baseline to beat: verdict correctness 35%, source localisation 0%.
+- **`akashi recheck` re-derives a report from the inputs it names.** It refuses
+  *before* it works: a recheck against the wrong package or the wrong response
+  would report a mismatch, and that mismatch would be a true statement that
+  misleads. A version difference is named first and explicitly is not tampering.
+  It re-derives with **the packs the report names**, not this machine's default.
+  Exit codes: `0` identical, `1` could not run, `5` re-derived and different.
+- **The report's *shape* is domain (`AuditReport.to_dict`) and only its
+  serialization is infrastructure.** A report is a document (ADR-0002), and what
+  a document contains is not a formatting decision — `recheck` lives in
+  `application`, which may not reach infrastructure, and needed the shape.
+- **Next in v0.2:** `--attestation`. Then v0.4's `contradicted`, which now has a
+  corpus to price its false positives against and a baseline to beat: verdict
+  correctness 35%, source localisation 0%.
 - **The corpus does not exercise the structure pass.** Its 177 segments are all
   prose; the nine marked answers are the only material with tables and list
   items in it (53 prose, 15 table rows, 12 list items). Worth fixing when the
