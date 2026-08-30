@@ -278,6 +278,67 @@ def test_a_protection_that_is_neither_null_nor_an_object_is_refused() -> None:
         read_package(package)
 
 
+# --- A protection block is read as strictly as the contract writes it --------
+#
+# The contract requires ``by``, ``scope`` and ``reversible``, the first two with
+# ``minLength: 1``. The reader used to take ``scope`` as optional and
+# ``reversible`` through ``bool()``, so a malformed block was audited as
+# "irreversible, scope unstated". That is the safe direction and it was still
+# wrong: it was reached by accident, and ADR-0008 turns on ``reversible``.
+
+
+WHOLE = {"by": "mamori@0.17.0", "scope": "sess_2f11", "reversible": True}
+
+
+@pytest.mark.parametrize("missing", ["by", "scope", "reversible"])
+def test_a_protection_block_missing_any_field_is_refused(missing: str) -> None:
+    block = {key: value for key, value in WHOLE.items() if key != missing}
+    with pytest.raises(ContractError, match=f"has no '{missing}'"):
+        read_package(minimal(provenance={"protection": block}))
+
+
+@pytest.mark.parametrize("blank", ["by", "scope"])
+def test_a_protection_field_the_contract_requires_content_in_may_not_be_empty(
+    blank: str,
+) -> None:
+    """``minLength: 1``. A producer that sends ``""`` has said nothing while
+    appearing to have answered, and ``scope`` is what a reader would use to
+    decide which part of the package the redaction touched."""
+    with pytest.raises(ContractError, match=f"has an empty '{blank}'"):
+        read_package(minimal(provenance={"protection": {**WHOLE, blank: ""}}))
+
+
+@pytest.mark.parametrize("value", ["false", "true", 0, 1, None, []])
+def test_reversible_must_be_a_boolean_and_is_not_coerced(value: object) -> None:
+    """The reason this is not ``bool(raw.get("reversible"))``.
+
+    That reads the string ``"false"`` as ``True`` — a package nobody can
+    restore, audited as though it could be. Every value here is refused rather
+    than interpreted, including the ones that would have come out right.
+    """
+    with pytest.raises(ContractError, match="'reversible' that is not a boolean"):
+        read_package(minimal(provenance={"protection": {**WHOLE, "reversible": value}}))
+
+
+def test_a_whole_protection_block_still_reads() -> None:
+    read = read_package(minimal(provenance={"protection": WHOLE}))
+    assert read.protection == Protection(**WHOLE)  # type: ignore[arg-type]
+    assert read.declares_protection
+
+
+def test_null_and_absent_are_still_different_after_the_tightening() -> None:
+    """``declares_protection`` does the same job it always did. A malformed
+    block is now a third thing: refused outright, rather than joining either
+    of the two the contract distinguishes."""
+    declared = read_package(minimal(provenance={"protection": None}))
+    assert declared.protection is None
+    assert declared.declares_protection
+
+    silent = read_package(minimal(provenance={}))
+    assert silent.protection is None
+    assert not silent.declares_protection
+
+
 # --- Loading from a file -----------------------------------------------------
 
 
