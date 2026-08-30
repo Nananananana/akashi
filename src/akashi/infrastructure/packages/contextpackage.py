@@ -222,6 +222,16 @@ def _protection(raw: object, where: str) -> Protection | None:
     rather than to guess. ``null`` still means "nothing redacted this"; absent
     still means "this package did not say", which ``declares_protection``
     carries and which ADR-0008 already refuses on.
+
+    **This strictness belongs to *this* contract and must not be carried to the
+    next one.** ``tsumugi.context-package/1`` requires ``reversible``, so a
+    block without it is malformed. ``mamori.protection-scope/1`` says the
+    opposite for a field of the same name: a consumer that cannot find
+    ``reversible`` reads it as ``false``, because there the value is computed
+    rather than defaulted and the rule exists for readers of records mamori did
+    not write (its ADR-0032). Two contracts, one field name, opposite rules for
+    its absence. Whoever writes the protection-scope reader should read that ADR
+    before reusing anything here.
     """
     if raw is None:
         return None
