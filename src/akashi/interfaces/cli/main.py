@@ -10,6 +10,7 @@ apart:
 ``1``  it could not be audited -- a protected answer, an unreadable package
 ``2``  the command line was wrong
 ``3``  audited, and something floats. Only with ``--fail-on-findings``
+``4``  a floor was breached. Only with ``eval --gate``
 
 The default is ``0`` for an audit that found problems, because *finding* things
 is what an auditor does and a non-zero exit for that would make the ordinary
@@ -30,9 +31,11 @@ from akashi.application import audit
 from akashi.errors import AkashiError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
+from akashi.evaluation.floors import check as check_floors
 from akashi.evaluation.marked import load_marked, score_extraction
 from akashi.evaluation.rendering import as_dict as evaluation_dict
 from akashi.evaluation.rendering import as_text as evaluation_text
+from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
 from akashi.infrastructure.rendering import as_json, as_text
@@ -43,6 +46,7 @@ AUDITED = 0
 REFUSED = 1
 MISUSED = 2
 FOUND = 3
+BREACHED = 4
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -130,6 +134,12 @@ def _parser() -> argparse.ArgumentParser:
         metavar="DIR",
         help="hand-marked realistic answers, for extraction recall. Skipped when absent",
     )
+    eval_command.add_argument(
+        "--gate",
+        action="store_true",
+        help=f"exit {BREACHED} when a metric falls through its floor. The floors are in "
+        f"src/akashi/evaluation/floors.py, each beside the score it was set against",
+    )
     eval_command.add_argument("--json", action="store_true", help="emit the numbers as JSON")
     eval_command.add_argument(
         "--language", action="append", metavar="CODE", help="restrict the language packs"
@@ -188,12 +198,31 @@ def _eval(arguments: argparse.Namespace, out: TextIO) -> int:
         overall, by_language, _ = score_extraction(answers, chosen)
         extraction = (overall, by_language)
 
+    measured = measured_values(breakdown, extraction)
+    breaches = check_floors(measured)
+
     if arguments.json:
         body = evaluation_dict(breakdown, notes, cases=len(cases), extraction=extraction)
+        body["floors"] = {
+            "breaches": [breach.describe() for breach in breaches],
+            "measured": measured,
+        }
         rendered = json.dumps(body, ensure_ascii=False, indent=2) + "\n"
     else:
-        rendered = evaluation_text(breakdown, notes, cases=len(cases), extraction=extraction)
+        rendered = evaluation_text(
+            breakdown,
+            notes,
+            cases=len(cases),
+            extraction=extraction,
+            floors=(measured, breaches),
+        )
     print(rendered, end="", file=out)
+    if arguments.gate and breaches:
+        # Named on stderr as well, because a build log is read from the end and
+        # the reason a gate went red should not need scrolling for.
+        for breach in breaches:
+            print(f"akashi: {breach.describe()}", file=sys.stderr)
+        return BREACHED
     return AUDITED
 
 
