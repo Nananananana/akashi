@@ -88,10 +88,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      # The README promises `pip install akashi` installs one thing. A promise
-      # in a README decays; this one is checked on every push. An auditor with
-      # a supply chain is not an auditor, and the number that says so has to be
+      # The README promises zero runtime dependencies -- "an auditor with a
+      # supply chain is not an auditor". A promise in a README decays; this one
+      # is checked on every push, because the number that says so has to be
       # measured rather than asserted.
+      #
+      # It used to say the README promises `pip install akashi`. It does not,
+      # and it could not: that name on PyPI belongs to an unrelated project.
+      # What akashi is published as is undecided and is a decision about the
+      # product, not about this job.
       - name: Install with no extras
         run: python -m pip install --upgrade pip && python -m pip install .
 
