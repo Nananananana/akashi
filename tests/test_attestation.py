@@ -305,6 +305,21 @@ def test_the_two_identifiers_agree_on_the_version_they_name() -> None:
     announce a predicate type whose schema describes something else, and every
     test here would still pass, because each checks its own half. This is the
     only place the halves are compared.
+
+    **It is not the weaker half of the test above it**, which was worth
+    checking rather than assuming. The better general rule — pass a real
+    document through both sides rather than comparing identifiers — has one
+    blind spot, and it is exactly this field: **`$id` takes no part in
+    validation.** Measured, not recalled: a schema whose `$id` claims to be
+    `audit-report-9.json` validates this predicate identically. `$id` is used
+    for `$ref` resolution and for registries, never for deciding whether a
+    document conforms.
+
+    So a document passing through both sides proves the *shapes* agree. It
+    cannot prove the *labels* do — and a consumer selects on a label before it
+    validates anything (ADR-0014). Each test is blind where the other looks: the
+    one above catches a broken route and a predicate that stopped conforming,
+    this one catches an identifier that quietly began naming something else.
     """
     import json
     from pathlib import Path
