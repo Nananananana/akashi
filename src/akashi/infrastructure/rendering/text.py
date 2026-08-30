@@ -135,6 +135,7 @@ def _coverage(report: AuditReport) -> list[str]:
 def _provenance(report: AuditReport) -> list[str]:
     provenance = report.provenance
     lines = ["Provenance"]
+    lines.append(f"{_INDENT}report {report.report_id}")
     if report.audited.package_id:
         lines.append(f"{_INDENT}package {report.audited.package_id}")
     if provenance.protection_by:
@@ -148,8 +149,6 @@ def _provenance(report: AuditReport) -> list[str]:
         listed = ", ".join(f"{count} {rule}" for rule, count in provenance.withheld)
         lines.append(f"{_INDENT}the package withheld {listed}")
         lines.append(f"{_INDENT}akashi cannot check an answer against withheld text")
-    if len(lines) == 1:
-        return []
     return [*lines, ""]
 
 

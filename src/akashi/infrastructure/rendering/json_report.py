@@ -35,12 +35,14 @@ def as_dict(report: AuditReport) -> dict[str, Any]:
     coverage = assessment.coverage
     return {
         "contract": report.contract,
+        "report_id": report.report_id,
         "audited": {
             "package_id": report.audited.package_id,
             "response_hash": report.audited.response_hash,
             "response_length": report.audited.response_length,
             "segmenters": list(report.audited.segmenters),
             "extractors": list(report.audited.extractors),
+            "packs": list(report.audited.packs),
             "akashi_version": report.audited.akashi_version,
         },
         "unchecked": [

@@ -26,7 +26,14 @@ from dataclasses import dataclass, field
 
 from .coverage import Assessment
 
-__all__ = ["CONTRACT", "AuditReport", "Audited", "ReportProvenance", "content_hash"]
+__all__ = [
+    "CONTRACT",
+    "AuditReport",
+    "Audited",
+    "ReportProvenance",
+    "content_hash",
+    "report_id",
+]
 
 #: Not frozen. ADR-0002: the freeze happens once a second program has produced
 #: and consumed a report, not once the calendar says v0.2.
@@ -40,6 +47,46 @@ def content_hash(text: str) -> str:
     reader holding the string alone can still check it.
     """
     return f"sha256:{hashlib.sha256(text.encode('utf-8')).hexdigest()}"
+
+
+#: The separator between fields of the canonical form. A newline, because no
+#: field may contain one -- a hash, a version and a pack name are all single
+#: tokens -- and because a serialization somebody has to reimplement should be
+#: readable when printed.
+_FIELD = "\n"
+
+
+def report_id(audited: Audited) -> str:
+    """The id of a report, over exactly what determined it.
+
+    Two runs over the same answer, the same package and the same akashi give one
+    id. That is what makes ``recheck`` a check rather than a re-print, and it is
+    why the canonical form is written out here rather than derived from a
+    dataclass: anyone reimplementing it needs the field order and the separator,
+    and ``dataclasses.astuple`` would silently change the answer the next time a
+    field is added.
+
+    **The pack set is in the hash and this is the part that is easy to miss.**
+    Narrowing the packs changes the segmentation and therefore every count on
+    the report; two audits that hashed the same either way could claim one id
+    for different findings.
+
+    **``created_at`` is not in it**, and neither is anything else that moves
+    without the inputs moving. A hash that changes when nothing changed is a
+    hash nobody can compare, which is the whole use.
+    """
+    canonical = _FIELD.join(
+        [
+            "akashi.audit-report/1",
+            audited.response_hash,
+            audited.package_id,
+            audited.akashi_version,
+            ",".join(audited.segmenters),
+            ",".join(audited.extractors),
+            ",".join(audited.packs),
+        ]
+    )
+    return f"sha256:{hashlib.sha256(canonical.encode('utf-8')).hexdigest()}"
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,6 +103,9 @@ class Audited:
     response_length: int = 0
     segmenters: tuple[str, ...] = ()
     extractors: tuple[str, ...] = ()
+    #: Every language pack that was loaded, by code. In the id because it
+    #: decides the segmentation and therefore every count on the report.
+    packs: tuple[str, ...] = ()
     akashi_version: str = ""
 
 
@@ -91,6 +141,11 @@ class AuditReport:
     audited: Audited = field(default_factory=Audited)
     provenance: ReportProvenance = field(default_factory=ReportProvenance)
     contract: str = CONTRACT
+
+    @property
+    def report_id(self) -> str:
+        """What this report is, by its inputs. See :func:`report_id`."""
+        return report_id(self.audited)
 
     @property
     def has_findings(self) -> bool:
