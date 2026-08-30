@@ -54,7 +54,16 @@ def _require(data: dict[str, Any], key: str, where: str) -> Any:
     return data[key]
 
 
-def _text(data: dict[str, Any], key: str, where: str, *, required: bool = True) -> str:
+def _text(
+    data: dict[str, Any], key: str, where: str, *, required: bool = True, least: int = 0
+) -> str:
+    """A string field. ``least`` mirrors the schema's ``minLength``.
+
+    Empty is a legal value for most fields here and the default reflects that.
+    Where the contract says ``minLength: 1`` it means the field carries
+    information, and a producer that sends ``""`` has said nothing while
+    appearing to have answered.
+    """
     if key not in data:
         if required:
             raise ContractError(f"{where} has no {key!r}, which the contract requires")
@@ -62,6 +71,24 @@ def _text(data: dict[str, Any], key: str, where: str, *, required: bool = True) 
     value = data[key]
     if not isinstance(value, str):
         raise ContractError(f"{where} has a {key!r} that is not a string: {value!r}")
+    if len(value) < least:
+        raise ContractError(
+            f"{where} has an empty {key!r}, and the contract requires it to say something"
+        )
+    return value
+
+
+def _flag(data: dict[str, Any], key: str, where: str) -> bool:
+    """A boolean field, and *only* a boolean.
+
+    ``bool(raw.get(key))`` would be shorter and is what this replaced. It reads
+    the string ``"false"`` as ``True``, which is the unsafe direction for
+    ``reversible``: a package nobody can restore would be audited as though it
+    could be.
+    """
+    value = _require(data, key, where)
+    if not isinstance(value, bool):
+        raise ContractError(f"{where} has a {key!r} that is not a boolean: {value!r}")
     return value
 
 
@@ -181,14 +208,39 @@ def _omission(raw: object, index: int) -> Withheld:
 
 
 def _protection(raw: object, where: str) -> Protection | None:
+    """A protection block, read exactly as strictly as the contract writes it.
+
+    The contract requires all three fields, and ``by`` and ``scope`` with
+    ``minLength: 1``. This used to read ``scope`` as optional and ``reversible``
+    through ``bool()``, so a malformed block became "irreversible, scope
+    unstated" and was audited.
+
+    That is the *safe* direction and it was still wrong, because it was reached
+    by accident rather than decided. ADR-0008 turns on ``reversible``: a package
+    that cannot say whether it can be restored has not told akashi the one thing
+    the decision needs, and the house rule everywhere else here is to refuse
+    rather than to guess. ``null`` still means "nothing redacted this"; absent
+    still means "this package did not say", which ``declares_protection``
+    carries and which ADR-0008 already refuses on.
+
+    **This strictness belongs to *this* contract and must not be carried to the
+    next one.** ``tsumugi.context-package/1`` requires ``reversible``, so a
+    block without it is malformed. ``mamori.protection-scope/1`` says the
+    opposite for a field of the same name: a consumer that cannot find
+    ``reversible`` reads it as ``false``, because there the value is computed
+    rather than defaulted and the rule exists for readers of records mamori did
+    not write (its ADR-0032). Two contracts, one field name, opposite rules for
+    its absence. Whoever writes the protection-scope reader should read that ADR
+    before reusing anything here.
+    """
     if raw is None:
         return None
     if not isinstance(raw, dict):
         raise ContractError(f"{where} is neither null nor an object: {raw!r}")
     return Protection(
-        by=_text(raw, "by", where),
-        scope=_text(raw, "scope", where, required=False),
-        reversible=bool(raw.get("reversible", False)),
+        by=_text(raw, "by", where, least=1),
+        scope=_text(raw, "scope", where, least=1),
+        reversible=_flag(raw, "reversible", where),
     )
 
 

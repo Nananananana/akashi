@@ -56,6 +56,15 @@ API yet.
   `source misdirection` is now a gated floor while `source localisation`
   deliberately is not -- a floor under a number you are willing to trade is a
   cage, and this trade would have been a build failure under one.
+- **A malformed `protection` block is refused rather than read charitably.**
+  The ContextPackage contract requires `by`, `scope` and `reversible`, the
+  first two with `minLength: 1`; the reader took `scope` as optional and
+  `reversible` through `bool()`, so a block missing them was audited as
+  "irreversible, scope unstated" — and `bool("false")` is `True`, which is the
+  unsafe direction for the field [ADR-0008](docs/adr/0008-restore-before-you-audit.md)
+  turns on. Nothing on the wire exercised it, because `tsumugi` writes all
+  three. Refusing it is the house rule everywhere else here, and this was an
+  accident rather than a decision.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),

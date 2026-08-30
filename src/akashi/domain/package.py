@@ -28,6 +28,24 @@ class Protection:
     touched are ``unverifiable`` rather than ``floating`` -- unknown and false
     are different, and an auditor that conflates them teaches its user to
     ignore it.
+
+    **The default of ``False`` is agreed across the seam and is not an
+    oversight.** ``tsumugi`` defaulted it to ``True`` and has settled on
+    ``False`` to match (its ADR-0020): ``reversible=True`` carries the meaning
+    *this can be restored, so an unresolved citation may be reported as
+    unsupported*, and when that is wrong the failure is silent -- honest
+    quotations reported as fabrications. The cost of a wrong default is
+    asymmetric, so it sits on the side that cannot be restored.
+
+    The optimistic default was not merely risky in principle. ``mamori``'s
+    ``PrivacyPolicy`` defaults its action to ``BLOCK``, and a blocked value is
+    gone -- so against the redactor this seam is actually pointed at,
+    ``reversible=True`` was wrong rather than hopeful. Do not flip it back
+    because the optimistic value reads better.
+
+    Reaching this default at all means constructing a ``Protection`` rather than
+    reading one: the reader requires all three fields and refuses a block that
+    omits any (the contract requires them too).
     """
 
     by: str
