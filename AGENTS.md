@@ -197,9 +197,25 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 - **`akashi eval` scores 42/42 fabrication recall and 0/42 false positives on
   the generated corpus.** That number is evidence the method does what it says
   on material written against its stated design — not evidence about production
-  traffic. The corpus was authored for it. Issue #24's hand-labelled realistic
-  answers are the harder test, and `unbearing` at 13% here is optimistic for the
-  same reason.
+  traffic. The corpus was authored for it.
+- **Extraction recall on nine hand-marked realistic answers: 87 of 96 (91%)
+  over everything marked, 87 of 87 (100%) over the kinds akashi claims,
+  precision 100%, every span exact.** The nine misses are all `proper_noun`,
+  which akashi declares it does not extract. **ADR-0004 survives its
+  falsification condition.**
+- **`unbearing` is 35% on realistic answers and 13% on the generated corpus.**
+  The generated one was written to carry particulars; the 35% is the honest
+  figure. About a third of a real answer is prose akashi has nothing to say
+  about — mostly the model hedging or reporting what it could not find, which
+  is a different thing from a claim it cannot check.
+- **Marking those answers found three more extractor defects**, and one of them
+  mattered: the sign was being dropped from `-20℃` and `±0.02mm`, so a flipped
+  sign would have grounded against the value it was flipped from. Also a
+  year-month date (`August 2026` read as `August 20`) and a digit inside a word
+  (`HbA1c` yielding a `1`). The digit-in-word fix then broke `350kPa` in the
+  corpus, which is why the rule forbids a letter *before* a bare number and not
+  after: a letter before a digit is a word carrying a digit; a letter after one
+  is a unit the extractor does not know yet.
 - **v0.3 is in progress, ahead of v0.2.** v0.3 is the milestone that decides
   whether ADR-0004 holds; freezing a report contract around a method whose
   extraction recall is unmeasured would be fixing a shape before knowing it

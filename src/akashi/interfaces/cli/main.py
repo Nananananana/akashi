@@ -30,6 +30,7 @@ from akashi.application import audit
 from akashi.errors import AkashiError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
+from akashi.evaluation.marked import load_marked, score_extraction
 from akashi.evaluation.rendering import as_dict as evaluation_dict
 from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.infrastructure.languages import DEFAULT, packs
@@ -123,6 +124,12 @@ def _parser() -> argparse.ArgumentParser:
         "held-out split that anything touches by default is a training split "
         "with a different name",
     )
+    eval_command.add_argument(
+        "--marked",
+        default="tests/marked",
+        metavar="DIR",
+        help="hand-marked realistic answers, for extraction recall. Skipped when absent",
+    )
     eval_command.add_argument("--json", action="store_true", help="emit the numbers as JSON")
     eval_command.add_argument(
         "--language", action="append", metavar="CODE", help="restrict the language packs"
@@ -171,11 +178,21 @@ def _eval(arguments: argparse.Namespace, out: TextIO) -> int:
 
     chosen = packs(*arguments.language) if arguments.language else DEFAULT
     breakdown, notes = run(cases, chosen)
+
+    # Skipped rather than refused when absent: the corpus and the marked
+    # answers measure different things, and a caller who has one should get
+    # the numbers it supports rather than an error about the other.
+    extraction = None
+    if Path(arguments.marked).is_dir():
+        answers = load_marked(arguments.marked)
+        overall, by_language, _ = score_extraction(answers, chosen)
+        extraction = (overall, by_language)
+
     if arguments.json:
-        body = evaluation_dict(breakdown, notes, cases=len(cases))
+        body = evaluation_dict(breakdown, notes, cases=len(cases), extraction=extraction)
         rendered = json.dumps(body, ensure_ascii=False, indent=2) + "\n"
     else:
-        rendered = evaluation_text(breakdown, notes, cases=len(cases))
+        rendered = evaluation_text(breakdown, notes, cases=len(cases), extraction=extraction)
     print(rendered, end="", file=out)
     return AUDITED
 

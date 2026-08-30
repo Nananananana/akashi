@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .marked import ExtractionScore
 from .metrics import Breakdown, Rate
 
 __all__ = ["as_dict", "as_text"]
@@ -39,7 +40,47 @@ def _line(rate: Rate) -> str:
     return f"  {rate.name:<30} {rate.hit:>5} of {rate.total:<5} {rate.share:>5.0%}"
 
 
-def as_text(breakdown: Breakdown, notes: list[str], *, cases: int) -> str:
+def extraction_text(score: ExtractionScore, by_language: dict[str, ExtractionScore]) -> list[str]:
+    """Extraction against hand-marked answers, printed as two recalls.
+
+    *Over everything marked* is coverage: how much of an answer akashi sees at
+    all. *Over the kinds it claims* is whether it does what it says. Publishing
+    only the second would score akashi against a boundary it drew for itself;
+    publishing only the first would count a declared limit as a defect.
+    """
+    claimed_found = score.found - score.found_declared_absent
+    claimed_total = score.marked - score.marked_declared_absent
+    lines = [
+        "Extraction, on hand-marked realistic answers",
+        f"  recall over everything marked  {score.found:>5} of {score.marked:<5} "
+        f"{_share(score.recall)}",
+        f"  recall over the claimed kinds  {claimed_found:>5} of {claimed_total:<5} "
+        f"{_share(score.recall_on_claimed_kinds)}",
+        f"  spans exact rather than near   {score.exact:>5} of {score.found:<5}",
+        f"  precision                      {score.extracted - score.unmarked_extractions:>5} "
+        f"of {score.extracted:<5} {_share(score.precision)}",
+        f"  unbearing segments             {score.unbearing:>5} of {score.segments:<5} "
+        f"{_share(score.unbearing_share)}",
+    ]
+    for name, single in by_language.items():
+        lines.append(
+            f"  {name}  everything {_share(single.recall)}   "
+            f"claimed {_share(single.recall_on_claimed_kinds)}"
+        )
+    return [*lines, ""]
+
+
+def _share(value: float | None) -> str:
+    return "  n/a" if value is None else f"{value:>5.0%}"
+
+
+def as_text(
+    breakdown: Breakdown,
+    notes: list[str],
+    *,
+    cases: int,
+    extraction: tuple[ExtractionScore, dict[str, ExtractionScore]] | None = None,
+) -> str:
     tally = breakdown.overall.tally
     rates = breakdown.overall.by_name()
     lines = [
@@ -67,6 +108,9 @@ def as_text(breakdown: Breakdown, notes: list[str], *, cases: int) -> str:
         lines.append(f"  {name}  recall {_short(recall)}   false positives {_short(wrong)}")
     lines.append("")
 
+    if extraction is not None:
+        lines += extraction_text(*extraction)
+
     lines.append("By plant kind")
     for name, score in breakdown.by_kind.items():
         lines.append(f"  {name:<24} {_kind_line(score.by_name())}")
@@ -89,6 +133,10 @@ def as_text(breakdown: Breakdown, notes: list[str], *, cases: int) -> str:
         "  Declared misses passed is not a score to improve. It is the count of",
         "  hallucinations ADR-0004 says akashi cannot see, published rather than",
         "  hidden.",
+        "  The hand-marked answers are nine, written by one model in one sitting,",
+        "  and marked by the person who wrote the extractor. That is the bias",
+        "  ADR-0010 warns about, and the markings are in the files so anyone can",
+        "  disagree with one.",
     ]
     return "\n".join(lines).rstrip() + "\n"
 
@@ -113,7 +161,13 @@ def _kind_line(rates: dict[str, Rate]) -> str:
     return "nothing to measure"
 
 
-def as_dict(breakdown: Breakdown, notes: list[str], *, cases: int) -> dict[str, Any]:
+def as_dict(
+    breakdown: Breakdown,
+    notes: list[str],
+    *,
+    cases: int,
+    extraction: tuple[ExtractionScore, dict[str, ExtractionScore]] | None = None,
+) -> dict[str, Any]:
     def body(score_rates: dict[str, Rate]) -> dict[str, Any]:
         return {
             rate.name: {"hit": rate.hit, "total": rate.total, "share": rate.share}
@@ -132,5 +186,35 @@ def as_dict(breakdown: Breakdown, notes: list[str], *, cases: int) -> dict[str, 
         "by_kind": {name: body(score.by_name()) for name, score in breakdown.by_kind.items()},
         "unattributed_floats": tally.unattributed_floats,
         "plants_split": tally.plants_split,
+        "extraction": _extraction_body(extraction),
         "notes": notes,
+    }
+
+
+def _extraction_body(
+    extraction: tuple[ExtractionScore, dict[str, ExtractionScore]] | None,
+) -> dict[str, Any] | None:
+    if extraction is None:
+        return None
+    score, by_language = extraction
+
+    def body(one: ExtractionScore) -> dict[str, Any]:
+        return {
+            "marked": one.marked,
+            "found": one.found,
+            "exact": one.exact,
+            "overlapping": one.overlapping,
+            "recall": one.recall,
+            "recall_on_claimed_kinds": one.recall_on_claimed_kinds,
+            "precision": one.precision,
+            "unbearing": one.unbearing,
+            "segments": one.segments,
+            "unbearing_share": one.unbearing_share,
+        }
+
+    return {
+        "overall": body(score),
+        "by_language": {name: body(one) for name, one in by_language.items()},
+        "misses": list(score.misses),
+        "surplus": list(score.surplus),
     }

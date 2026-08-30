@@ -147,6 +147,16 @@ ENGLISH = LanguagePack(
             pattern=(
                 r"(?<![A-Za-z])(?:January|February|March|April|May|June|July|August|"
                 r"September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|"
+                r"Sept|Oct|Nov|Dec)\.?\s+\d{4}(?![\d])"
+            ),
+            priority=93,
+            note="a month and a year: without this, August 2026 reads as August 20",
+        ),
+        ExtractionRule(
+            kind=ParticularKind.DATE,
+            pattern=(
+                r"(?<![A-Za-z])(?:January|February|March|April|May|June|July|August|"
+                r"September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|"
                 r"Sept|Oct|Nov|Dec)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,\s*\d{4})?"
             ),
             priority=92,
@@ -178,7 +188,7 @@ ENGLISH = LanguagePack(
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
             pattern=(
-                r"(?<![\d])\d[\d,.]*\s*(?:kilograms?|kilogrammes?|grams?|grammes?|"
+                r"[-−+±]?(?<![\d])\d[\d,.]*\s*(?:kilograms?|kilogrammes?|grams?|grammes?|"
                 r"milligrams?|tonnes?|tons?|pounds?|ounces?|kilometres?|kilometers?|"
                 r"metres?|meters?|centimetres?|centimeters?|millimetres?|millimeters?|"
                 r"litres?|liters?|millilitres?|milliliters?|"
