@@ -30,7 +30,18 @@ STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
 #: purpose: a consumer selects on this URI before it reads a single field, and a
 #: URI that moved when the report contract did not would break that selection
 #: for no reason.
-PREDICATE_TYPE = "https://akashi.dev/audit-report/v1"
+#:
+#: **The namespace has to be one akashi holds.** in-toto's spec says a TypeURI
+#: is "a collision-resistant type identifier", that it need not resolve, and
+#: that "TypeURIs are not registered -- the natural namespacing of URIs is
+#: sufficient to prevent collisions". That guarantee is the namespace, and a
+#: namespace only prevents collisions if it is yours. This was `akashi.dev`,
+#: which anybody can buy: whoever bought it after a missed renewal could publish
+#: a different definition at the exact URI already-issued attestations name, and
+#: attestations cannot be recalled. A repository URL is held by an account
+#: rather than by a renewal, so its worst case is a dead link rather than a live
+#: one somebody else controls -- and the spec allows an unresolvable TypeURI.
+PREDICATE_TYPE = "https://github.com/Nananananana/akashi/audit-report/v1"
 
 #: The subject when the caller named none. Not an empty string: a subject with
 #: no name is harder to read in a log than one that says it was unnamed.

@@ -223,3 +223,41 @@ def test_the_statement_is_not_escaped_into_unreadability(
     printed = capsys.readouterr().out
     assert "テント" in printed
     assert "\\u30c6" not in printed
+
+
+# --- The identifier lives in a namespace akashi holds -------------------------
+
+
+def test_the_identifiers_are_not_in_a_namespace_somebody_could_buy() -> None:
+    """in-toto's guarantee for a `predicateType` is the namespace itself:
+
+        TypeURIs are not registered. The natural namespacing of URIs is
+        sufficient to prevent collisions.
+
+    A namespace only prevents collisions if it is yours. These were under
+    `akashi.dev`, a domain anybody can register — and the failure is worse than
+    a dead link. A `predicateType` is what a verifier keys on *before* it reads
+    a field, attestations are made to travel and cannot be recalled, so whoever
+    bought the domain after a missed renewal could publish a different
+    definition at the exact URI already-issued statements name.
+
+    Pinned as a property rather than as the string, so that reintroducing a
+    rentable namespace fails here rather than in somebody's verifier years from
+    now. The values are read from the code and the schema, never from prose.
+    """
+    import json
+    from pathlib import Path
+
+    from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
+
+    held = "https://github.com/Nananananana/akashi/"
+    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
+
+    for name, value in (("predicateType", PREDICATE_TYPE), ("$id", identifier)):
+        assert value.startswith(held), (
+            f"{name} is {value!r}. It has to sit in a namespace held by an account "
+            f"rather than by a renewal: a lapsed one becomes somebody else's, and "
+            f"an identifier that becomes somebody else's is worse than one that "
+            f"stops resolving."
+        )

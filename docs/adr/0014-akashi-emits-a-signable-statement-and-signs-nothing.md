@@ -43,7 +43,7 @@ teams already run.
 {
   "_type": "https://in-toto.io/Statement/v1",
   "subject": [{"name": "answer.txt", "digest": {"sha256": "e5a3b0ba…"}}],
-  "predicateType": "https://akashi.dev/audit-report/v1",
+  "predicateType": "https://github.com/Nananananana/akashi/audit-report/v1",
   "predicate": { … the report, unchanged … }
 }
 ```
@@ -57,6 +57,44 @@ the same field, so the two cannot disagree.
 
 Keys, trust roots, revocation and verification are the caller's, with tooling
 they choose. akashi's contribution is the shape.
+
+## Amended while the contract was still a draft: the namespace has to be held
+
+The `predicateType` above was `https://akashi.dev/audit-report/v1`. It is now a
+repository URL, and the reason is the one line of the in-toto spec this decision
+rests on without having quoted it:
+
+> TypeURIs are not registered. The natural namespacing of URIs is sufficient to
+> prevent collisions.
+
+The guarantee **is** the namespace. A namespace only prevents collisions if it
+is yours, and `akashi.dev` is a domain anybody can buy.
+
+That matters more here than for a schema `$id`, for the reason this ADR exists.
+akashi emits and signs nothing, so an attestation is made to travel: somebody
+else signs it and a third party reads it later, without the package and without
+us. `predicateType` is what that reader keys on *before* looking at a single
+field. **An attestation cannot be recalled**, so whoever acquired the domain
+after a missed renewal could publish a different definition at the exact URI
+already-issued statements name — silently, years later, and landing on the
+reader.
+
+A repository URL is held by an account rather than by a renewal. Its worst case
+is that it stops resolving, which the spec explicitly permits — *"SHOULD resolve
+to a human-readable description, but MAY be unresolvable"* — and a dead link is
+not a live one somebody else controls.
+
+`urn:uuid:` was considered and declined: collision-resistant with no owner at
+all, and unreadable, which is the wrong trade for an artefact whose purpose is
+to be understood by somebody who was not there.
+
+The schema `$id` moved in the same change, because it is the same claim about
+the same namespace.
+
+**The window for this was open only because nothing had been issued.** The
+contract is still `1-draft` and no attestation has been emitted, so the change
+cost one commit. After the freeze it would have cost the meaning of every
+certificate already carrying the old identifier.
 
 ## Consequences
 
