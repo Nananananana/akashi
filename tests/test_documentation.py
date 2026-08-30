@@ -9,6 +9,7 @@ asserted.
 from __future__ import annotations
 
 import re
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -99,20 +100,36 @@ def test_a_published_schema_is_packaged_with_the_wheel() -> None:
     ``schemas/`` is empty, because hatchling refuses to build against a
     force-include that resolves to nothing. This is what stops that comment
     from outliving its reason.
+
+    **This reads the effective configuration rather than the text**, so a block
+    that has been commented out is simply absent and the assertion fails. It
+    also checks where the files are sent, because a destination of
+    ``akashi/schema`` would build a perfectly good wheel that no consumer can
+    read.
+
+    What it cannot do is open the artefact. ``force-include`` does not apply to
+    an editable install, so the developer's own tree never has the schema at
+    that path and a test looking for it would fail for everybody. The one place
+    a real install exists is the ``dependency count is zero`` CI job, and the
+    check that opens it lives there.
     """
-    if not list((ROOT / "schemas").glob("*.json")):
+    published = sorted(path.name for path in (ROOT / "schemas").glob("*.json"))
+    if not published:
         pytest.skip("no schema published yet; v0.2")
 
-    pyproject = ROOT / "pyproject.toml"
-    live = [
-        line
-        for line in pyproject.read_text(encoding="utf-8").splitlines()
-        if not line.lstrip().startswith("#")
-    ]
-    assert "[tool.hatch.build.targets.wheel.force-include]" in live, (
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    wheel = config["tool"]["hatch"]["build"]["targets"]["wheel"]
+    assert "force-include" in wheel, (
         "schemas/ now holds a published contract, so the force-include block in "
         "pyproject.toml must be uncommented. A consumer validating a report should not "
         "have to fetch a schema from the internet."
+    )
+
+    package = Path(wheel["packages"][0]).name
+    assert wheel["force-include"] == {"schemas": f"{package}/schemas"}, (
+        f"the schemas must land inside the {package} package directory, or "
+        f"importlib.resources cannot find them and the wheel ships a contract "
+        f"nobody can open: {wheel['force-include']}"
     )
 
 

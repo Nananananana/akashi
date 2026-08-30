@@ -95,6 +95,30 @@ jobs:
       - name: Install with no extras
         run: python -m pip install --upgrade pip && python -m pip install .
 
+      # ADR-0002 promises the contract ships inside the wheel, and pyproject
+      # says how. Both of those are declarations, and the test suite can only
+      # compare one declaration to the other -- `force-include` does not apply
+      # to an editable install, so a developer's tree never has the file at
+      # that path and a local test would fail for everybody.
+      #
+      # This job is the one place a real install exists, so this is the one
+      # place the artefact gets opened. It is opened the way a consumer opens
+      # it, through importlib.resources against the installed package, rather
+      # than by unzipping something we just built: a wheel that contains the
+      # file but puts it where nobody looks would pass the second check and
+      # fail this one.
+      - name: The contract is inside what was installed
+        run: |
+          python - <<'PY'
+          import json
+          from importlib.resources import files
+
+          shipped = files("akashi") / "schemas" / "audit-report-1.json"
+          body = json.loads(shipped.read_text(encoding="utf-8"))
+          assert body["$id"].endswith("audit-report-1.json"), body.get("$id")
+          print("shipped:", shipped)
+          PY
+
       - name: Assert nothing came with it
         run: |
           python - <<'PY'
