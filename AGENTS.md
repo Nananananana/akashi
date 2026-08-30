@@ -188,11 +188,10 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   against the vendored `tsumugi` schema *and* checks that each anchor's length
   matches its own text — the schema cannot express the second and every reported
   offset rests on it.
-- **Two parts of `docs/proposals/0001-the-design.md` are out of date and the
-  proposal stays as written.** Stage 6 there searches an omission index and
-  names an `omitted_source` rule; ADR-0012 withdrew both, because an omission
-  carries an anchor and a reason and not the text. The proposal is a record of
-  what was proposed, not of what is true.
+- **`docs/proposals/0002-what-building-it-taught.md` is the current roadmap.**
+  `0001` is the design as written before any code and stays that way; `0002`
+  revises its plan from what building cost, what the measurements said, and what
+  changed outside the repository. Read `0002` first.
 - **A restoration akashi did not watch is a claim** (ADR-0013). An answer with
   no placeholders in it is *not* evidence of restoration — `mamori` can
   substitute surrogates, which are designed to look like real values — so a

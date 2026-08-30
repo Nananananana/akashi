@@ -38,7 +38,9 @@ learned it the expensive way.
   because the reasoning is the point.
 - A proposal is never cited as evidence that something exists. When a proposal
   lands, the current-state documents change and the proposal stays where it is,
-  describing what was proposed.
+  describing what was proposed. A roadmap that turned out wrong is revised by a
+  *later* proposal saying so, never by editing the earlier one — the order the
+  two were written in is part of what they say.
 - The current-state documents describe what the code does today. If one of them
   disagrees with the code, one of the two is wrong and the disagreement is a
   defect — not a difference of opinion.
@@ -60,16 +62,18 @@ the freeze waits for a second consumer rather than for a date.
 
 Read in this order:
 
-1. [`proposals/0001-the-design.md`](proposals/0001-the-design.md) — the design
-   and the roadmap, written before the code and left as written afterwards. Two
-   parts of it are now out of date and it stays as written; `AGENTS.md` says
-   which.
-2. [`adr/0004`](adr/0004-the-particular-is-the-unit-of-verification.md) — the
+1. [`proposals/0002-what-building-it-taught.md`](proposals/0002-what-building-it-taught.md)
+   — the current roadmap, revised from what building actually cost and what the
+   measurements said. Read this before `0001`.
+2. [`proposals/0001-the-design.md`](proposals/0001-the-design.md) — the design
+   as it was written before any code existed, and it stays that way. Parts of it
+   are wrong; `0002` says which and why.
+3. [`adr/0004`](adr/0004-the-particular-is-the-unit-of-verification.md) — the
    decision the rest of the design is arranged around.
-3. [`adr/0005`](adr/0005-say-what-could-not-be-checked.md) — the decision that
+4. [`adr/0005`](adr/0005-say-what-could-not-be-checked.md) — the decision that
    makes 0004 honest.
-4. [`measurements.md`](measurements.md) — whether any of it is true.
-5. [`adr/README.md`](adr/README.md) — the rest. Three of the thirteen were
+5. [`measurements.md`](measurements.md) — whether any of it is true.
+6. [`adr/README.md`](adr/README.md) — the rest. Three of the thirteen were
    written *while* building and each corrects something the pre-code design got
    wrong.
 
