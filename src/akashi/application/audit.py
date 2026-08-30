@@ -55,7 +55,16 @@ def audit(
     # only finding a reader can act on without opening the file themselves.
     sources = SourceIndex.of(package.evidence, packs)
     checked = [
-        check_segment(segment, extract_from_segment(segment, packs), package.evidence, sources)
+        check_segment(
+            segment,
+            extract_from_segment(segment, packs),
+            package.evidence,
+            sources,
+            # What a restorer could not put back. ADR-0008's third path: audit
+            # what can be audited and mark what cannot, rather than reporting a
+            # masked value as a fabrication.
+            admission.residue,
+        )
         for segment in segmentation.segments
     ]
     assessment = assess(checked, kinds_not_extracted(packs))

@@ -173,3 +173,101 @@ def test_an_english_package_audits_too() -> None:
         one.particular.text for segment in report.assessment.segments for one in segment.floating
     ]
     assert "2025" in floating
+
+
+# --- The third path of ADR-0008: audit what you can, mark what you cannot -----
+
+
+def protected_package() -> ContextPackage:
+    """A package whose redaction cannot be undone. `mamori` masked a value, so
+    there is no mapping behind it and no restorer can help."""
+    from akashi.domain.evidence import item
+    from akashi.domain.package import Protection
+
+    return ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of(
+            [item("itm_01", "担当者の連絡先は社内名簿にある。金額は 45,000 円。")]
+        ),
+        protection=Protection(by="mamori@0.27.0", scope="session-abc", reversible=False),
+        declares_protection=True,
+    )
+
+
+MASKED = "担当は <PERSON_001> です。金額は 45,000 円でした。"
+
+
+def test_a_masked_value_reaches_the_report_as_unverifiable() -> None:
+    """The wire that was missing.
+
+    `admit` computed the residue and set `is_partly_unverifiable`; `audit` never
+    passed either along, so `Verdict.UNVERIFIABLE` -- in the enum, handled in
+    coverage, documented in the contract, promised by ADR-0008 -- had never been
+    emitted by any audit. The masked sentence came back `floating`, which tells
+    a reader an honest answer is probably fabricated.
+    """
+    report = audit(MASKED, protected_package(), DEFAULT)
+    verdicts = [segment.verdict for segment in report.assessment.segments]
+    assert Verdict.UNVERIFIABLE in verdicts
+    assert Verdict.FLOATING not in verdicts
+
+
+def test_the_rest_of_the_answer_is_still_audited() -> None:
+    """Refusing the whole answer is the other way to be useless. The amount is
+    quoted correctly and akashi says so."""
+    report = audit(MASKED, protected_package(), DEFAULT)
+    grounded = [
+        one.particular.text for segment in report.assessment.segments for one in segment.grounded
+    ]
+    assert "45,000 円" in grounded
+
+
+def test_the_masked_segment_is_not_counted_as_a_finding() -> None:
+    report = audit(MASKED, protected_package(), DEFAULT)
+    assert report.assessment.findings == ()
+    assert report.assessment.coverage.unexamined == 1
+
+
+def test_the_report_says_which_segment_it_could_not_check_and_why() -> None:
+    """ADR-0005. A gap a reader cannot see is worse than a gap."""
+    report = audit(MASKED, protected_package(), DEFAULT)
+    unverifiable = [
+        segment for segment in report.assessment.segments if segment.verdict is Verdict.UNVERIFIABLE
+    ]
+    assert len(unverifiable) == 1
+    assert "<PERSON_001>" in unverifiable[0].because
+
+
+def test_the_report_of_a_partly_masked_answer_still_validates() -> None:
+    """`because` is required exactly when a segment was not examined, and this
+    is the first verdict that exercises that branch of the schema."""
+    import json
+
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    jsonschema.validate(
+        audit(MASKED, protected_package(), DEFAULT).to_dict(),
+        json.loads(schema.read_text(encoding="utf-8")),
+    )
+
+
+def test_an_answer_that_is_masked_throughout_has_no_share_rather_than_a_zero() -> None:
+    """The degenerate case, and the one a percentage would misreport worst.
+
+    Every segment is unverifiable, so nothing was checked -- which is not the
+    same as nothing being grounded. A `0%` here reads as an answer that cited
+    nothing, and a `100%` reads as one that cited everything correctly. Neither
+    happened.
+    """
+    from akashi.domain.evidence import item
+    from akashi.domain.package import Protection
+
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "社内資料。")]),
+        protection=Protection(by="mamori@0.27.0", scope="s", reversible=False),
+        declares_protection=True,
+    )
+    report = audit("担当は <PERSON_001>。連絡先は <EMAIL_002>。", package, DEFAULT)
+    assert {segment.verdict for segment in report.assessment.segments} == {Verdict.UNVERIFIABLE}
+    assert report.assessment.grounded_share is None
