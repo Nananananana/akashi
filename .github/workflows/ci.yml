@@ -45,6 +45,16 @@ jobs:
         env:
           PYTHONUTF8: "1"
 
+      # The labelled corpus and the hand-marked answers, against floors set
+      # deliberately below what was measured. Floors, not targets: a gate at
+      # today's number makes every honest experiment a build failure, and
+      # src/akashi/evaluation/floors.py prints each bound beside the score it
+      # was set against so the gap stays visible.
+      - name: Evaluate
+        run: python -m akashi.interfaces.cli.main eval --tier ci --gate
+        env:
+          PYTHONUTF8: "1"
+
   lint:
     name: lint, types and layering
     runs-on: ubuntu-latest

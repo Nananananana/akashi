@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .floors import FLOORS, Breach
 from .marked import ExtractionScore
 from .metrics import Breakdown, Rate
 
@@ -70,6 +71,49 @@ def extraction_text(score: ExtractionScore, by_language: dict[str, ExtractionSco
     return [*lines, ""]
 
 
+def measured_values(
+    breakdown: Breakdown,
+    extraction: tuple[ExtractionScore, dict[str, ExtractionScore]] | None,
+) -> dict[str, float | None]:
+    """Everything a floor might bound, by the name the floor uses.
+
+    One place, so that a metric renamed in one file and not the other stops
+    being gated loudly rather than quietly.
+    """
+    rates = breakdown.overall.by_name()
+    values: dict[str, float | None] = {name: rate.share for name, rate in rates.items()}
+    if extraction is not None:
+        score, _ = extraction
+        values["extraction recall on claimed kinds"] = score.recall_on_claimed_kinds
+        values["extraction precision"] = score.precision
+        values["unbearing segments"] = score.unbearing_share
+    return values
+
+
+def floors_text(measured: dict[str, float | None], breaches: list[Breach]) -> list[str]:
+    """The bounds, each beside the score it was set against.
+
+    The gap is the point. A floor that has crept up to meet its measurement has
+    become a target, and printing the two side by side is what makes that
+    visible before it happens.
+    """
+    lines = ["Floors"]
+    for floor in FLOORS:
+        value = measured.get(floor.metric)
+        mark = " " if value is None or floor.holds(value) else "!"
+        shown = "  n/a" if value is None else f"{value:>5.0%}"
+        room = "invariant" if floor.is_invariant else f"floor set against {floor.measured:.0%}"
+        direction = ">=" if floor.at_least is not None else "<="
+        lines.append(
+            f" {mark} {floor.metric:<36} {shown}  {direction} {floor.bound:>4.0%}  ({room})"
+        )
+    if breaches:
+        lines.append("")
+        lines.append(f"  {len(breaches)} bound{'' if len(breaches) == 1 else 's'} breached:")
+        lines.extend(f"    {breach.describe()}" for breach in breaches)
+    return [*lines, ""]
+
+
 def _share(value: float | None) -> str:
     return "  n/a" if value is None else f"{value:>5.0%}"
 
@@ -80,6 +124,7 @@ def as_text(
     *,
     cases: int,
     extraction: tuple[ExtractionScore, dict[str, ExtractionScore]] | None = None,
+    floors: tuple[dict[str, float | None], list[Breach]] | None = None,
 ) -> str:
     tally = breakdown.overall.tally
     rates = breakdown.overall.by_name()
@@ -110,6 +155,9 @@ def as_text(
 
     if extraction is not None:
         lines += extraction_text(*extraction)
+
+    if floors is not None:
+        lines += floors_text(*floors)
 
     lines.append("By plant kind")
     for name, score in breakdown.by_kind.items():

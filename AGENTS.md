@@ -120,10 +120,20 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 - **Anything that changes extraction or segmentation is gated on `akashi eval`.**
   Run it before and after. Every count in the report has the segmenter in its
   denominator.
-- **Floors, not targets.** The eval gate is deliberately looser than the current
-  scores. A gate set at today's number makes every honest experiment a build
-  failure, and tuning to reach a threshold is what `mamori`'s ADR-0023 records
-  the cost of.
+- **Floors, not targets.** The gate is deliberately looser than the current
+  scores, and `src/akashi/evaluation/floors.py` refuses a floor set *at* its
+  measurement — the rule is enforced at construction rather than left to
+  whoever writes the next one. Every bound prints beside the score it was set
+  against, because a floor that has crept up to meet its measurement has become
+  a target and the gap is what makes that visible.
+  - Two bounds *are* their measurement and say so: refusing a protected
+    response and producing the same report twice are invariants (ADR-0008,
+    ADR-0003), not quality metrics. There is no honest experiment that trades
+    either away.
+  - Three metrics are deliberately **ungated**. Gating `declared misses passed`
+    would forbid akashi from ever catching a cross-document stitch, which is a
+    goal. Gating a number you want to move is how a measurement becomes a cage.
+- **CI runs `akashi eval --tier ci --gate`** on every push.
 - **Every discarding path carries its reason to the end.** A skipped segment
   produces an `unchecked[]` entry naming the rule. This is invasive to retrofit,
   so it is done from the first filter.
