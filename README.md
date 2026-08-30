@@ -9,8 +9,8 @@ model in the path and nothing installed alongside it.
 > it against a labelled corpus and nine hand-marked realistic answers, gated on
 > floors. Nothing is released and the API is not stable.
 > [`docs/measurements.md`](docs/measurements.md) is what it currently scores;
-> [`docs/proposals/0001-the-design.md`](docs/proposals/0001-the-design.md) is
-> the rest of the roadmap.
+> [`docs/proposals/0002-what-building-it-taught.md`](docs/proposals/0002-what-building-it-taught.md)
+> is the rest of the roadmap.
 
 ---
 
@@ -71,6 +71,9 @@ Said before what it will, because the boundary is the product.
   any particular passes. A sentence assembled from two documents, each quoted
   correctly, passes. These are named on every report rather than left for you to
   discover.
+- **Not causal faithfulness.** Whether the cited passage actually *influenced*
+  what the model wrote is a stronger claim than akashi makes, and measuring it
+  needs the model's internals. akashi never runs a model, so it never will.
 - **Not a guard rail.** akashi runs after the answer exists. It reports; it does
   not block or rewrite.
 
@@ -121,7 +124,8 @@ that can emit one.
 | | |
 |---|---|
 | [The concept](docs/concept.md) | What akashi asks, and why that question and not the obvious one |
-| [The design and the roadmap](docs/proposals/0001-the-design.md) | The whole plan, and what would falsify it |
+| [The roadmap](docs/proposals/0002-what-building-it-taught.md) | What building it taught, and the plan that follows |
+| [The original design](docs/proposals/0001-the-design.md) | Written before any code, left as written. Parts of it are wrong and `0002` says which |
 | [What it scores](docs/measurements.md) | Every number, with the command that produced it and what it does not say |
 | [The corpus](docs/evaluation-corpus.md) | The labelled dataset, its plants, and what it cannot tell you |
 | [Decisions](docs/adr/README.md) | Thirteen ADRs, each with what it costs |
