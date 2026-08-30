@@ -128,16 +128,32 @@ def test_a_protected_case_is_scored_on_its_refusal(
     assert rate.share == 1.0
 
 
-def test_source_localisation_is_measured_even_though_it_cannot_yet_be_hit(
+def test_source_localisation_moved_off_the_baseline_it_was_introduced_against(
     measured: tuple[object, list[str]],
 ) -> None:
     """A metric introduced at the same time as the feature it scores measures
-    nothing. This is the baseline v0.4 has to move."""
+    nothing, so this one was published at a structural zero for three versions
+    before ``contradicted`` existed to move it. It is 12 of 33 now."""
     breakdown, _ = measured
     rate = breakdown.overall.source_localisation  # type: ignore[attr-defined]
     assert rate.total > 0
+    assert 0 < rate.hit < rate.total
+
+
+def test_a_named_source_is_never_the_wrong_source(
+    measured: tuple[object, list[str]],
+) -> None:
+    """The number that decided how narrow ``contradicted`` had to be.
+
+    Sending a reader to a line that is correct, and telling them their answer
+    corrupted it, is worse than saying nothing about where the value came from.
+    Localisation recall was traded down from 27 of 33 to 12 of 33 to keep this
+    at none, and the trade is the finding rather than a tuning step.
+    """
+    breakdown, _ = measured
+    rate = breakdown.overall.source_misdirection  # type: ignore[attr-defined]
+    assert rate.total > 0
     assert rate.hit == 0
-    assert "v0.4" in rate.note
 
 
 def test_verdict_correctness_is_over_what_a_plant_should_ultimately_carry(

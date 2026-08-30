@@ -93,9 +93,14 @@ class Breach:
         )
 
 
-#: Set on 2026-08-30 and re-measured the same day when the structural name
-#: rules shipped. Two numbers moved and the bounds did not: extraction recall
-#: over everything marked went 91% -> 95%, and unbearing went 35% -> 30%.
+#: Set on 2026-08-30 and re-measured the same day, twice: once when the
+#: structural name rules shipped (extraction recall over everything marked went
+#: 91% -> 95%, unbearing 35% -> 30%) and once when ``contradicted`` did
+#: (verdict correctness 35% -> 59%, source localisation 0% -> 36%).
+#:
+#: Every bound below is where it was. ``verdict correctness`` is the clearest
+#: case: its score rose 24 points and its floor did not move, because nothing
+#: about what akashi can afford to lose changed when it got better.
 #:
 #: **Moving a bound because a score improved is how a floor becomes a target.**
 #: The ``measured`` figures below are updated because they are a record of what
@@ -121,12 +126,28 @@ FLOORS: tuple[Floor, ...] = (
     ),
     Floor(
         metric="verdict correctness",
-        measured=0.35,
+        measured=0.59,
         measured_on="2026-08-30",
         at_least=0.25,
         why=(
-            "the verdict a plant should ultimately carry. Low by construction until "
-            "contradicted ships in v0.4, and this bound stops it going lower"
+            "the verdict a plant should ultimately carry. It was 35% and is 59% now "
+            "that contradicted ships, and the bound stays at 25% on purpose: a floor "
+            "raised every time a score rises is a target wearing a floor's name"
+        ),
+    ),
+    Floor(
+        metric="source misdirection",
+        measured=0.0,
+        measured_on="2026-08-30",
+        at_most=0.05,
+        why=(
+            "a source named that is not the value replaced. Worse than naming none: it "
+            "sends a reader to a line that is correct and tells them it is not. With "
+            "twelve localisations, one of these is 8% and breaches -- which is the "
+            "intended strictness, not an accident of the sample size. Note which of "
+            "the pair is gated: source *localisation* is not, because 27 of its 33 "
+            "were given up in one afternoon to hold this number at zero, and a floor "
+            "under it would have forbidden the trade"
         ),
     ),
     Floor(

@@ -35,6 +35,27 @@ API yet.
   everything a person marked**, and about a third of a realistic answer is
   prose akashi has nothing to check in — so ADR-0004 survives both of its
   stated falsification conditions.
+- **v0.4, names and the first thing akashi can say about a source.** Structural
+  `proper_noun` rules -- a title before a name, an honorific or professional
+  title after one, a legal form on an organisation -- took extraction recall
+  over everything a person marked from 91% to 95% and unbearing segments from
+  35% to 30%.
+- **`contradicted` ships, and it is a third of the feature it was specified
+  as.** akashi now names the source value an answer replaced -- `the source
+  says '5mg'` with the offset to open -- but only where the answer kept that
+  source's digits *exactly* and changed the text beside them. Source
+  localisation went from a structural 0 of 33 to 12 of 33, with **0 of 12
+  misdirected**.
+
+  The wider rule was built first and measured: naming a source for a value
+  whose digits had drifted was right 47% of the time, because an invented
+  figure, a value derived by arithmetic and a corrupted one are the same thing
+  to anything that reads structure. 15 findings were given up to hold
+  misdirection at zero.
+  [ADR-0015](docs/adr/0015-the-digits-are-the-evidence.md) has the numbers, and
+  `source misdirection` is now a gated floor while `source localisation`
+  deliberately is not -- a floor under a number you are willing to trade is a
+  cage, and this trade would have been a build failure under one.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
@@ -44,10 +65,10 @@ API yet.
   absence of a placeholder is not evidence of restoration).
 - The design: [`docs/proposals/0001-the-design.md`](docs/proposals/0001-the-design.md),
   written before any code and left as written afterwards.
-- Thirteen architecture decision records, [`docs/adr/`](docs/adr/README.md).
+- Fifteen architecture decision records, [`docs/adr/`](docs/adr/README.md).
   ADR-0004 — the particular is the unit of verification — is the one the rest is
   arranged around.
 - The conceptual model, [`docs/concept.md`](docs/concept.md).
-- Tooling: `ruff`, `mypy --strict`, five `import-linter` contracts, `pre-commit`,
+- Tooling: `ruff`, `mypy --strict`, six `import-linter` contracts, `pre-commit`,
   and a CI workflow whose `dependencies` job asserts that the runtime dependency
   count is zero.

@@ -16,11 +16,11 @@ look" lies by omission.** That is why ``unbearing`` and ``unchecked`` are
 separate, why neither is folded into ``grounded``, and why the coverage numbers
 carry all three.
 
-``contradicted`` is defined here and produced by nothing. It is v0.4, after the
-evaluation corpus exists to price its false positives -- shipping the strongest
-claim on the page before there is anything to measure it against is how a
-detector tuned to a threshold happens (mamori's ADR-0023). A test asserts that
-v0.1 never produces it, so the vocabulary is stable while the detector is not.
+``contradicted`` was defined here and produced by nothing until v0.4, on
+purpose: shipping the strongest claim on the page before there was a corpus to
+measure it against is how a detector tuned to a threshold happens (mamori's
+ADR-0023). The rule is in ``contradiction.py`` and every part of it is a
+restriction.
 
 **And the thing this module does not do.** A grounded segment is not a true
 sentence. It means every load-bearing string in it is where the answer implies
@@ -34,6 +34,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 
+from .contradiction import Contradiction, SourceIndex
 from .evidence import Evidence, Location
 from .particular import Particular
 from .segment import Segment
@@ -89,6 +90,17 @@ class CheckedParticular:
     #: Every place it stands alone in the text that was sent. Empty means it is
     #: nowhere in it, which is a real answer and not a near miss.
     locations: tuple[Location, ...] = ()
+    #: What the source says instead, when akashi could tell. Set only on a
+    #: floating particular, and only when the rule in ``contradiction.py``
+    #: found exactly one candidate.
+    contradiction: Contradiction | None = None
+
+    def __post_init__(self) -> None:
+        if self.contradiction is not None and self.locations:
+            raise ValueError(
+                f"{self.particular.text!r} is grounded and also carries a contradiction. "
+                f"A particular that resolved cannot also be the wrong value."
+            )
 
     @property
     def standing(self) -> Standing:
@@ -111,7 +123,13 @@ class CheckedParticular:
             location.in_an_interpretation for location in self.locations
         )
 
+    @property
+    def is_contradicted(self) -> bool:
+        return self.contradiction is not None
+
     def describe(self) -> str:
+        if self.contradiction is not None:
+            return f"{self.particular.describe()}: {self.contradiction.describe()}"
         where = self.locations[0].anchor.describe() if self.locations else "nowhere"
         return f"{self.particular.describe()}: {self.standing.value} ({where})"
 
@@ -164,12 +182,17 @@ def check_segment(
     segment: Segment,
     particulars: Sequence[Particular],
     evidence: Evidence,
+    sources: SourceIndex | None = None,
 ) -> CheckedSegment:
     """Resolve one segment's particulars against the text that was sent.
 
     Pure, and the only place a verdict is decided. Code is not examined at all
     (ADR-0004's extraction note); a segment with nothing to check is
     ``unbearing`` and says so rather than passing.
+
+    ``sources`` is what turns a floating particular into a contradicted one. It
+    is optional and an absent one changes no verdict except that: without it
+    every finding is ``floating``, which is exactly what v0.1 through v0.3 did.
     """
     if segment.is_code:
         return CheckedSegment(
@@ -179,14 +202,44 @@ def check_segment(
             "or a hash as a claim about the world",
         )
 
-    checked = tuple(
+    resolved = tuple(
         CheckedParticular(particular=particular, locations=evidence.locate(particular))
         for particular in particulars
     )
-    if not checked:
+    if not resolved:
         return CheckedSegment(segment=segment, verdict=Verdict.UNBEARING)
 
-    verdict = (
-        Verdict.GROUNDED if all(one.standing.is_grounded for one in checked) else Verdict.FLOATING
+    # Where the *rest of the segment* landed. It narrows the search for what a
+    # floating particular replaced when more than one candidate would qualify.
+    # It does not gate the finding: see ``contradiction`` for why that
+    # restriction was specified, measured at a cost of ten findings in twelve,
+    # and dropped.
+    anchored = tuple(
+        location for one in resolved if one.standing.is_grounded for location in one.locations
     )
+    checked = tuple(
+        _explained(one, anchored, evidence, sources) if not one.standing.is_grounded else one
+        for one in resolved
+    )
+
+    if any(one.is_contradicted for one in checked):
+        verdict = Verdict.CONTRADICTED
+    elif all(one.standing.is_grounded for one in checked):
+        verdict = Verdict.GROUNDED
+    else:
+        verdict = Verdict.FLOATING
     return CheckedSegment(segment=segment, particulars=checked, verdict=verdict)
+
+
+def _explained(
+    one: CheckedParticular,
+    anchored: Sequence[Location],
+    evidence: Evidence,
+    sources: SourceIndex | None,
+) -> CheckedParticular:
+    if sources is None:
+        return one
+    found = sources.explain(one.particular, anchored, evidence)
+    if found is None:
+        return one
+    return CheckedParticular(particular=one.particular, contradiction=found)

@@ -32,7 +32,7 @@ next section.
 
 ---
 
-## 2. Three places the design was wrong
+## 2. Four places the design was wrong
 
 Each is an ADR, each was found by writing the code rather than by thinking
 harder about it, and each is the reason those ADRs exist rather than a
@@ -65,10 +65,27 @@ restored text and unrestored text are indistinguishable, and the inference is
 false in the dangerous direction. The caller may assert; the assertion is
 recorded as an assertion.
 
-There is a pattern in all three. **Every one was a claim about somebody else's
-contract or somebody else's behaviour**, and every one survived being reasoned
-about and died on contact. The lesson for the rest of this roadmap is to build
-the seam early rather than to specify it more carefully.
+**[ADR-0015](../adr/0015-the-digits-are-the-evidence.md) — the digits are the
+evidence.** `0001`'s stage 6 said a floating particular could be explained by
+"one of the same kind, where the others point". The first run reported that an
+answer's `2.6kg` contradicted the source's **`300g`**: both were quantities, both
+were in the sentence the segment's grounded particular landed in, and there was
+exactly one candidate. Every clause was satisfied and the output was nonsense,
+because *same kind and nearby* is not a relation between two values but a
+coincidence of layout. The repaired rule was then measured and was right about
+half the time, and what shipped is roughly a third of what was specified.
+
+The first three make a pattern: **every one was a claim about somebody else's
+contract or somebody else's behaviour**, each survived being reasoned about and
+died on contact, and the lesson was to build the seam early rather than specify
+it more carefully.
+
+**The fourth breaks that pattern and is the more uncomfortable one.** It was a
+claim about akashi's own output, in the part of the design that was thought
+about hardest, and it did not die on contact with anyone else's system — it died
+on contact with a number. Building the seam early would not have caught it.
+Only the corpus did, which is the argument for having built the corpus in v0.3
+rather than v0.6.
 
 ---
 
@@ -184,14 +201,18 @@ SLAs and akashi has never been timed.
 Two things that were separate in `0001` and belong together, because both are
 about making a finding say more.
 
-- Stage 6: siblings, `contradicted`, source localisation. Gated on the corpus,
-  with the false-positive rate governing. The baseline to beat is measured:
-  verdict correctness 35%, source localisation 0%.
+- Stage 6: siblings, `contradicted`, source localisation. **Shipped, narrowed
+  to about a third of what was specified.** The false-positive rate governed,
+  exactly as this said it would, and it is what cut the feature down: verdict
+  correctness 35% -> 59%, source localisation 0 of 33 -> 12 of 33, source
+  misdirection 0 of 12. akashi explains a swapped unit and refuses to explain a
+  drifted digit ([ADR-0015](../adr/0015-the-digits-are-the-evidence.md)).
 - **The unit check that needs no unit table**: a grounded number whose
   following token differs from the source's following token.
 - **Structural proper nouns**: a token in front of an organisational or
-  honorific suffix, in three languages. Evidence, not a guess. This closes the
-  9% coverage gap and it should have been in v0.1.
+  honorific suffix, in three languages. Evidence, not a guess. **Shipped**:
+  extraction recall over everything marked 91% -> 95%, unbearing 35% -> 30%,
+  precision held at 100%. It should have been in v0.1.
 - `akashi explain`.
 
 ### v0.5 — the artefact and the seams
@@ -261,13 +282,24 @@ Written down because a boundary that is only implied gets crossed.
 
 ## 7. What would still falsify this
 
-`0001` §10 listed four conditions. Two have been checked and did not fire —
-extraction recall is not low, and `unbearing` is a third rather than most. Two
-remain, and one is new.
+`0001` §10 listed four conditions. Two were checked and did not fire —
+extraction recall is not low, and `unbearing` is a third rather than most. **One
+fired.** One remains, and one is new.
 
-- **`contradicted` is too eager.** If the sibling rule fires on paraphrases, the
-  strongest feature is a liability. Priced in v0.4 against the corpus's
-  deliberate non-hallucinations. Unchanged from `0001`.
+- **`contradicted` is too eager. This fired, and it is the most useful thing
+  that has happened to this project.** The sibling rule did not fire on
+  paraphrases — the `faithful_paraphrase` and `grounded` plants stayed at zero
+  false positives throughout — but it fired on the wrong *source*, which `0001`
+  had not thought to be afraid of. Naming a parent for a value whose digits had
+  drifted was right 47% of the time, and a finding that sends a reader to a
+  correct line and tells them their answer corrupted it is worse than saying
+  nothing.
+
+  The response was to ship a third of the feature and publish the other
+  two-thirds as a measurement, which is what the condition was written to
+  produce. What it changes for the rest of the roadmap: **a feature is now
+  priced before its scope is fixed, not after.** v0.4's unit check below is the
+  first to be planned that way, and it may not ship either.
 - **The closed world is too strict for real callers.** If users routinely audit
   against packages that do not match the answer, every report is noise.
   Unchanged from `0001`.

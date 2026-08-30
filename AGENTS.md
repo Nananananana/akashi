@@ -151,7 +151,7 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   is not stable.
 - **License: Apache-2.0. Python: 3.12+. Runtime dependencies: 0**, checked in CI
   by installing without extras and asserting nothing came along.
-- 1,204 tests, 98% coverage. `ruff`, `mypy --strict` and six `import-linter`
+- 1,290 tests, 97% coverage. `ruff`, `mypy --strict` and six `import-linter`
   contracts all green. The two that were parked in `.importlinter` went live
   when `evaluation/` appeared, which is what `tests/test_layering_config.py`
   exists to force.
@@ -162,9 +162,10 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   `infrastructure/packages` (the ContextPackage reader), `domain/package`,
   `domain/verdict`, `domain/coverage`, `domain/protection`, `domain/report`,
   `ports/restorer`, `application/admit`, `application/audit`,
+  `domain/contradiction` (what the source says instead),
   `infrastructure/rendering` (text and JSON), `interfaces/cli`, and the
-  `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. Nine of the ten
-  particular kinds have rules; `proper_noun` has none and says so.
+  `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. All ten particular
+  kinds have rules; `proper_noun`'s are structural and the limit is standing.
 - **One command: `akashi audit`**, with `--json`, `--language`, `--restored-by`
   and `--fail-on-findings`. Exit codes: `0` audited, `1` refused, `2` misused,
   `3` audited-with-findings (only under `--fail-on-findings`). Finding things is

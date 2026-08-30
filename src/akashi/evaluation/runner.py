@@ -71,13 +71,33 @@ def _verdicts_over(report: AuditReport, plant: Plant) -> set[str]:
     }
 
 
+def _named_source(report: AuditReport, plant: Plant) -> tuple[str, Span] | None:
+    """The source akashi named over this plant, right or wrong.
+
+    ``_located`` cannot answer this: it asks whether the labelled source was
+    found, and returns False both when akashi said nothing and when it named
+    something else. Those are not the same failure, and only the second is one
+    the reader can be harmed by.
+    """
+    for segment in report.assessment.segments:
+        for one in segment.particulars:
+            if one.contradiction is None or not one.particular.span.overlaps(plant.span):
+                continue
+            anchor = one.contradiction.anchor
+            return anchor.document_id, anchor.span
+    return None
+
+
 def _located(report: AuditReport, plant: Plant) -> bool:
     """Whether akashi reported the source the plant replaced.
 
-    Structurally false in v0.1: a floating particular resolves nowhere, so it
-    carries no location. That is the point of measuring it -- the number is the
-    baseline that ``contradicted`` has to move in v0.4, and a metric introduced
-    at the same time as the feature it scores measures nothing.
+    Structurally false until v0.4: a floating particular resolves nowhere, so it
+    carried no location at all. The number was the baseline ``contradicted``
+    had to move, and a metric introduced at the same time as the feature it
+    scores measures nothing.
+
+    A contradicted particular is still floating -- it has no ``locations`` --
+    so the anchor is read off the contradiction. Nothing else here changed.
     """
     if plant.source is None:
         return False
@@ -85,6 +105,10 @@ def _located(report: AuditReport, plant: Plant) -> bool:
         for one in segment.particulars:
             if not one.particular.span.overlaps(plant.span):
                 continue
+            if one.contradiction is not None and plant.source.matches(
+                one.contradiction.anchor.document_id, one.contradiction.anchor.span
+            ):
+                return True
             for location in one.locations:
                 if plant.source.matches(location.anchor.document_id, location.anchor.span):
                     return True
@@ -163,6 +187,10 @@ def _score_case(case: Case, packs: Sequence[LanguagePack]) -> Outcome:
         if plant.source is not None and plant.expect_detected:
             tally.locatable += 1
             tally.located += int(_located(report, plant))
+        named = _named_source(report, plant)
+        if named is not None:
+            tally.localisations += 1
+            tally.misdirected += int(plant.source is None or not plant.source.matches(*named))
 
     tally.unattributed_floats = sum(
         1 for span in floats if not any(span.overlaps(plant.span) for plant in case.plants)
@@ -244,4 +272,8 @@ def _score_kind(case: Case, outcome: Outcome, kind: str) -> Tally:
         if plant.source is not None and plant.expect_detected:
             tally.locatable += 1
             tally.located += int(_located(outcome.report, plant))
+        named = _named_source(outcome.report, plant)
+        if named is not None:
+            tally.localisations += 1
+            tally.misdirected += int(plant.source is None or not plant.source.matches(*named))
     return tally
