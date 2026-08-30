@@ -261,3 +261,62 @@ def test_the_identifiers_are_not_in_a_namespace_somebody_could_buy() -> None:
             f"an identifier that becomes somebody else's is worse than one that "
             f"stops resolving."
         )
+
+
+def test_the_route_the_contract_tells_a_consumer_to_take_actually_works() -> None:
+    """The published instruction, executed rather than trusted.
+
+    A sibling project found its `docs/contracts.md` telling consumers to reach
+    the schema through `importlib.resources` — true after `pip install`, **false
+    in every development checkout**, and nothing in the repository ran the
+    sentence, so nobody noticed. The audience for that sentence is the one group
+    the project has no other way to reach.
+
+    akashi's contract document names one path, in one markdown link. This walks
+    it: follow the link the way a reader would, and validate a real
+    attestation's predicate against whatever is at the other end.
+
+    The link target is parsed as a link — data — never matched out of the prose
+    around it, so the sentence explaining this test cannot satisfy it.
+    """
+    import json
+    import re
+    from pathlib import Path
+
+    jsonschema = pytest.importorskip("jsonschema")
+    contract = Path(__file__).parents[1] / "docs" / "audit-report.md"
+    links = re.findall(r"\]\((\.\./schemas/[^)]+)\)", contract.read_text(encoding="utf-8"))
+    assert len(links) == 1, f"the contract names {len(links)} schema paths; it should name one"
+
+    schema = (contract.parent / links[0]).resolve()
+    assert schema.is_file(), (
+        f"docs/audit-report.md sends a reader to {links[0]}, which is not there"
+    )
+    jsonschema.validate(as_statement(report())["predicate"], json.loads(schema.read_text("utf-8")))
+
+
+def test_the_two_identifiers_agree_on_the_version_they_name() -> None:
+    """`predicateType` and the schema `$id` are related by convention and by
+    nothing mechanical: one says `audit-report/v1`, the other
+    `audit-report-1.json`. A consumer selects on the first and validates against
+    the second.
+
+    So moving one and not the other is a silent divergence — the statement would
+    announce a predicate type whose schema describes something else, and every
+    test here would still pass, because each checks its own half. This is the
+    only place the halves are compared.
+    """
+    import json
+    from pathlib import Path
+
+    from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
+
+    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
+
+    predicate_major = PREDICATE_TYPE.rsplit("/v", 1)[-1]
+    schema_major = identifier.rsplit("-", 1)[-1].removesuffix(".json")
+    assert predicate_major == schema_major, (
+        f"predicateType names v{predicate_major} and the schema names {schema_major}. "
+        f"A consumer selects on the first and validates against the second."
+    )
