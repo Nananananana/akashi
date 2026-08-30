@@ -48,8 +48,11 @@ Said first, because the omissions in a contract matter more than the fields.
 - **Nothing about the subtle half.** A meaning reversed with every particular
   intact, or a true-looking sentence assembled from two documents each quoted
   correctly, are reported `grounded`. `limits[]` says so on every report.
-- **No signature.** A report is unsigned. `--attestation` wraps it in a shape
-  that can be signed by tooling the caller already trusts; the keys are theirs.
+- **No signature.** A report is unsigned. `akashi audit --attestation` wraps it
+  in an [in-toto Statement](adr/0014-akashi-emits-a-signable-statement-and-signs-nothing.md)
+  that `cosign` can sign and verify; the keys, the trust root and the revocation
+  are the caller's. **The envelope alone proves nothing**, and a reader who sees
+  `_type: in-toto` should not assume otherwise.
 - **No corpus.** akashi never reads the documents, only the spans that were
   sent, so an anchor here is a pointer and not a copy.
 
@@ -271,3 +274,34 @@ the only thing keeping the two representations in step.**
 
 A producer that is not akashi passes the same suite. That is the whole point of
 writing the contract down.
+
+
+---
+
+## The attestation envelope
+
+`akashi audit --attestation` emits the same report as an **unsigned** in-toto
+Statement ([ADR-0014](adr/0014-akashi-emits-a-signable-statement-and-signs-nothing.md)).
+
+```json
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [{"name": "answer.txt", "digest": {"sha256": "e5a3b0ba…"}}],
+  "predicateType": "https://akashi.dev/audit-report/v1",
+  "predicate": { … the report above, unchanged … }
+}
+```
+
+The subject digest is taken from the report's own `response_hash`, from the same
+field, so the envelope and the predicate cannot disagree about what was audited.
+The predicate is the report **unchanged** — one shape, wrapped or not — so
+`recheck` works on `predicate` exactly as it works on a bare report.
+
+`predicateType` is versioned apart from the report contract on purpose: a
+consumer selects on that URI before it reads a field, and a URI that moved when
+the contract did not would break the selection for nothing.
+
+**akashi signs nothing.** Signing needs a crypto library and a key-management
+story, and both already exist outside akashi and are better than anything an
+auditing library would write. The shape is akashi's contribution; the signature
+is yours.

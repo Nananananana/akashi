@@ -269,9 +269,15 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   serialization is infrastructure.** A report is a document (ADR-0002), and what
   a document contains is not a formatting decision — `recheck` lives in
   `application`, which may not reach infrastructure, and needed the shape.
-- **Next in v0.2:** `--attestation`. Then v0.4's `contradicted`, which now has a
-  corpus to price its false positives against and a baseline to beat: verdict
-  correctness 35%, source localisation 0%.
+- **`akashi audit --attestation` emits an unsigned in-toto Statement**, so a
+  report can be signed and verified by `cosign` — tooling security teams already
+  run. **akashi signs nothing** (ADR-0014): the Statement is a JSON shape and
+  the keys are the caller's, which is how zero runtime dependencies survives a
+  signing story. A test asserts no field anywhere invites the reading that it is
+  already signed.
+- **v0.2 is done.** Next is v0.4: `contradicted`, the unit check that needs no
+  unit table, and structural proper nouns. Baselines to beat, measured: verdict
+  correctness 35%, source localisation 0%, coverage over everything marked 91%.
 - **The corpus does not exercise the structure pass.** Its 177 segments are all
   prose; the nine marked answers are the only material with tables and list
   items in it (53 prose, 15 table rows, 12 list items). Worth fixing when the

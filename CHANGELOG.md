@@ -15,6 +15,17 @@ API yet.
   reports which particulars of the answer are in the text that was sent, where
   each one was found, and everything that was not checked. Text and JSON
   output; `en`, `ja` and `zh`; zero runtime dependencies; no model anywhere.
+- **v0.2, the report becomes a contract.** `report_id` over exactly the inputs;
+  `akashi.audit-report/1-draft` published as a JSON Schema that ships in the
+  wheel, with [`docs/audit-report.md`](docs/audit-report.md) as the contract;
+  `akashi recheck` to re-derive a report from the inputs it names; and
+  `akashi audit --attestation` to emit it as an unsigned in-toto Statement that
+  `cosign` can sign. akashi signs nothing
+  ([ADR-0014](docs/adr/0014-akashi-emits-a-signable-statement-and-signs-nothing.md)),
+  so zero runtime dependencies survives a signing story intact.
+- **The roadmap was revised from evidence**, in
+  [`docs/proposals/0002-what-building-it-taught.md`](docs/proposals/0002-what-building-it-taught.md).
+  `0001` stays exactly as it was written.
 - **v0.3, the corpus and the floors.** `akashi eval` runs 42 generated cases
   with 177 planted spans and nine hand-marked realistic answers, and gates on
   floors set deliberately below what was measured.
