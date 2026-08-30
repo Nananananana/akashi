@@ -294,7 +294,7 @@ def test_the_limits_travel_with_the_assessment() -> None:
     the documentation does not."""
     assessment = look("The tent weighs 2.4kg.")
     assert assessment.limits == STANDING_LIMITS
-    assert len(assessment.limits) == 5
+    assert len(assessment.limits) == 6
 
 
 def test_the_limits_name_the_two_declared_misses_and_the_two_false_positives() -> None:

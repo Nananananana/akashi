@@ -54,6 +54,10 @@ STANDING_LIMITS: tuple[str, ...] = (
     "because it is not in the sources. akashi does not do arithmetic.",
     "A name with no title, honorific or legal form beside it is not extracted "
     "and so is never checked. akashi reads structure, not names.",
+    "A floating particular is named as contradicting a source only where the "
+    "answer kept that source's digits exactly. A figure whose digits differ "
+    "from every source figure is reported without one, because an invention, a "
+    "calculation and a corruption look the same from here.",
 )
 
 

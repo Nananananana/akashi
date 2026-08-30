@@ -275,4 +275,15 @@ def _particular_dict(one: CheckedParticular) -> dict[str, Any]:
             for location in one.locations
         ]
         body["in_an_interpretation"] = one.in_an_interpretation
+    if one.contradiction is not None:
+        found = one.contradiction
+        body["contradiction"] = {
+            "found": found.found,
+            "item_id": found.item_id,
+            "document_id": found.anchor.document_id,
+            "source_path": found.anchor.source_path,
+            "section": found.anchor.section,
+            "span": [found.anchor.span.start, found.anchor.span.end],
+            "why": found.why,
+        }
     return body

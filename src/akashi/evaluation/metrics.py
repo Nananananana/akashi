@@ -82,6 +82,13 @@ class Tally:
     #: Flagged plants whose reported source span is the labelled one.
     located: int = 0
     locatable: int = 0
+    #: Sources akashi named that are not the one the plant replaced -- a source
+    #: named for a value that replaced nothing included. This is the number
+    #: that governs whether ``contradicted`` may ship at all: a wrong location
+    #: is worse than none, because it sends a reader to the wrong line and
+    #: tells them the answer is a corruption of it.
+    misdirected: int = 0
+    localisations: int = 0
     #: Cases that had to be refused, and were.
     refused: int = 0
     refusals_due: int = 0
@@ -168,6 +175,16 @@ class Score:
         )
 
     @property
+    def source_misdirection(self) -> Rate:
+        return Rate(
+            "source misdirection",
+            self.tally.misdirected,
+            self.tally.localisations,
+            note="sources named that are not the value replaced; lower is better and "
+            "this is why contradicted is narrow",
+        )
+
+    @property
     def refusal_rate(self) -> Rate:
         return Rate(
             "refusals",
@@ -203,6 +220,7 @@ class Score:
             self.declared_miss_rate,
             self.verdict_correctness,
             self.source_localisation,
+            self.source_misdirection,
             self.refusal_rate,
             self.reproducibility,
             self.unbearing_share,

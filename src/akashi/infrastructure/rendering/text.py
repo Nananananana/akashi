@@ -107,6 +107,17 @@ def _traced(report: AuditReport) -> list[str]:
 def _particular(one: CheckedParticular) -> str:
     span = one.particular.span
     head = f"{_INDENT * 2}{one.particular.text}  [{span.start}:{span.end}]"
+    if one.contradiction is not None:
+        found = one.contradiction
+        # Two lines. The source's own words go on their own line because that
+        # is the part a reader acts on, and burying them at the end of a longer
+        # line is how they get skimmed past.
+        return "\n".join(
+            [
+                f"{head}  is in none of the text that was sent",
+                f"{_INDENT * 3}the source says {found.found!r} at {found.anchor.describe()}",
+            ]
+        )
     if one.standing is Standing.FLOATING:
         return f"{head}  is in none of the text that was sent"
     where = ", ".join(location.anchor.describe() for location in one.locations)

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from akashi.domain.contradiction import SourceIndex
 from akashi.domain.coverage import assess
 from akashi.domain.extraction import extract_from_segment, kinds_not_extracted
 from akashi.domain.language import LanguagePack
@@ -49,8 +50,12 @@ def audit(
     text = admission.answer
 
     segmentation = segment_answer(text, packs)
+    # Built once. Segmenting and extracting the evidence costs the same work the
+    # answer already gets, over text that is usually shorter, and it buys the
+    # only finding a reader can act on without opening the file themselves.
+    sources = SourceIndex.of(package.evidence, packs)
     checked = [
-        check_segment(segment, extract_from_segment(segment, packs), package.evidence)
+        check_segment(segment, extract_from_segment(segment, packs), package.evidence, sources)
         for segment in segmentation.segments
     ]
     assessment = assess(checked, kinds_not_extracted(packs))

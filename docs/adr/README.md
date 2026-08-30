@@ -28,6 +28,7 @@ later ADR supersedes it and says so.
 | [0012](0012-an-omission-is-a-receipt-not-a-source.md) | An omission is a receipt, not a source |
 | [0013](0013-a-restoration-akashi-did-not-watch-is-a-claim.md) | A restoration akashi did not watch is a claim, and is reported as one |
 | [0014](0014-akashi-emits-a-signable-statement-and-signs-nothing.md) | akashi emits a signable statement, and signs nothing |
+| [0015](0015-the-digits-are-the-evidence.md) | The digits are the evidence, and a drifted one is not explained |
 
 [0004](0004-the-particular-is-the-unit-of-verification.md) is the one to read
 first. The rest of the design is arranged around it, and

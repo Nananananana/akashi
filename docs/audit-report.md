@@ -196,7 +196,7 @@ there would be read as one of the two. A renderer must say it in words.
 |---|---|
 | `grounded` | every particular in the segment is in the text that was sent |
 | `floating` | at least one is not |
-| `contradicted` | one is not, and one of the same kind, where the others point, is |
+| `contradicted` | one is not, and akashi can name the source value it replaced |
 | `unbearing` | akashi looked and there was nothing to check |
 | `unchecked` | akashi did not look |
 | `unverifiable` | akashi could not look, and says so |
@@ -205,8 +205,8 @@ there would be read as one of the two. A renderer must say it in words.
 `unverifiable`, and absent otherwise: a reason on an examined segment reads as
 an excuse for a finding.
 
-`contradicted` is in the vocabulary and produced by nothing before v0.4. A
-consumer should handle it now rather than discover it later.
+`contradicted` was in the vocabulary and produced by nothing before v0.4. It
+is produced now, and rarely on purpose — see `contradiction` below.
 
 ### `segments[].particulars[]`
 
@@ -218,6 +218,29 @@ was looked for and not found in a particular place.
 More than one location is **information, not an error.** A short particular
 genuinely occurs in several, and picking one would imply a precision that is not
 there.
+
+`contradiction` is present only on a particular whose standing is `floating`,
+and is forbidden on a grounded one: a particular that is in the source cannot
+also be a corruption of it. It carries the source's text verbatim, the document
+coordinates to open, and `why` — the rule that produced the finding, in words,
+because a finding that cannot say why it is a finding is one nobody can appeal.
+
+**`found` is not a correction.** akashi does not know which of the two values is
+right; it knows they differ and that one of them is in the text that was sent.
+
+**Expect it to be absent far more often than not, including on findings where a
+source obviously exists.** akashi emits it only where the answer kept the
+source's digits *exactly* and changed the text beside them — `5 grams` for
+`5mg`, `1,200億円` for `1,200万円`. A value whose digits drifted is left
+`floating` with no explanation, because an invented figure, a value derived by
+arithmetic, and a corrupted one are the same thing to anything that reads
+structure. Naming a source for those was right 47% of the time and akashi does
+not ship a finding that is wrong half the time. [ADR-0015](adr/0015-the-digits-are-the-evidence.md)
+has the measurement.
+
+A consumer should treat `contradiction` as a bonus on a finding it already has,
+never as the definition of one. Filtering reports down to particulars that carry
+it would hide most of what akashi found.
 
 `layer` is `kiseki`'s distinction and it survives the crossing. A particular
 grounded only in an item whose layer is `interpretation` has
