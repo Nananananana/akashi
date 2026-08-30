@@ -133,6 +133,41 @@ def test_a_published_schema_is_packaged_with_the_wheel() -> None:
     )
 
 
+def test_the_contract_tests_cannot_quietly_stop_running() -> None:
+    """``jsonschema`` is what proves a report matches the published contract,
+    and every test that uses it begins with ``pytest.importorskip``.
+
+    That is right for a dev-only dependency, and it leaves one hole: if
+    ``jsonschema`` were dropped from the ``dev`` extra, or the environment lost
+    it, **every conformance test would skip and CI would stay green with no
+    schema validated at all.** A suite that silently stops checking the thing it
+    exists to check is the same shape as a wheel that silently stops carrying
+    the schema.
+
+    The guard is safe because ``pytest`` sits in the same extra: anything that
+    can run this file has the extra installed, so an unimportable
+    ``jsonschema`` means the extra lost a package rather than that a developer
+    chose a lighter install.
+
+    ``importorskip`` itself is not the hole. pytest raises on a module that is
+    installed but broken and skips only on one that is absent, so *broken* and
+    *missing* stay apart -- checked on pytest 9.1 by importing a module that
+    raises, which produced a collection error rather than a skip.
+    """
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    dev = config["project"]["optional-dependencies"]["dev"]
+    assert any(name.startswith("jsonschema") for name in dev)
+
+    try:
+        import jsonschema  # noqa: F401
+    except ImportError as error:  # pragma: no cover - the failure being guarded
+        pytest.fail(
+            f"jsonschema is in the dev extra and pytest is running, so it should be "
+            f"importable. Every contract-conformance test is skipping and nothing is "
+            f"validating a report against its published schema: {error}"
+        )
+
+
 @pytest.mark.parametrize("word", FORBIDDEN_IN_OUTPUT)
 def test_the_forbidden_vocabulary_is_absent_from_the_readme(word: str) -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8").lower()
