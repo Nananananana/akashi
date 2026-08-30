@@ -79,6 +79,15 @@ API yet.
   front of each other — including the three cases the producer widened the
   fixture to carry: an omission, a superseded passage sent rather than dropped,
   and `protection: null` rather than absent.
+- **The unit check was measured and did not ship**, which is what its issue
+  asked for. The naive rule fires on 5 of the 7 grounded bare numbers in the
+  corpus and every firing is noise: Japanese and Chinese have no whitespace, so
+  the "token after a number" is a particle. A narrowing that consults the unit
+  table on the source side only makes no noise and catches both motivating
+  cases — and cannot tell a *swapped* unit from a *re-worded* one, which cannot
+  be measured on material written by the author of the unit lists.
+  [`docs/measurements.md`](docs/measurements.md) publishes it; the feature waits
+  on the v0.6 public corpus.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
