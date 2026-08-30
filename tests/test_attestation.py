@@ -126,11 +126,19 @@ def test_the_help_says_akashi_signs_nothing(capsys: pytest.CaptureFixture[str]) 
 def test_the_predicate_type_is_versioned_apart_from_the_report_contract() -> None:
     """A consumer selects on the predicate type before it reads a field, and a
     URI that moved when the report contract did not would break that selection
-    for no reason."""
+    for no reason.
+
+    It named the major version and nothing else, and this used to assert
+    `endswith("/v1")`. That was too tight in one direction: the *draft status*
+    is part of what a selector has to say, and the test below this one is why.
+    What still has to hold is that the two identifiers are different strings and
+    that this one names the same major version — moving it when the contract has
+    not moved is the failure the docstring is about."""
     from akashi.domain.report import CONTRACT
 
     assert PREDICATE_TYPE != CONTRACT
-    assert PREDICATE_TYPE.endswith("/v1")
+    assert "/v1" in PREDICATE_TYPE
+    assert PREDICATE_TYPE.rsplit("/v", 1)[-1].removesuffix("-draft") == "1"
 
 
 # --- Through the command line ------------------------------------------------
@@ -341,9 +349,33 @@ def test_the_two_identifiers_agree_on_the_version_they_name() -> None:
     schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
     identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
 
-    predicate_major = PREDICATE_TYPE.rsplit("/v", 1)[-1]
+    predicate_major = PREDICATE_TYPE.rsplit("/v", 1)[-1].removesuffix("-draft")
     schema_major = identifier.rsplit("-", 1)[-1].removesuffix(".json")
     assert predicate_major == schema_major, (
         f"predicateType names v{predicate_major} and the schema names {schema_major}. "
         f"A consumer selects on the first and validates against the second."
+    )
+
+
+def test_the_selector_says_the_contract_is_still_a_draft() -> None:
+    """The report says `1-draft` inside itself. `predicateType` has to say it
+    too, because that is the field read *first*.
+
+    An in-toto verifier selects on the predicate type before parsing anything,
+    so one keying on a bare `/v1` would believe it had selected a frozen
+    contract while holding a provisional one — and when a later akashi adds an
+    optional field, all it receives is a `ValidationError`, indistinguishable
+    from a corrupt document. `contradiction` was added to this contract exactly
+    that way. The addition was legitimate under a draft; what was missing is
+    that the selector never said "draft".
+
+    The identifier changing at the freeze is the **signal**, not the cost:
+    statements carrying `v1-draft` are precisely the ones that predate it.
+    """
+    from akashi.domain.report import CONTRACT
+    from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
+
+    assert CONTRACT.endswith("-draft") == PREDICATE_TYPE.endswith("-draft"), (
+        f"the report says {CONTRACT!r} and the selector says {PREDICATE_TYPE!r}. "
+        f"A verifier reads the second before it reads the first."
     )

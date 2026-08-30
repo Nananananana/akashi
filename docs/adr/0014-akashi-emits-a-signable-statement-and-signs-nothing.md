@@ -43,7 +43,7 @@ teams already run.
 {
   "_type": "https://in-toto.io/Statement/v1",
   "subject": [{"name": "answer.txt", "digest": {"sha256": "e5a3b0ba…"}}],
-  "predicateType": "https://github.com/Nananananana/akashi/audit-report/v1",
+  "predicateType": "https://github.com/Nananananana/akashi/audit-report/v1-draft",
   "predicate": { … the report, unchanged … }
 }
 ```
@@ -90,6 +90,27 @@ to be understood by somebody who was not there.
 
 The schema `$id` moved in the same change, because it is the same claim about
 the same namespace.
+
+**And the identifier now carries the draft status.** The report has always said
+`akashi.audit-report/1-draft` inside itself; `predicateType` said a bare `/v1`.
+That is the wrong way round, because a verifier selects on `predicateType`
+*before* it parses a field — so one keying on `/v1` would believe it had
+selected a frozen contract while holding a provisional one.
+
+It is not hypothetical. `contradiction` was added to this contract as an
+optional field, under `1-draft`, which is what a draft is for. But the schema
+sets `additionalProperties: false` in all thirteen places it appears, so a
+consumer holding a cached copy rejects the newer report — and all it receives is
+a `ValidationError`, which is exactly what a corrupt document produces. *"You
+are out of date"* and *"this document is broken"* need opposite responses and
+arrived as one exception.
+
+The addition did not need `/2`. Version numbers that climb for optional
+additions teach consumers to ignore version numbers, and a consumer ignoring
+them stops performing the check this whole decision leans on. What was missing
+is that the selector never said the contract was provisional. It does now, and
+the identifier changing at the freeze is the **signal** rather than the cost:
+statements carrying `v1-draft` are precisely the ones that predate it.
 
 **The window for this was open only because nothing had been issued.** The
 contract is still `1-draft` and no attestation has been emitted, so the change
