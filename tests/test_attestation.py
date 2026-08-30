@@ -306,20 +306,32 @@ def test_the_two_identifiers_agree_on_the_version_they_name() -> None:
     test here would still pass, because each checks its own half. This is the
     only place the halves are compared.
 
-    **It is not the weaker half of the test above it**, which was worth
-    checking rather than assuming. The better general rule — pass a real
-    document through both sides rather than comparing identifiers — has one
-    blind spot, and it is exactly this field: **`$id` takes no part in
-    validation.** Measured, not recalled: a schema whose `$id` claims to be
-    `audit-report-9.json` validates this predicate identically. `$id` is used
-    for `$ref` resolution and for registries, never for deciding whether a
-    document conforms.
+    **It is not the weaker half of the test above it**, and that was measured
+    rather than argued.
 
-    So a document passing through both sides proves the *shapes* agree. It
-    cannot prove the *labels* do — and a consumer selects on a label before it
-    validates anything (ADR-0014). Each test is blind where the other looks: the
-    one above catches a broken route and a predicate that stopped conforming,
-    this one catches an identifier that quietly began naming something else.
+    The better general rule — pass a real document through both sides rather
+    than comparing identifiers — proves the *shapes* agree and is blind to every
+    field validation does not read. Four of them here, checked by swapping each
+    and revalidating:
+
+        $id           ignored — the document validates identically
+        title         ignored
+        description   ignored
+        $schema       ignored, even swapped to a different dialect
+
+    A consumer selects on a label *before* it validates anything (ADR-0014), so
+    the fields a validator ignores are the ones a reader meets first.
+
+    And the mechanical form of "not redundant": break something in a way no
+    existing check catches, and see whether only the new one fires. Rewriting
+    `$id` to name `audit-report-9.json`, with the namespace left alone so the
+    test above it stays quiet:
+
+        1 failed, everything else passed
+        FAILED test_the_two_identifiers_agree_on_the_version_they_name
+
+    A new check's worth is not that it can fail. It is that it fails on a break
+    nothing else notices.
     """
     import json
     from pathlib import Path
