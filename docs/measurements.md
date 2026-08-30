@@ -283,6 +283,58 @@ what was seen rather than a thing the bound must chase.
 
 ---
 
+## Which guards have been watched failing
+
+Every number above is produced by something, and every one of those things is
+guarded by something else. A guard nobody has watched fail is a guard nobody has
+evidence about — `exit 0` is not evidence until something has shown it can be
+non-zero.
+
+This section exists because a sibling project found that its layering gate had
+**never run once** in the project's whole history, silently, while reporting
+success. akashi's gate is invoked differently and is fine. The audit that
+established that is below, including the half that came out badly.
+
+**Watched failing, deliberately:**
+
+| guard | how it was made to fail |
+|---|---|
+| `lint-imports` | a forbidden `domain -> infrastructure` import added to `span.py`; exit 1, violation named |
+| the vendored-copy hash | the recorded `sha256` corrupted |
+| the upstream drift check | a real 404, after `tsumugi` moved its schema — which is how it was found to be *skipping* rather than failing |
+| the packaging test | the `force-include` destination changed to `akashi/schema` |
+| the wheel build | `schemas/` empty, which turned every CI job red |
+| the floor gate's exit code | a `Breach` injected into `check_floors` |
+
+**Not watched failing:**
+
+- `generate_cases.py --check-only`
+- *"Assert nothing came with it"* — the zero-dependency claim itself
+- *"The contract is inside what was installed"* — seen passing against a real
+  install; never seen fail
+- **`akashi eval --gate` on a real floor breach.** The exit code is covered by an
+  injected `Breach`, so the wiring is proven. What has never happened is a score
+  actually falling through a bound and stopping a build. **The floors exist to
+  stop a regression and no one has seen them stop one.**
+
+The last one is left as it is rather than manufactured. Producing a genuine
+breach means degrading the extractor on purpose, and a number reached that way
+would be a number about the degradation. The honest position is to say the gate
+has not been fired in anger, and this is where that is said.
+
+**Two things went wrong during the audit itself**, which is the argument for
+writing it down rather than trusting the summary:
+
+- `python -m importlinter.cli lint` exits **0 with no output at all**, even with
+  a live violation. CI uses the console script and is unaffected — but that
+  module form was run earlier in this project, produced nothing, and was passed
+  over. The console-script rerun that caught it was luck.
+- The first attempt to read `lint-imports`' exit code read `$?` after a pipe,
+  which is the exit code of `tail`. An exit code is evidence only once you have
+  also checked whose it is.
+
+---
+
 ## What was found by measuring
 
 Five things, all on the first two runs, which is what a first run is for.
