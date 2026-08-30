@@ -4,9 +4,9 @@
     {
       "file": "context-package-1.json",
       "repo": "Nananananana/tsumugi",
-      "path": "schemas/context-package-1.json",
+      "path": "src/tsumugi/schemas/context-package-1.json",
       "branch": "main",
-      "commit": "11259679b2e31c8cf3318b713c6f219522df38d7",
+      "commit": "903c17ff932f6d4fbd635616487d7fdf2abe831d",
       "sha256": "1dd65d2fbc2d3e36f06c39d94b27ef47c199383754896661516d91ab567de61c",
       "retrieved": "2026-08-30",
       "licence": "Apache-2.0",
