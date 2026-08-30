@@ -5,11 +5,12 @@ you and the context it was given, and separate what the answer took from its
 evidence from what it produced on its own — deterministically, offline, with no
 model in the path and nothing installed alongside it.
 
-> **Status: v0.1, the spine.** `akashi audit` works: segmentation, particular
-> extraction, strict matching against the closed world, verdicts, and the
-> account of what was not checked. Nothing is released and the API is not
-> stable. The design and the rest of the roadmap are in
-> [`docs/proposals/0001-the-design.md`](docs/proposals/0001-the-design.md).
+> **Status: v0.1 and v0.3.** `akashi audit` works, and `akashi eval` measures
+> it against a labelled corpus and nine hand-marked realistic answers, gated on
+> floors. Nothing is released and the API is not stable.
+> [`docs/measurements.md`](docs/measurements.md) is what it currently scores;
+> [`docs/proposals/0001-the-design.md`](docs/proposals/0001-the-design.md) is
+> the rest of the roadmap.
 
 ---
 
@@ -121,7 +122,9 @@ that can emit one.
 |---|---|
 | [The concept](docs/concept.md) | What akashi asks, and why that question and not the obvious one |
 | [The design and the roadmap](docs/proposals/0001-the-design.md) | The whole plan, and what would falsify it |
-| [Decisions](docs/adr/README.md) | Ten ADRs, each with what it costs |
+| [What it scores](docs/measurements.md) | Every number, with the command that produced it and what it does not say |
+| [The corpus](docs/evaluation-corpus.md) | The labelled dataset, its plants, and what it cannot tell you |
+| [Decisions](docs/adr/README.md) | Thirteen ADRs, each with what it costs |
 | [Documentation map](docs/README.md) | Which document is current state, which is history, which is a plan |
 
 ## License

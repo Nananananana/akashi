@@ -23,10 +23,10 @@ learned it the expensive way.
 | `AGENTS.md` | For contributors and AI agents: the current rules, constraints and state |
 | `docs/concept.md` | The conceptual model, and the whole picture across four projects |
 | `docs/architecture.md` | The current architecture — **not written yet, on purpose** |
-| `docs/audit-report.md` | The AuditReport contract, for producers and consumers |
-| `docs/threat-model.md` | What a report contains, and what it becomes if it leaks |
+| `docs/audit-report.md` | The AuditReport contract — **not written yet**; the shape is `1-draft` and freezes in v0.2 |
+| `docs/threat-model.md` | What a report contains, and what it becomes if it leaks — **not written yet** |
 | `docs/evaluation-corpus.md` | The labelled dataset: its shape, its plants, and what it cannot tell you |
-| `docs/measurements.md` | What extraction and segmentation actually score, with the tools that produced the numbers |
+| `docs/measurements.md` | What extraction and segmentation actually score, with the commands that produced the numbers |
 | `docs/adr/` | Decisions as they were made, with their reasons — history |
 | `docs/proposals/` | Proposed or planned work — not necessarily implemented |
 | `CHANGELOG.md` | The released history, briefly |
@@ -50,19 +50,30 @@ learned it the expensive way.
 
 ## Where the project is right now
 
-**Nothing is built.** This repository currently contains the design, the
-decisions behind it, and the tooling that will enforce them.
+**v0.1 and v0.3 are done; v0.2 is deliberately after them.** `akashi audit`
+works, and `akashi eval` runs a labelled corpus and a set of hand-marked answers
+against floors. v0.2 — freezing the report contract — was put *after* the
+measurement on purpose: fixing a shape around a method whose extraction recall
+was unmeasured would have been the wrong order, and
+[ADR-0002](adr/0002-the-audit-report-is-a-document.md) does not object, because
+the freeze waits for a second consumer rather than for a date.
 
 Read in this order:
 
 1. [`proposals/0001-the-design.md`](proposals/0001-the-design.md) — the design
-   and the roadmap, written before the code and left as written afterwards.
+   and the roadmap, written before the code and left as written afterwards. Two
+   parts of it are now out of date and it stays as written; `AGENTS.md` says
+   which.
 2. [`adr/0004`](adr/0004-the-particular-is-the-unit-of-verification.md) — the
    decision the rest of the design is arranged around.
 3. [`adr/0005`](adr/0005-say-what-could-not-be-checked.md) — the decision that
    makes 0004 honest.
-4. [`adr/README.md`](adr/README.md) — the rest.
+4. [`measurements.md`](measurements.md) — whether any of it is true.
+5. [`adr/README.md`](adr/README.md) — the rest. Three of the thirteen were
+   written *while* building and each corrects something the pre-code design got
+   wrong.
 
 `architecture.md` is deliberately absent. An ADR before the code is legitimate,
 because it records a decision that has been made. A current-state document
-before the code is fiction.
+before the code is fiction — and there is now code, so this one is a debt
+rather than a principle.

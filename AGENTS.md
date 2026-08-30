@@ -226,11 +226,12 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   corpus, which is why the rule forbids a letter *before* a bare number and not
   after: a letter before a digit is a word carrying a digit; a letter after one
   is a unit the extractor does not know yet.
-- **v0.3 is in progress, ahead of v0.2.** v0.3 is the milestone that decides
-  whether ADR-0004 holds; freezing a report contract around a method whose
-  extraction recall is unmeasured would be fixing a shape before knowing it
-  works. ADR-0002 does not object — the freeze waits for a second consumer, not
-  for a date.
+- **v0.3 was done ahead of v0.2, deliberately.** v0.3 is the milestone that
+  decides whether ADR-0004 holds; freezing a report contract around a method
+  whose extraction recall was unmeasured would have been fixing a shape before
+  knowing it works. ADR-0002 does not object — the freeze waits for a second
+  consumer, not for a date. **Both of ADR-0004's falsification conditions were
+  checked and neither fired.**
 - **The case format is `akashi.case/1`.** A manifest carries each plant's text
   *and* its span, and the loader refuses a case where they disagree. Deriving
   the text from the span would make the check vacuous: an edited response would
@@ -249,10 +250,14 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   actually wrong), `declared_miss` (is akashi's silence a stated limit). The
   plants where they disagree are the reason the corpus is worth more than a
   hallucination benchmark.
-  `contradicted` is deliberately not in v0.1; it ships in v0.4, after there is a
-  corpus to price its false positives against.
-  `docs/proposals/0001-the-design.md` §9 has the order and §10 has what would
-  falsify the whole thing.
+- **Next: v0.2** — `akashi.audit-report/1` as a published schema, `report_id`
+  over exactly the inputs, `akashi recheck`. Then v0.4's `contradicted`, which
+  now has a corpus to price its false positives against and a baseline to beat:
+  verdict correctness 35%, source localisation 0%.
+- **The corpus does not exercise the structure pass.** Its 177 segments are all
+  prose; the nine marked answers are the only material with tables and list
+  items in it (53 prose, 15 table rows, 12 list items). Worth fixing when the
+  corpus next grows.
 - **`proper_noun` is declared and extracted by nothing.** Recognising a name
   without a dictionary or a model is guessing. It appears in every report's
   `kinds_not_extracted`; the structural cases — a token in front of `Inc.` or
@@ -268,9 +273,12 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   numeral is only admitted with a magnitude character in it, or between two
   markers like `第…条`. The price is that `三人` is missed, and a test asserts
   that price so it stays a known quantity rather than a surprise.
-- **Unmeasured, and the documentation says so:** extraction recall, segmenter
-  disagreement, the share of real answers that are `unbearing`. All three are
-  v0.3, and the third one can change the roadmap.
+- **Measured, in `docs/measurements.md`:** extraction recall (91% over
+  everything marked, 100% over the kinds akashi claims), the `unbearing` share
+  (35% on realistic answers, 13% on the generated corpus), and the segmenter's
+  fallback share (1.1%). Still owed: a hand-segmented reference set, so there is
+  a segmenter *disagreement* rate rather than only a fallback rate. ADR-0009
+  asked for that one and it is not paid.
 - Still open: which model generates the evaluation corpus and how genres are
   sampled — the seed and the model get recorded with the fixtures. Needed before
   the corpus is generated, not before then.
