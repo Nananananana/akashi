@@ -66,11 +66,24 @@ class Verdict(Enum):
 
     GROUNDED = "grounded"
     FLOATING = "floating"
-    #: v0.4. Defined so the vocabulary is stable; produced by nothing yet.
     CONTRADICTED = "contradicted"
     UNBEARING = "unbearing"
     UNCHECKED = "unchecked"
     UNVERIFIABLE = "unverifiable"
+
+    @property
+    def rule(self) -> str:
+        """The rule that produced this verdict, in one line.
+
+        The same words `docs/audit-report.md` gives a consumer, kept here so
+        there is one definition rather than two. `akashi explain` prints this
+        beside a segment: a reader looking at one finding should not have to
+        hold the contract open beside it to know what the word means.
+
+        A segment carrying ``because`` says more than this and says it about
+        itself; this is what the verdict means for every segment that has it.
+        """
+        return _RULES[self]
 
     @property
     def is_finding(self) -> bool:
@@ -81,6 +94,19 @@ class Verdict(Enum):
     def was_examined(self) -> bool:
         """akashi looked. It may still have found nothing to check."""
         return self not in (Verdict.UNCHECKED, Verdict.UNVERIFIABLE)
+
+
+#: One line per verdict, worded as the contract words it. Kept beside the enum
+#: rather than in the renderer: two places that explain the same vocabulary
+#: drift, and the one a reader reaches first is not always the maintained one.
+_RULES: dict[Verdict, str] = {
+    Verdict.GROUNDED: "every particular in the segment is in the text that was sent",
+    Verdict.FLOATING: "at least one is not",
+    Verdict.CONTRADICTED: "one is not, and akashi can name the source value it replaced",
+    Verdict.UNBEARING: "akashi looked and there was nothing to check",
+    Verdict.UNCHECKED: "akashi did not look",
+    Verdict.UNVERIFIABLE: "akashi could not look, and says so",
+}
 
 
 @dataclass(frozen=True, slots=True)
