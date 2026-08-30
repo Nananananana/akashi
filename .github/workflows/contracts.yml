@@ -1,0 +1,49 @@
+name: Vendored contracts
+
+# akashi reads a ContextPackage as a document against a published schema and
+# imports tsumugi nowhere (ADR-0007), so tests/contracts/ holds a *copy* of
+# somebody else's contract. A copy goes stale silently, and the whole point of
+# checking fixtures against the real schema is lost the moment it does.
+#
+# This is a separate workflow, not a step in CI, on purpose. Upstream having
+# moved is information about the family, not a defect in whatever pull request
+# happens to be open — and a check that blocks unrelated work is a check that
+# somebody eventually disables. It gates only the pull requests that touch the
+# vendored files themselves.
+
+on:
+  schedule:
+    # Daily. A contract does not change often, but the cost of asking is a few
+    # seconds and the cost of not noticing is every conformance test in the
+    # repository passing while measuring nothing.
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tests/contracts/**"
+      - "tests/test_vendored_contracts.py"
+      - ".github/workflows/contracts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: the vendored copies are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+
+      # The offline half runs in ordinary CI too: it catches a copy edited here.
+      # This job exists for the other half, which has to ask the producer.
+      - name: Compare against upstream
+        run: python -m pytest tests/test_vendored_contracts.py -m network -v
+        env:
+          PYTHONUTF8: "1"

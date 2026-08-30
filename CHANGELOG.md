@@ -65,6 +65,12 @@ API yet.
   turns on. Nothing on the wire exercised it, because `tsumugi` writes all
   three. Refusing it is the house rule everywhere else here, and this was an
   accident rather than a decision.
+- **A vendored contract that goes stale is a test failure rather than a
+  discovery.** `tests/contracts/upstream.json` records where each copied schema
+  came from — repo, path, commit, `sha256`, date, licence — and two checks watch
+  it: an offline one on every run, catching a copy edited here, and a
+  `network`-marked one in its own daily workflow, catching a copy the producer
+  has moved past. Both were watched failing before being trusted.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
