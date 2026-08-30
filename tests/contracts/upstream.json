@@ -1,0 +1,16 @@
+{
+  "note": "Where each vendored contract came from, so that a copy going stale is a test failure rather than a discovery. Refresh with: python -m pytest tests/test_vendored_contracts.py -m network",
+  "vendored": [
+    {
+      "file": "context-package-1.json",
+      "repo": "Nananananana/tsumugi",
+      "path": "schemas/context-package-1.json",
+      "branch": "main",
+      "commit": "11259679b2e31c8cf3318b713c6f219522df38d7",
+      "sha256": "1dd65d2fbc2d3e36f06c39d94b27ef47c199383754896661516d91ab567de61c",
+      "retrieved": "2026-08-30",
+      "licence": "Apache-2.0",
+      "why": "akashi's fixtures are checked against the real contract without installing tsumugi (ADR-0007). Test material only; nothing under src/ reads it."
+    }
+  ]
+}

@@ -71,7 +71,14 @@ packages = ["src/akashi"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+# Network tests are deselected by default. akashi audits offline by design and
+# so must its test suite: a check that cannot run on a developer's machine, or
+# inside the networks that most need this tool, is a check that gets disabled.
+# The one job that runs them asks for them by name.
+addopts = "-q -m 'not network'"
+markers = [
+    "network: reaches a host outside this machine. Deselected by default; run with -m network",
+]
 
 [tool.ruff]
 line-length = 100

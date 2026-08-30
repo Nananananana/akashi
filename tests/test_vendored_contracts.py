@@ -1,0 +1,137 @@
+"""A copy of somebody else's contract, and the two ways it goes wrong.
+
+`tests/contracts/` holds schemas published by other projects. akashi imports
+none of them ([ADR-0007](../docs/adr/0007-read-the-producer-through-its-contract.md)):
+the reader checks the contract field in plain Python, and these copies exist for
+the other direction — proving that the fixtures akashi tests against are
+documents the producer would actually emit.
+
+A vendored copy fails in two different ways and they need different checks.
+
+**It can be edited here.** Someone loosens a `required` to make a fixture pass,
+and akashi is now conformant to a contract nobody published. This is caught
+offline, on every run, by `tests/contracts/upstream.json` carrying the sha256 of
+what was actually vendored.
+
+**It can go stale there.** The producer tightens the schema and the copy does
+not move. Nothing local can see this, so the check has to ask upstream — which
+means the network, which means it is not a check that can run on every machine.
+It is marked `network`, deselected by default, and run by its own CI job.
+
+The `no-network` import contract covers `source_modules = akashi`. Tests are not
+part of that package (they are not a package at all), so `urllib` here breaks
+nothing — but the reason akashi refuses the network is that an audit must run
+inside networks that cannot reach out, and that argument is about the library.
+A test that fetches is a test, and it says so in its marker.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+CONTRACTS = Path(__file__).parent / "contracts"
+UPSTREAM = CONTRACTS / "upstream.json"
+
+
+def vendored() -> list[dict[str, Any]]:
+    body = json.loads(UPSTREAM.read_text(encoding="utf-8"))
+    return list(body["vendored"])
+
+
+def digest(raw: bytes) -> str:
+    """By content, not by line ending.
+
+    A Windows checkout can rewrite `\\r\\n` and the schema would be a different
+    file byte for byte while saying exactly the same thing. Normalising means
+    the recorded hash is a statement about the contract rather than about
+    somebody's git configuration.
+    """
+    return hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def ids(entries: list[dict[str, Any]]) -> list[str]:
+    return [str(entry["file"]) for entry in entries]
+
+
+# --- What can be checked without asking anybody ------------------------------
+
+
+def test_every_vendored_file_is_accounted_for() -> None:
+    """A schema dropped into this directory without provenance is a copy nobody
+    can refresh, and the licence it arrived under is unrecorded."""
+    present = {path.name for path in CONTRACTS.glob("*.json")} - {UPSTREAM.name}
+    assert present == {str(entry["file"]) for entry in vendored()}, (
+        "tests/contracts/upstream.json does not describe what is in tests/contracts/"
+    )
+
+
+@pytest.mark.parametrize("entry", vendored(), ids=ids(vendored()))
+def test_the_copy_is_the_thing_that_was_vendored(entry: dict[str, Any]) -> None:
+    """Catches an edit here, which is the failure mode that matters most.
+
+    Loosening a `required` in a local copy to make a fixture pass would leave
+    akashi conformant to a contract nobody published, and every conformance
+    test in this repository green while saying nothing.
+    """
+    local = CONTRACTS / str(entry["file"])
+    assert digest(local.read_bytes()) == entry["sha256"], (
+        f"{entry['file']} has been edited since it was vendored from "
+        f"{entry['repo']}@{entry['commit'][:7]}. Vendored contracts are copies, "
+        f"not forks: change it upstream, then refresh."
+    )
+
+
+@pytest.mark.parametrize("entry", vendored(), ids=ids(vendored()))
+def test_the_provenance_is_complete_enough_to_refresh_from(entry: dict[str, Any]) -> None:
+    for field in ("file", "repo", "path", "branch", "commit", "sha256", "retrieved", "licence"):
+        assert entry.get(field), f"{entry.get('file')} has no {field!r}"
+    assert len(str(entry["commit"])) == 40, "pin a full commit sha, not an abbreviation"
+    assert len(str(entry["sha256"])) == 64
+
+
+def test_the_vendored_schema_is_the_one_the_fixtures_are_checked_against() -> None:
+    """Ties this file to the thing it protects. If the conformance tests stopped
+    reading the vendored copy, these checks would be guarding a file nobody
+    uses."""
+    conformance = (Path(__file__).parent / "test_contract_conformance.py").read_text(
+        encoding="utf-8"
+    )
+    assert "contracts" in conformance
+    assert "context-package-1.json" in conformance
+
+
+# --- What can only be checked by asking upstream -----------------------------
+
+
+@pytest.mark.network
+@pytest.mark.parametrize("entry", vendored(), ids=ids(vendored()))
+def test_the_copy_has_not_gone_stale_upstream(entry: dict[str, Any]) -> None:
+    """Fetches the producer's current schema and compares it to what is recorded.
+
+    Failing means upstream moved, which is information rather than a defect in
+    whatever change is being reviewed. That is why this runs in its own job and
+    on a schedule instead of gating every pull request: a contract that
+    legitimately changed would otherwise block work that has nothing to do with
+    it, and a check that blocks unrelated work gets disabled.
+    """
+    from urllib.error import URLError
+    from urllib.request import urlopen
+
+    url = f"https://raw.githubusercontent.com/{entry['repo']}/{entry['branch']}/{entry['path']}"
+    try:
+        with urlopen(url, timeout=30) as response:
+            current = response.read()
+    except (URLError, TimeoutError) as error:
+        pytest.skip(f"cannot reach {url}: {error}")
+
+    assert digest(current) == entry["sha256"], (
+        f"{entry['file']} has changed in {entry['repo']} since it was vendored at "
+        f"{entry['commit'][:7]} on {entry['retrieved']}.\n"
+        f"Refresh the copy, update sha256 and commit in tests/contracts/upstream.json, "
+        f"and read the diff before assuming akashi still conforms."
+    )
