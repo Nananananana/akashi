@@ -43,13 +43,29 @@ dev = [
     "jsonschema>=4",
 ]
 
-# There is deliberately no `siblings` extra yet. The seam tests it would exist
-# for -- ADR-0008's restorer against the real `mamori`, ADR-0007's contract
-# against the reference producer -- land in v0.5, and neither project is
-# published to an index, so declaring them here would make the extra
-# unresolvable for everyone including CI. Until then those tests install their
-# siblings from source, skip when absent, and the architecture tests assert
-# that nothing under src/ imports either one.
+# There is deliberately no `siblings` extra, and the reason is stronger than it
+# was first written. The seam tests it would exist for -- ADR-0008's restorer
+# against the real `mamori`, ADR-0007's contract against the reference producer
+# -- land in v0.5, and neither project is on an index, so a plain requirement
+# would be unresolvable.
+#
+# A direct reference would resolve, and that is the trap. `mamori @
+# git+https://...` installs correctly and beats a taken PyPI name, because no
+# index is consulted. But an extra is metadata: it reaches the built
+# distribution as `Requires-Dist: mamori @ git+... ; extra == 'siblings'`, and
+# PyPI refuses any distribution whose metadata carries a direct reference. One
+# line in an extra nobody installs makes the *whole* distribution unpublishable.
+#
+# Checked rather than believed: hatchling refuses to build this at all without
+# `tool.hatch.metadata.allow-direct-references`, which is a local signal other
+# backends do not give. Setting that flag builds cleanly and puts the line in
+# METADATA exactly as above. So the guard here is a build error today and a
+# rejected upload the moment somebody switches the flag on to make the error go
+# away.
+#
+# Where it belongs is the install step of a CI job, which never touches
+# metadata. Until then those tests install their siblings from source, and the
+# architecture tests assert that nothing under src/ imports either one.
 
 [project.urls]
 Homepage = "https://github.com/Nananananana/akashi"
