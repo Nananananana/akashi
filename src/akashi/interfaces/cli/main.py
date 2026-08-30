@@ -39,8 +39,14 @@ from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
-from akashi.infrastructure.rendering import as_json, as_statement, as_text
-from akashi.infrastructure.reports import load_report
+from akashi.infrastructure.rendering import (
+    as_json,
+    as_statement,
+    as_text,
+    explain_segment,
+    segments_with_findings,
+)
+from akashi.infrastructure.reports import load_report, load_report_or_statement
 
 __all__ = ["main"]
 
@@ -144,6 +150,35 @@ def _parser() -> argparse.ArgumentParser:
     )
     recheck_command.add_argument("--json", action="store_true")
 
+    explain_command = commands.add_parser(
+        "explain",
+        help="one finding, in full, from the report alone",
+        description=(
+            "Prints one segment of a report with everything about it: the sentence, "
+            "every particular, where each resolved, what the source says instead, and "
+            "what the verdict means. It reads the report and nothing else -- no "
+            "package, no response, no re-audit -- which is how the claim that a report "
+            "is a document gets exercised rather than asserted."
+        ),
+    )
+    explain_command.add_argument(
+        "report",
+        metavar="REPORT",
+        help="the audit report, as JSON; an in-toto statement is read through its predicate",
+    )
+    explain_command.add_argument(
+        "--segment",
+        metavar="ID",
+        default="",
+        help="which segment. Omitted, the findings are listed for you to choose from",
+    )
+    explain_command.add_argument(
+        "--particular",
+        metavar="TEXT",
+        default="",
+        help="narrow to one particular by its text, for a segment carrying a dozen",
+    )
+
     eval_command = commands.add_parser(
         "eval",
         help="run the labelled corpus and print what it establishes",
@@ -224,6 +259,34 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
 
     if arguments.fail_on_findings and report.has_findings:
         return FOUND
+    return AUDITED
+
+
+def _explain(arguments: argparse.Namespace, out: TextIO) -> int:
+    """One segment of a report, from the report alone.
+
+    A statement is unwrapped to its predicate first: an attestation and a bare
+    report are one shape, and a reader who archived the signed thing should not
+    have to unwrap it by hand to read it.
+    """
+    document = load_report_or_statement(arguments.report)
+    if not arguments.segment:
+        findings = segments_with_findings(document)
+        print("akashi explain — name a segment with --segment", file=out)
+        print(file=out)
+        if findings:
+            print("Findings in this report", file=out)
+            for segment_id in findings:
+                print(f"  {segment_id}", file=out)
+        else:
+            print("  this report has no findings; every segment can still be named", file=out)
+        return AUDITED
+
+    print(
+        explain_segment(document, arguments.segment, particular=arguments.particular or None),
+        end="",
+        file=out,
+    )
     return AUDITED
 
 
@@ -339,6 +402,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _eval(arguments, sys.stdout)
         if arguments.command == "recheck":
             return _recheck(arguments, sys.stdout)
+        if arguments.command == "explain":
+            return _explain(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first
             parser.error(f"unknown command {arguments.command!r}")
         return _audit(arguments, sys.stdout)

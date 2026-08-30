@@ -21,7 +21,7 @@ from typing import Any
 from akashi.domain.report import CONTRACT
 from akashi.errors import ContractError
 
-__all__ = ["ACCEPTED_REPORT", "load_report", "read_report"]
+__all__ = ["ACCEPTED_REPORT", "load_report", "load_report_or_statement", "read_report"]
 
 ACCEPTED_REPORT = "akashi.audit-report"
 ACCEPTED_MAJOR = "1"
@@ -74,4 +74,35 @@ def load_report(path: Path | str) -> dict[str, Any]:
         data = json.loads(raw)
     except json.JSONDecodeError as error:
         raise ContractError(f"the report at {location} is not JSON: {error}") from error
+    return read_report(data)
+
+
+def load_report_or_statement(path: Path | str) -> dict[str, Any]:
+    """A report, whether it was archived bare or inside an in-toto Statement.
+
+    They are one shape: `as_statement` puts the report in `predicate`
+    unchanged. A reader who kept the signed artefact rather than the bare
+    report is holding the same document one envelope down, and asking them to
+    unwrap it by hand before they can read it would be asking them to know
+    something the envelope already says.
+
+    The envelope is recognised by `_type` rather than by the presence of
+    `predicate`: a bare report has no `_type`, and keying on a field a future
+    report might legitimately gain is how a reader starts unwrapping documents
+    that are not envelopes.
+    """
+    location = Path(path)
+    try:
+        data = json.loads(location.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise ContractError(f"cannot read the report at {location}: {error}") from error
+    except UnicodeDecodeError as error:
+        raise ContractError(f"the report at {location} is not UTF-8: {error}") from error
+    except json.JSONDecodeError as error:
+        raise ContractError(f"the report at {location} is not JSON: {error}") from error
+
+    if isinstance(data, dict) and str(data.get("_type", "")).startswith("https://in-toto.io/"):
+        if "predicate" not in data:
+            raise ContractError(f"{location} is an in-toto statement with no 'predicate' to read")
+        return read_report(data["predicate"])
     return read_report(data)

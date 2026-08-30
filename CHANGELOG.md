@@ -119,6 +119,16 @@ API yet.
   which the spec permits. Done now because nothing has been issued yet: after
   the freeze it would have cost the meaning of every certificate already
   carrying the old value.
+- **`akashi explain` — one finding, in full, from the report and nothing else.**
+  The segment, every particular, where each resolved, what the source says
+  instead and why, and what the verdict means in the contract's own words.
+  `--particular` narrows further; an unknown id is refused with the ids that
+  exist; a bare report and an in-toto Statement are read alike. It takes no
+  package and no response, which is how *a report is a document*
+  ([ADR-0002](docs/adr/0002-the-audit-report-is-a-document.md)) gets exercised
+  rather than repeated — and it ends by saying **which offsets a reader can
+  check and which they cannot**, since an offset into a source document is an
+  assertion to anyone who does not hold that document.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),

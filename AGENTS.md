@@ -185,8 +185,8 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   `infrastructure/rendering` (text and JSON), `interfaces/cli`, and the
   `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. All ten particular
   kinds have rules; `proper_noun`'s are structural and the limit is standing.
-- **One command: `akashi audit`**, with `--json`, `--language`, `--restored-by`
-  and `--fail-on-findings`. Exit codes: `0` audited, `1` refused, `2` misused,
+- **`akashi audit`**, with `--json`, `--language`, `--restored-by`
+  and `--fail-on-findings`. Beside it: `recheck`, `explain`, `eval`. Exit codes: `0` audited, `1` refused, `2` misused,
   `3` audited-with-findings (only under `--fail-on-findings`). Finding things is
   what an auditor does, so it is not a failure by default.
 - **The text rendering has a `Traced` section**, and it is not decoration. The
@@ -298,6 +298,15 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   misleads. A version difference is named first and explicitly is not tampering.
   It re-derives with **the packs the report names**, not this machine's default.
   Exit codes: `0` identical, `1` could not run, `5` re-derived and different.
+- **`akashi explain` prints one segment in full, from the report and nothing
+  else.** No package, no response, no re-audit — which is the point rather than
+  a convenience. ADR-0002 says a report is a document, and a document that needs
+  its inputs beside it to be read is not one; this is where that claim is
+  exercised instead of repeated. It reads a bare report and an in-toto Statement
+  alike, recognising the envelope by `_type` rather than by the presence of
+  `predicate`. It also says **which offsets a reader can check and which they
+  cannot**: an offset into the answer is in the report, an offset into a source
+  document is an assertion (#53).
 - **The report's *shape* is domain (`AuditReport.to_dict`) and only its
   serialization is infrastructure.** A report is a document (ADR-0002), and what
   a document contains is not a formatting decision — `recheck` lives in
