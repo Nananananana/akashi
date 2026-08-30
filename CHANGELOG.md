@@ -65,6 +65,20 @@ API yet.
   turns on. Nothing on the wire exercised it, because `tsumugi` writes all
   three. Refusing it is the house rule everywhere else here, and this was an
   accident rather than a decision.
+- **A vendored contract that goes stale is a test failure rather than a
+  discovery.** `tests/contracts/upstream.json` records where each copied schema
+  came from — repo, path, commit, `sha256`, date, licence — and two checks watch
+  it: an offline one on every run, catching a copy edited here, and a
+  `network`-marked one in its own daily workflow, catching a copy the producer
+  has moved past. Both were watched failing before being trusted.
+- **The seam with `tsumugi`.** Every other test in this repository reads a
+  package somebody here typed, which proves akashi is self-consistent and
+  nothing more. `tests/contracts/context-package-seam.json` is real output from
+  `tsumugi context --json`, vendored beside the schema it instantiates, and
+  `tests/test_seam_tsumugi.py` puts the two implementations of that contract in
+  front of each other — including the three cases the producer widened the
+  fixture to carry: an omission, a superseded passage sent rather than dropped,
+  and `protection: null` rather than absent.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),

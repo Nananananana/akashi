@@ -45,6 +45,16 @@ jobs:
         env:
           PYTHONUTF8: "1"
 
+      # The seam with tsumugi, through the installed entry point. Every other
+      # test in this repository reads a package somebody here typed, which
+      # proves akashi is self-consistent and nothing more. ADR-0007 has akashi
+      # reading somebody else's contract without importing them, and this is
+      # where the two implementations are put in front of each other.
+      - name: The seam with tsumugi
+        run: python -m pytest tests/test_seam_tsumugi.py -v
+        env:
+          PYTHONUTF8: "1"
+
       # The labelled corpus and the hand-marked answers, against floors set
       # deliberately below what was measured. Floors, not targets: a gate at
       # today's number makes every honest experiment a build failure, and
