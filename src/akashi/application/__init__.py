@@ -9,5 +9,6 @@ from __future__ import annotations
 
 from .admit import Admission, admit
 from .audit import audit
+from .recheck import Recheck, recheck
 
-__all__ = ["Admission", "admit", "audit"]
+__all__ = ["Admission", "Recheck", "admit", "audit", "recheck"]

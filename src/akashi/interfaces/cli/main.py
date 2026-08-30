@@ -11,6 +11,7 @@ apart:
 ``2``  the command line was wrong
 ``3``  audited, and something floats. Only with ``--fail-on-findings``
 ``4``  a floor was breached. Only with ``eval --gate``
+``5``  a report re-derived differently. Only from ``recheck``
 
 The default is ``0`` for an audit that found problems, because *finding* things
 is what an auditor does and a non-zero exit for that would make the ordinary
@@ -27,7 +28,7 @@ from pathlib import Path
 from typing import TextIO
 
 from akashi import __version__
-from akashi.application import audit
+from akashi.application import audit, recheck
 from akashi.errors import AkashiError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
@@ -39,6 +40,7 @@ from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
 from akashi.infrastructure.rendering import as_json, as_text
+from akashi.infrastructure.reports import load_report
 
 __all__ = ["main"]
 
@@ -47,6 +49,7 @@ REFUSED = 1
 MISUSED = 2
 FOUND = 3
 BREACHED = 4
+DIFFERED = 5
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -104,6 +107,28 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help=f"exit {FOUND} when anything floats, for a pipeline that gates on it",
     )
+
+    recheck_command = commands.add_parser(
+        "recheck",
+        help="re-derive a report from the inputs it names, and compare",
+        description=(
+            "Takes a report somebody else produced, re-derives it from the package "
+            "and the response the report names, and reports whether the report_id "
+            "matches. This is the difference between an audit and an opinion."
+        ),
+    )
+    recheck_command.add_argument("report", metavar="REPORT", help="the audit report, as JSON")
+    recheck_command.add_argument("--package", required=True, metavar="PATH")
+    recheck_command.add_argument(
+        "--response", required=True, metavar="PATH", help="- reads standard input"
+    )
+    recheck_command.add_argument(
+        "--restored-by",
+        default="",
+        metavar="WHO",
+        help="as for audit; needed when the report was made over a restored answer",
+    )
+    recheck_command.add_argument("--json", action="store_true")
 
     eval_command = commands.add_parser(
         "eval",
@@ -179,6 +204,57 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
     return AUDITED
 
 
+def _recheck(arguments: argparse.Namespace, out: TextIO) -> int:
+    archived = load_report(arguments.report)
+    package = load_package(arguments.package)
+    answer = _read(arguments.response)
+
+    # The packs the *report* names, not this machine's default. Re-deriving with
+    # a different pack set would change the segmentation and therefore every
+    # count, and the difference would be the recheck's rather than the report's.
+    named = [code for code in archived["audited"]["packs"] if code != "und"]
+    try:
+        chosen = packs(*named) if named else DEFAULT
+    except ValueError as error:
+        raise AkashiError(
+            f"the report names a language pack this akashi does not have: {error}. "
+            f"A recheck under a different set of packs is not a recheck."
+        ) from error
+
+    result = recheck(
+        archived,
+        answer,
+        package,
+        chosen,
+        restored_by=arguments.restored_by,
+        akashi_version=__version__,
+    )
+
+    if arguments.json:
+        body = {
+            "archived_id": result.archived_id,
+            "rederived_id": result.rederived_id,
+            "matches": result.matches,
+            "version_differs": result.version_differs,
+            "archived_version": result.archived_version,
+            "rederived_version": result.rederived_version,
+            "differences": list(result.differences),
+        }
+        print(json.dumps(body, ensure_ascii=False, indent=2), file=out)
+    else:
+        print(f"akashi recheck — {result.describe()}", file=out)
+        if not result.matches:
+            print(f"  archived   {result.archived_id}", file=out)
+            print(f"  re-derived {result.rederived_id}", file=out)
+            print("", file=out)
+            for line in result.differences[:40]:
+                print(f"  {line}", file=out)
+            if len(result.differences) > 40:
+                print(f"  ... and {len(result.differences) - 40} more", file=out)
+
+    return AUDITED if result.matches else DIFFERED
+
+
 def _eval(arguments: argparse.Namespace, out: TextIO) -> int:
     splits = (Split.TRAIN, Split.HELD_OUT) if arguments.held_out else (Split.TRAIN,)
     cases = load_cases(arguments.cases, splits=splits, tier=arguments.tier)
@@ -238,6 +314,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if arguments.command == "eval":
             return _eval(arguments, sys.stdout)
+        if arguments.command == "recheck":
+            return _recheck(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first
             parser.error(f"unknown command {arguments.command!r}")
         return _audit(arguments, sys.stdout)
