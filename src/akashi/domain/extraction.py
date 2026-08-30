@@ -66,7 +66,7 @@ def rules_of(packs: Sequence[LanguagePack]) -> tuple[ExtractionRule, ...]:
     found: list[tuple[str, ExtractionRule]] = []
     for pack in packs:
         found.extend((pack.code, rule) for rule in pack.rules)
-    found.sort(key=lambda pair: (pair[0], pair[1].kind.value, pair[1].pattern))
+    found.sort(key=lambda pair: (pair[0], pair[1].kind.value, pair[1].pattern, pair[1].group))
     return tuple(rule for _, rule in found)
 
 
@@ -85,9 +85,16 @@ def _candidates(text: str, rules: Iterable[ExtractionRule]) -> list[tuple[Span, 
     found: list[tuple[Span, ExtractionRule]] = []
     for rule in rules:
         for match in _compiled(rule.pattern).finditer(text):
-            start, end = match.span()
-            if end > start and text[start:end].strip():
-                found.append((Span(start, end), rule))
+            # ``rule.group`` is how a rule matches its evidence without
+            # capturing it: the honorific in ``田中医師`` is what makes ``田中``
+            # a name and is not part of the name.
+            start, end = match.span(rule.group)
+            if start < 0 or end <= start:
+                continue
+            body = text[start:end]
+            if not body.strip() or body in rule.reject:
+                continue
+            found.append((Span(start, end), rule))
     return found
 
 

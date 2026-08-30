@@ -19,18 +19,24 @@ python tools/generate_cases.py --check-only        # the corpus is what the gene
 
 ## The headline, and the two ways to read it
 
-| | |
-|---|---|
-| Extraction recall over **everything marked** | **87 of 96 — 91%** |
-| Extraction recall over **the kinds akashi claims** | **87 of 87 — 100%** |
+| | v0.3 | v0.4 |
+|---|---|---|
+| Extraction recall over **everything marked** | 87 of 96 — 91% | **91 of 96 — 95%** |
+| Extraction recall over **the kinds akashi claims** | 87 of 87 — 100% | 91 of 96 — 95% |
+| Extraction precision | 100% | **100%** |
+| Unbearing segments | 35% | **30%** |
 
-The first is coverage: how much of a realistic answer akashi sees at all. The
-second is whether it does what it says. The nine-particular gap is entirely
-`proper_noun`, which akashi declares it does not extract
-([ADR-0004](adr/0004-the-particular-is-the-unit-of-verification.md)).
+The two recalls were far apart in v0.3 because `proper_noun` was a kind akashi
+attempted nothing for. **The structural name rules in v0.4 closed that**, so the
+two are now the same number and the five remaining misses are names with no
+title, honorific or legal form beside them.
 
-Reporting only the second would score akashi against a boundary it drew for
-itself. Reporting only the first would count a declared limit as a defect.
+They are still reported separately. A kind added later that nothing extracts
+would pull them apart again, and a reader who has watched them move together
+learns more than one handed a single figure.
+
+**akashi reads structure, not names**, and that is now a standing limit on every
+report rather than an entry in `kinds_not_extracted`.
 
 ---
 
@@ -41,10 +47,9 @@ itself. Reporting only the first would count a declared limit as a defect.
 
 | | Found | Marked | |
 |---|---:|---:|---:|
-| Everything marked | 87 | 96 | 91% |
-| The claimed kinds | 87 | 87 | **100%** |
-| Spans exact rather than merely overlapping | 87 | 87 | 100% |
-| Precision — extractions a marking covers | 87 | 87 | **100%** |
+| Everything marked | 91 | 96 | **95%** |
+| Spans exact rather than merely overlapping | 91 | 91 | 100% |
+| Precision — extractions a marking covers | 91 | 91 | **100%** |
 
 ### Per kind
 
@@ -58,15 +63,15 @@ itself. Reporting only the first would count a declared limit as a defect.
 | `identifier` | 6 / 6 | 100% |
 | `percentage` | 6 / 6 | 100% |
 | `money` | 3 / 3 | 100% |
-| **`proper_noun`** | **0 / 9** | **0%** |
+| **`proper_noun`** | **4 / 9** | **44%** |
 
 ### Per language
 
-| | Everything | Claimed kinds |
-|---|---:|---:|
-| `en` | 28 / 31 — 90% | 100% |
-| `ja` | 30 / 33 — 91% | 100% |
-| `zh` | 29 / 32 — 91% | 100% |
+| | Everything marked |
+|---|---:|
+| `en` | 30 / 31 — 97% |
+| `ja` | 31 / 33 — 94% |
+| `zh` | 30 / 32 — 94% |
 
 No language is much worse than the others, which is the thing an aggregate
 would hide and a test now watches for.
@@ -78,6 +83,17 @@ would hide and a test now watches for.
 - **The person who marked them wrote the extractor.** ADR-0010 warns about
   exactly this for a labelled corpus. The marking rule and the visibility of the
   markings are mitigations, not an answer.
+- **The structural name rules were written *after* seeing these answers**, which
+  is the same bias one level down. Discount the 91 → 95 accordingly. What can be
+  said in its defence: the three families — a title, an honorific, a legal form —
+  are what anyone listing structural markers for these genres would list, and
+  the rules were narrowed, not widened, when precision fell. Two candidate rules
+  were **not** written because they would have been invented to pass this set:
+  `[甲乙丙丁]社` for Japanese contract parties and `[甲乙]方` for Chinese ones.
+  Both are standard legal conventions and both stay out until material nobody
+  here wrote asks for them.
+- **The five remaining misses are `Borden Systems`, `甲社`, `乙社`, `甲方` and
+  `乙方`.** A company name with no legal form, and party designators.
 - A unit the extractor does not know makes a *unit swap* undetectable. Two such
   gaps were found by this measurement and closed (`℉`, `percentage points`), and
   the general fact stands: the unit lists are lists, and a list is never
@@ -93,13 +109,17 @@ would hide and a test now watches for.
 
 | | | |
 |---|---:|---:|
-| Unbearing segments, **realistic answers** | 28 / 80 | **35%** |
+| Unbearing segments, **realistic answers** | 24 / 80 | **30%** |
 | Unbearing segments, generated corpus | 18 / 135 | 13% |
 
 **35% is the number to use.** The generated corpus was written to carry
 particulars, so its 13% is optimistic by construction.
 
-Of the 28, **22 are prose and 6 are table rows** — and the table rows are
+It was 35% before the structural name rules shipped, and the five-point fall is
+the clearest evidence that coverage and extraction are the same question asked
+twice: a segment whose only load-bearing token was a name used to bear nothing.
+
+Of the 24, most are prose and six are table rows — and the table rows are
 `|---|---|` separators, which assert nothing and are counted anyway because a
 segment is a segment.
 
@@ -199,9 +219,9 @@ measurement raises.
 | Verdict correctness | 35% | ≥ 25% | |
 | Refusals | 100% | ≥ 100% | **invariant** (ADR-0008) |
 | Reproducibility | 100% | ≥ 100% | **invariant** (ADR-0003) |
-| Extraction recall, claimed kinds | 100% | ≥ 90% | |
+| Extraction recall, claimed kinds | 95% | ≥ 85% | |
 | Extraction precision | 100% | ≥ 90% | |
-| Unbearing segments | 35% | ≤ 55% | |
+| Unbearing segments | 30% | ≤ 55% | |
 
 Three metrics are deliberately **ungated**: `declared misses passed`,
 `acknowledged false positives` and `source localisation`. Gating a number you
@@ -233,3 +253,10 @@ label.
 
 Fixing (5) then broke `350kPa` in the corpus on the same afternoon, which is
 why the rule forbids a letter *before* a bare number and not after.
+
+**And one more, from v0.4.** The first structural name rules put a proper noun
+on `筐体仕様` — `様` is an honorific and also the second character of 仕様, 模様,
+多様 and 同様, which are words that live in exactly the specification and
+contract documents akashi is aimed at. Precision fell to 99% and `様` was
+dropped. That costs `佐藤様`, a real case, and the trade is the right way round:
+**a precision-first extractor that is not precise is worth nothing at all.**

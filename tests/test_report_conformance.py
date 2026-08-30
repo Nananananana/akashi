@@ -193,7 +193,7 @@ def test_every_unchecked_span_belongs_to_a_segment(name: str, report: dict[str, 
 @pytest.mark.parametrize(("name", "report"), ALL_REPORTS, ids=[n for n, _ in ALL_REPORTS])
 def test_the_limits_travel_with_every_report(name: str, report: dict[str, Any]) -> None:
     """On the artefact rather than in the documentation. The artefact travels."""
-    assert len(report["limits"]) == 4
+    assert len(report["limits"]) == 5
     assert any("not about truth" in limit for limit in report["limits"])
 
 

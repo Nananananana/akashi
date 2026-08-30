@@ -19,6 +19,16 @@ from akashi.domain.particular import ExtractionRule, ParticularKind
 
 __all__ = ["ENGLISH"]
 
+#: Titles that make what follows them a person's name. Matched and not
+#: captured: ``Dr.`` is the evidence and ``Okafor`` is the name.
+_TITLE = r"(?:Dr|Prof|Mr|Mrs|Ms|Mx|Sir|Dame|Rev|Hon|Judge|Justice|Sen|Gov)"
+
+#: Legal-form suffixes. These are the whole evidence, and a capitalised word on
+#: its own is not: a rule that fired on those would put a particular on every
+#: sentence-initial word in the language, and akashi would be guessing rather
+#: than reading.
+_LEGAL_FORM = r"(?:Inc|Ltd|LLC|LLP|PLC|Corp|Co|GmbH|AG|SA|NV|BV|Pty|KK|Oy|AB)"
+
 _ABBREVIATIONS = frozenset(
     {
         # Titles.
@@ -131,6 +141,24 @@ ENGLISH = LanguagePack(
     needs_space_after=True,
     abbreviations=_ABBREVIATIONS,
     rules=(
+        ExtractionRule(
+            kind=ParticularKind.PROPER_NOUN,
+            pattern=r"(?<![A-Za-z])"
+            + _TITLE
+            + r"\.?\s+([A-Z][A-Za-z'\-]+(?:\s+[A-Z][A-Za-z'\-]+)?)",
+            priority=85,
+            group=1,
+            note="a name after a title; the title is evidence and not part of the name",
+        ),
+        ExtractionRule(
+            kind=ParticularKind.PROPER_NOUN,
+            pattern=(
+                r"(?<![A-Za-z])[A-Z][A-Za-z&'\-]*(?:\s+[A-Z][A-Za-z&'\-]*){0,3}"
+                r"\s+" + _LEGAL_FORM + r"\.?(?![A-Za-z])"
+            ),
+            priority=86,
+            note="Acme Ltd: the legal form is the evidence and is part of the name",
+        ),
         ExtractionRule(
             kind=ParticularKind.REFERENCE,
             pattern=(
