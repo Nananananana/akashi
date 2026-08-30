@@ -176,3 +176,32 @@ def test_the_forbidden_vocabulary_is_absent_from_the_readme(word: str) -> None:
         f"answer implies it is, and nothing stronger. See "
         f"docs/adr/0004-the-particular-is-the-unit-of-verification.md"
     )
+
+
+def test_every_local_link_in_every_document_resolves() -> None:
+    """A link whose text is right and whose target is wrong is worse than no
+    link: it sends a reader somewhere with confidence.
+
+    That is the judgement `contradicted` is built on one layer down — akashi
+    declines to name a source rather than name the wrong one — and it applies to
+    a document that names a file.
+
+    This was found with one broken link in it, in an ADR written the same day:
+    the display text said `ADR-0004` and the target dropped three words of the
+    filename. Nothing rendered it as an error; the anchor simply went nowhere.
+
+    External links are not followed. Reaching them needs the network, and a
+    check that cannot run offline is a check that gets skipped exactly when
+    somebody is working without one.
+    """
+    broken = []
+    for document in sorted(ROOT.rglob("*.md")):
+        if any(part in {".venv", ".git", "node_modules"} for part in document.parts):
+            continue
+        for target in re.findall(r"\]\(([^)\s]+)\)", document.read_text(encoding="utf-8")):
+            if target.startswith(("http://", "https://", "#", "mailto:")):
+                continue
+            path = target.partition("#")[0]
+            if path and not (document.parent / path).resolve().exists():
+                broken.append(f"{document.relative_to(ROOT).as_posix()} -> {target}")
+    assert not broken, "documents point at files that are not there:\n  " + "\n  ".join(broken)
