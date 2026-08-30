@@ -11,6 +11,17 @@
       "retrieved": "2026-08-30",
       "licence": "Apache-2.0",
       "why": "akashi's fixtures are checked against the real contract without installing tsumugi (ADR-0007). Test material only; nothing under src/ reads it."
+    },
+    {
+      "file": "context-package-seam.json",
+      "repo": "Nananananana/tsumugi",
+      "path": "fixtures/seam/context-package.json",
+      "branch": "main",
+      "commit": "859bff5a7616a0e29775675fad6f22f632b1c609",
+      "sha256": "2e2b499439f14360a48778f376bc062435bf3bc52723376ef4b3f50a808b6b2a",
+      "retrieved": "2026-08-30",
+      "licence": "Apache-2.0",
+      "why": "A real ContextPackage, emitted by the reference producer for a fixed corpus and a fixed question. The schema says what the shape may be; this says what tsumugi actually emits. Test material only."
     }
   ]
 }
