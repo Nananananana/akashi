@@ -1,11 +1,29 @@
 # Vendored contracts
 
-Schemas published by other projects, copied here so that akashi's fixtures can
-be checked against the real contract without installing anything.
+Contracts published by other projects, and the documents that instantiate them,
+copied here so that akashi can be tested against the real thing without
+installing anything.
 
 | File | Source | Licence |
 |---|---|---|
 | `context-package-1.json` | [`tsumugi`](https://github.com/Nananananana/tsumugi), `schemas/context-package-1.json` | Apache-2.0 |
+| `context-package-seam.json` | [`tsumugi`](https://github.com/Nananananana/tsumugi), `fixtures/seam/context-package.json` | Apache-2.0 |
+
+They are a pair and they answer different questions. The schema says what the
+shape **may** be; the fixture is one instance of it that the producer really
+produced. A consumer needs both, because a schema is satisfied by documents
+nobody emits and contradicted by none that they do.
+
+## One invariant lives in the reader, because it cannot live in the schema
+
+JSON Schema 2020-12 cannot compare two properties of the same object, so
+**`end >= start` on an anchor is not expressible** and a reversed anchor
+validates cleanly. `tsumugi` refuses to construct one, so no real package
+carries it — but a producer's invariant is not a consumer's guarantee, and
+`infrastructure/packages/contextpackage.py` keeps its own copy of this check.
+
+That check is not redundant with schema validation and must not be removed on
+the grounds that every fixture here validates. That is what it is for.
 
 [`upstream.json`](upstream.json) records, for each file, the repository, the
 path, the commit it was taken at, its `sha256` and the date. That file is the
@@ -51,6 +69,17 @@ gets disabled.
 3. **Read the diff.** The hash going green again is not evidence that akashi
    still conforms; it is only evidence that the copy is current.
 
-Neither check replaces the v0.5 seam test, which builds a package with the
-reference producer rather than reading one somebody typed. A schema says what a
-document may look like; it does not say what `tsumugi` actually emits.
+## The fixture
+
+`context-package-seam.json` is what `tsumugi context --json` emits for a fixed
+corpus and a fixed question. Its `created_at` is pinned by the producer — it is
+the one field deliberately excluded from `package_id`, which is what makes
+pinning it honest — so the whole document compares and nothing is skipped.
+
+It is deliberately wider than the happy path: two items **and an omission**, a
+superseded passage carried rather than dropped, and `protection: null` rather
+than absent. `tests/test_seam_tsumugi.py` is what reads it, and each of those
+three is a test in there.
+
+Regenerate it upstream with `python tools/make_seam_fixture.py`; pin the
+timestamp with `tsumugi context --json --at <ISO8601>`.

@@ -151,6 +151,12 @@ def _item(raw: object, index: int) -> EvidenceItem:
     anchor_where = f"{where}.anchor"
     start = _offset(raw_anchor, "start", anchor_where)
     end = _offset(raw_anchor, "end", anchor_where)
+    # **This one is not in the schema and cannot be.** JSON Schema 2020-12
+    # cannot compare two properties of the same object, so a reversed anchor
+    # validates cleanly. tsumugi refuses to construct one, so no real package
+    # carries it -- but a producer's invariant is not a consumer's guarantee,
+    # and this is the consumer's copy of it. Do not remove it on the grounds
+    # that the fixtures validate; that is exactly what it is here for.
     if end < start:
         raise ContractError(f"{anchor_where} ends at {end}, before it starts at {start}")
 
