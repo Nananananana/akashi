@@ -5,8 +5,9 @@ you and the context it was given, and separate what the answer took from its
 evidence from what it produced on its own — deterministically, offline, with no
 model in the path and nothing installed alongside it.
 
-> **Status: v0.1 and v0.3.** `akashi audit` works, and `akashi eval` measures
-> it against a labelled corpus and nine hand-marked realistic answers, gated on
+> **Status: v0.1, v0.2 and v0.3.** `akashi audit` works; `akashi recheck`
+> re-derives a report from the inputs it names; `akashi eval` measures both
+> against a labelled corpus and nine hand-marked realistic answers, gated on
 > floors. Nothing is released and the API is not stable.
 > [`docs/measurements.md`](docs/measurements.md) is what it currently scores;
 > [`docs/proposals/0002-what-building-it-taught.md`](docs/proposals/0002-what-building-it-taught.md)
@@ -126,6 +127,7 @@ that can emit one.
 | [The concept](docs/concept.md) | What akashi asks, and why that question and not the obvious one |
 | [The roadmap](docs/proposals/0002-what-building-it-taught.md) | What building it taught, and the plan that follows |
 | [The original design](docs/proposals/0001-the-design.md) | Written before any code, left as written. Parts of it are wrong and `0002` says which |
+| [The report contract](docs/audit-report.md) | `akashi.audit-report/1`, for producers and consumers |
 | [What it scores](docs/measurements.md) | Every number, with the command that produced it and what it does not say |
 | [The corpus](docs/evaluation-corpus.md) | The labelled dataset, its plants, and what it cannot tell you |
 | [Decisions](docs/adr/README.md) | Thirteen ADRs, each with what it costs |

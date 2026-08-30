@@ -39,7 +39,7 @@ from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
-from akashi.infrastructure.rendering import as_json, as_text
+from akashi.infrastructure.rendering import as_json, as_statement, as_text
 from akashi.infrastructure.reports import load_report
 
 __all__ = ["main"]
@@ -83,6 +83,20 @@ def _parser() -> argparse.ArgumentParser:
     )
     audit_command.add_argument(
         "--json", action="store_true", help="emit the report as JSON instead of text"
+    )
+    audit_command.add_argument(
+        "--attestation",
+        action="store_true",
+        help=(
+            "emit the report as an unsigned in-toto Statement, for a pipeline that "
+            "signs its artefacts. akashi signs nothing: the keys are yours (ADR-0014)"
+        ),
+    )
+    audit_command.add_argument(
+        "--subject",
+        default="",
+        metavar="NAME",
+        help="the subject name in the attestation. Defaults to the response path",
     )
     audit_command.add_argument(
         "--language",
@@ -196,7 +210,16 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         restored_by=arguments.restored_by,
         akashi_version=__version__,
     )
-    rendered = as_json(report) if arguments.json else as_text(report)
+    if arguments.attestation:
+        subject = arguments.subject or (
+            "response" if arguments.response == "-" else Path(arguments.response).name
+        )
+        statement = as_statement(report, subject=subject)
+        rendered = json.dumps(statement, ensure_ascii=False, indent=2) + "\n"
+    elif arguments.json:
+        rendered = as_json(report)
+    else:
+        rendered = as_text(report)
     print(rendered, end="", file=out)
 
     if arguments.fail_on_findings and report.has_findings:
