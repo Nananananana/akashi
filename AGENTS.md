@@ -151,10 +151,29 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   is not stable.
 - **License: Apache-2.0. Python: 3.12+. Runtime dependencies: 0**, checked in CI
   by installing without extras and asserting nothing came along.
-- 1,339 tests, 98% coverage. `ruff`, `mypy --strict` and six `import-linter`
-  contracts all green. The two that were parked in `.importlinter` went live
-  when `evaluation/` appeared, which is what `tests/test_layering_config.py`
-  exists to force.
+- Before every green commit: `pytest`, `mypy`, `lint-imports`, and
+  `pre-commit run --all-files`. CI runs all four and the corpus gate besides.
+  The two `import-linter` contracts parked in `.importlinter` went live when
+  `evaluation/` appeared, which is what `tests/test_layering_config.py` exists
+  to force.
+- **What is actually enforced, rather than described**: no runtime dependency,
+  no network anywhere in `akashi`, and the layer direction. Each is a contract
+  or a CI job that fails, not a sentence that ages.
+
+  This block used to say `1,339 tests, 98% coverage`. `main` had 1,361 within
+  hours, and nothing noticed, because nothing was checking. **The coverage
+  figure was still right, and that is the more useful half of the story**: a
+  ratio does not move while tests grow in proportion, so the number that looked
+  like the quality claim was the defenceless one. It happened not to move.
+
+  A count that drifts with ordinary work does not belong in prose -- it is
+  maintenance rather than correctness, and a reader who wants it runs the
+  command above. Gating coverage instead (`--cov-fail-under`) would make the
+  claim true by construction and was **not** done: a floor has to be wanted for
+  its own reasons, and adding one so a sentence stops being wrong is the
+  sentence choosing the code. The measured numbers that *are* checked live in
+  `docs/measurements.md`, each with its command, its date, and what it does not
+  say.
 - **Built:** `domain/span`, `domain/text` (the one normalization tolerance, with
   the map back to original offsets), `domain/language`, `domain/segment`
   (structure pass then sentence pass), `domain/particular`, `domain/extraction`,
