@@ -130,7 +130,7 @@ def as_text(
     tally = breakdown.overall.tally
     rates = breakdown.overall.by_name()
     lines = [
-        f"akashi eval — {cases} cases, {tally.particulars} particulars, {tally.segments} segments",
+        f"akashi eval - {cases} cases, {tally.particulars} particulars, {tally.segments} segments",
         "",
     ]
 

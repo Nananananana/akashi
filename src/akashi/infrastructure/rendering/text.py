@@ -27,7 +27,7 @@ def as_text(report: AuditReport, *, width: int = 78) -> str:
     into a file that somebody attaches to a filing as it is to be read on a
     screen, and escape codes in that file are noise a reviewer has to explain.
     """
-    lines: list[str] = [f"akashi — {report.summary()}", ""]
+    lines: list[str] = [f"akashi - {report.summary()}", ""]
     lines += _not_checked(report)
     lines += _findings(report, width)
     lines += _traced(report)

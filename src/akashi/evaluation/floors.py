@@ -89,7 +89,7 @@ class Breach:
         direction = "below" if self.floor.at_least is not None else "above"
         return (
             f"{self.floor.metric}: {self.value:.0%} is {direction} the "
-            f"{self.floor.bound:.0%} bound — {self.floor.why}"
+            f"{self.floor.bound:.0%} bound - {self.floor.why}"
         )
 
 

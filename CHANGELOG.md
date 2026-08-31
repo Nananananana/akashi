@@ -138,6 +138,14 @@ API yet.
   `provenance.protection`, which makes that branch exactly where a real claim
   arrives. akashi still checks nothing: the claim goes on the report attributed
   to whoever made it ([ADR-0013](docs/adr/0013-a-restoration-akashi-did-not-watch-is-a-claim.md)).
+- **Every printing command crashed on a Japanese console.** `audit`, `eval` and
+  `explain` all raised `UnicodeEncodeError` on `cp932` — what a reader gets by
+  typing `akashi` without setting anything — because akashi's own headings
+  carried an em dash. akashi's prose is ASCII now, and the CLI asks its streams
+  for `errors="replace"` so that text akashi *did not write* degrades instead of
+  losing the audit. Not `encoding="utf-8"`: that makes the characters
+  representable and the terminal decodes them as `cp932` anyway, turning the
+  Japanese akashi most often prints into mojibake.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
