@@ -239,8 +239,19 @@ about making a finding say more.
   annotator-agreement ceiling stated.
 - The comparison against a model-based judge on the same inputs, with the
   reproducibility difference measured rather than asserted: run both twice.
-- **Latency, at the lengths people send.** Never measured. `mamori`'s ADR-0025
-  is the pattern.
+  **The speed half of that comparison is already settled** and is not worth
+  re-running: a model judge does not run in akashi's range, the gap is two to
+  three orders of magnitude, and no plausible measurement error closes it. What
+  is left to measure is **agreement**.
+- **Latency, at the lengths people send.** **Measured**, and published in
+  `measurements.md` with its range rather than a point: 1.1-1.6 ms for a
+  realistic answer, linear in both the answer and the package, ~370 ms of cold
+  start that is Python's rather than akashi's. Two batches hours apart agree
+  within ~4%, which is itself the interesting part -- a sibling saw 25% between
+  batches on this machine, and an audit has no I/O in the loop for the machine's
+  state to act on. `mamori`'s ADR-0025 was the pattern, and its distinction
+  between what reproduces anywhere and what is a property of the machine is
+  what the two batches exist to respect.
 - A hand-segmented reference set, so ADR-0009's disagreement rate stops being
   owed.
 - The corpus grows to exercise the structure pass.

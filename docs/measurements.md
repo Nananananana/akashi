@@ -332,6 +332,73 @@ is real whether or not #42 ever ships.
 
 ---
 
+## Latency, and the range that is part of it
+
+`akashi audit`, end to end, on the nine hand-marked answers. **Two batches, some
+hours apart**, on one machine that had other agent sessions and GPU work running
+throughout.
+
+| | batch 1 | batch 2 |
+|---|---:|---:|
+| the nine realistic answers (median each) | 1.16 – 1.57 ms | 1.11 – 1.56 ms |
+| 2,832 characters | 8.53 ms | 8.53 ms |
+| 11,334 characters | 34.08 ms | 32.75 ms |
+| 45,342 characters | 134.09 ms | 132.61 ms |
+| a 1-item package | 0.40 ms | 0.41 ms |
+| a 1,000-item package | 211.64 ms | 204.04 ms |
+| cold start, process to report | 318 – 375 ms | 359 – 380 ms |
+
+**Linear in both directions.** Four times the characters is four times the time;
+a package a thousand times larger costs about five hundred times as much, and
+the `SourceIndex` that walks the whole package is the reason it is the second
+axis at all. Nothing in segmentation, extraction or matching is quadratic.
+
+### Why two batches rather than more repetitions
+
+Repeating a measurement twenty times inside one batch establishes that
+conditions held **for the length of the batch**, and nothing else. A sibling
+project measured ±1% across three consecutive runs and **25% between batches an
+hour apart** on this same machine — precise inside the batch, and about the
+machine rather than about the code.
+
+akashi's spread between batches is **at most about 4%** on everything except
+cold start, which moved ~13% and is the one that is mostly Python's interpreter
+starting rather than akashi doing anything.
+
+That is a result about akashi rather than a claim about measurement hygiene: an
+audit is pure CPU with no I/O in the loop, no model and no network, so there is
+little for the machine's state to act on. **Two batches is two batches**, and
+the number to quote is the range rather than either end of it.
+
+### What this does not say
+
+- **It is one machine.** 28 logical CPUs, Windows, CPython 3.12.8. Nothing here
+  is portable to another; only the *shape* — linear, sub-millisecond per
+  sentence, three orders of magnitude under a model — is expected to survive.
+- **No GPU was involved and none could be.** That is structural rather than
+  observed: `src/akashi` imports fourteen standard-library modules and nothing
+  else, and the zero-dependency CI job and the `no-network` import contract both
+  enforce it. **"No GPU is used" is checked; "the timings are hardware
+  independent" is false** and is not claimed.
+- **Cold start is Python's**, not akashi's. 1.5 ms of the ~370 ms is the audit.
+  It is reported because it is what a CLI user feels.
+- The nine answers were written for the extractor by the person who wrote it,
+  and their length distribution is not evidence about production traffic.
+
+### What it settles for v0.6
+
+The roadmap's comparison against a model judge has one prior that no longer
+needs measuring: **a model judge does not run in this range.** The cheapest one
+is tens to hundreds of milliseconds per call and usually more, so the gap is two
+to three orders of magnitude. A 25% error of the kind the sibling found would
+not close it, and neither would a 10× one.
+
+That is not an argument that akashi is better. It is the reason the comparison
+has to be about **agreement**, not about speed: the speed question is already
+answered and answering it again would be measuring the obvious.
+
+---
+
 ## The floors
 
 Set on 2026-08-30 against the run above, in
