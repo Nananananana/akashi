@@ -56,6 +56,44 @@ Said first, because the omissions in a contract matter more than the fields.
 - **No corpus.** akashi never reads the documents, only the spans that were
   sent, so an anchor here is a pointer and not a copy.
 
+### What a reader who does not hold the package may conclude
+
+A report travels. It is signed by somebody else, forwarded, filed, and read by a
+party who was not there and who does not have the ContextPackage beside them.
+That reader can confirm strictly less than one who does, and the difference is
+worth stating rather than leaving to be discovered.
+
+| in a report | with the package | without it |
+|---|---|---|
+| `answer` | the text audited | **the same**: the answer is in the report |
+| a particular's `span` | an offset into `answer` | **checkable**: slice `answer` and look |
+| `segments[].text` | a slice of `answer` | **checkable**, the same way |
+| `counts`, `coverage` | arithmetic over the above | **checkable** |
+| `locations[]` — `source_path`, `section`, `span` | open the document and look | **an assertion**. Nothing in the report holds that document |
+| `contradiction.found` | likewise | **an assertion** |
+| `provenance.withheld[]` | what the producer said it left out | **an assertion**, and it was one for akashi too |
+
+**The dividing line is not importance, it is direction.** Every offset pointing
+*inward* — at the answer, which travels with the report — is something the
+reader can settle for themselves. Every offset pointing *outward* — at a
+document akashi read and they did not — is akashi's word.
+
+That does not make the outward half worthless: it is precisely what makes a
+finding actionable, since it tells a reader which file to open. It makes it a
+**claim to be checked rather than a fact on the page**, and a reader who cannot
+tell the two apart will believe the wrong one.
+
+`akashi explain` prints this distinction under any segment carrying an outward
+claim, and prints nothing where a segment carries none — because there, nothing
+is being taken on trust.
+
+**akashi stops at the package.** It never held the owner's original file, and a
+report must not read as though it did. Resolving a `source_path` further back —
+through whatever produced the corpus — is possible for somebody holding those
+records, and is not akashi's: the coordinates here are chosen to be resolvable,
+which is a different thing from being resolved
+([#53](https://github.com/Nananananana/akashi/issues/53)).
+
 ---
 
 ## Shape
