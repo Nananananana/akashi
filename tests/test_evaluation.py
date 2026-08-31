@@ -235,7 +235,7 @@ def test_the_json_carries_the_notes(measured: tuple[object, list[str]]) -> None:
 def test_eval_runs_from_the_command_line(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["eval", "--cases", str(CASES)]) == AUDITED
     printed = capsys.readouterr().out
-    assert printed.startswith("akashi eval — ")
+    assert printed.startswith("akashi eval - ")
     assert "fabrication recall" in printed
 
 

@@ -112,7 +112,7 @@ def explain_segment(
     segment = _find(report, segment_id)
     verdict = Verdict(segment["verdict"])
 
-    lines = [f"akashi explain — {segment_id}", ""]
+    lines = [f"akashi explain - {segment_id}", ""]
     lines.append(f"{_INDENT}verdict   {verdict.value}")
     lines.append(f"{_INDENT}rule      {verdict.rule}")
     if segment.get("because"):

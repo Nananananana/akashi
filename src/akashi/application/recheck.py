@@ -68,7 +68,7 @@ class Recheck:
             return (
                 f"{head}, and the report was produced by akashi "
                 f"{self.archived_version or 'unknown'} rather than "
-                f"{self.rederived_version or 'unknown'} — a version difference is not "
+                f"{self.rederived_version or 'unknown'} - a version difference is not "
                 f"tampering, and these differences may be entirely explained by it"
             )
         return head

@@ -21,6 +21,7 @@ case look like a failure. A caller who wants the build to go red asks for it.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 from collections.abc import Sequence
@@ -272,7 +273,7 @@ def _explain(arguments: argparse.Namespace, out: TextIO) -> int:
     document = load_report_or_statement(arguments.report)
     if not arguments.segment:
         findings = segments_with_findings(document)
-        print("akashi explain — name a segment with --segment", file=out)
+        print("akashi explain - name a segment with --segment", file=out)
         print(file=out)
         if findings:
             print("Findings in this report", file=out)
@@ -328,7 +329,7 @@ def _recheck(arguments: argparse.Namespace, out: TextIO) -> int:
         }
         print(json.dumps(body, ensure_ascii=False, indent=2), file=out)
     else:
-        print(f"akashi recheck — {result.describe()}", file=out)
+        print(f"akashi recheck - {result.describe()}", file=out)
         if not result.matches:
             print(f"  archived   {result.archived_id}", file=out)
             print(f"  re-derived {result.rederived_id}", file=out)
@@ -388,12 +389,41 @@ def _eval(arguments: argparse.Namespace, out: TextIO) -> int:
     return AUDITED
 
 
+def _tolerate_a_narrow_console() -> None:
+    """Print what the console can and a ``?`` for the rest, rather than crash.
+
+    akashi echoes text it did not write: the answer, a segment, a particular, a
+    source path. On a Japanese Windows console -- `cp932`, which is what a
+    reader gets by typing `akashi` without setting anything -- a Chinese
+    document or a stray typographic character raises `UnicodeEncodeError` and
+    the audit is lost after doing all of its work.
+
+    **Not `encoding="utf-8"`.** That makes the characters representable and
+    then the terminal decodes them as `cp932` anyway, so the Japanese akashi is
+    most often printing comes out as mojibake. `errors="replace"` keeps
+    everything the console *can* show exactly right and degrades only what it
+    cannot, which is the smaller loss for the text akashi actually handles.
+
+    akashi's own prose is ASCII, so nothing here should ever be replaced. This
+    is for the text somebody else wrote.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None or getattr(stream, "errors", None) == "replace":
+            continue
+        # A stream that cannot be reconfigured -- a pipe somebody replaced, a
+        # capture object -- is not a reason to refuse to run.
+        with contextlib.suppress(ValueError, OSError):
+            reconfigure(errors="replace")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI. Returns an exit code rather than calling ``sys.exit``.
 
     A function that exits the process cannot be called by a test, and the
     behaviour worth testing is the exit code.
     """
+    _tolerate_a_narrow_console()
     parser = _parser()
     arguments = parser.parse_args(argv)
 

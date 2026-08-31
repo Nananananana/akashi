@@ -41,7 +41,9 @@ def test_an_audit_prints_a_report_and_exits_zero(
 ) -> None:
     assert run("audit", "--package", "package.json", "--response", "answer.txt") == AUDITED
     printed = capsys.readouterr().out
-    assert printed.startswith("akashi — ")
+    # ASCII on purpose: a Japanese console is cp932 and an em dash here
+    # crashed every printing command on it.
+    assert printed.startswith("akashi - ")
 
 
 def test_the_output_leads_with_what_was_not_checked(
