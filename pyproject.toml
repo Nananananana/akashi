@@ -46,6 +46,10 @@ dev = [
     # comment. It arrives with pre-commit anyway; declared because a test that
     # depends on a transitive dependency breaks the day that dependency moves.
     "pyyaml>=6",
+    # mypy now reads the tests too, and an untyped `jsonschema` there is a
+    # silent `Any` in the checks that validate the published contract.
+    "types-jsonschema",
+    "types-PyYAML",
 ]
 
 # There is deliberately no `siblings` extra, and the reason is stronger than it
@@ -125,7 +129,16 @@ ignore = [
 
 [tool.mypy]
 python_version = "3.12"
-files = ["src/akashi"]
+# The scope of a check has to match the scope of what it protects. This said
+# `src/akashi` and so looked at 53 of the repository's 86 files, leaving the
+# corpus generator and every test unchecked -- including the ones the published
+# measurements rest on. Widening it found an assertion that could not fail.
+#
+# One profile for all of it, rather than a relaxed one for tests. The first
+# attempt at that used `module = "test_*"`, which mypy rejects as a pattern and
+# then continues past, applying nothing: the same shape as the narrow scope it
+# was meant to soften.
+files = ["src/akashi", "tests", "tools"]
 strict = true
 warn_unreachable = true
 

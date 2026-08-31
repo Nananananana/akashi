@@ -16,6 +16,7 @@ from hypothesis import strategies as st
 
 from akashi import __version__
 from akashi.application import audit
+from akashi.domain.package import ContextPackage
 from akashi.domain.report import Audited, report_id
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
@@ -25,7 +26,7 @@ PACKAGES = Path(__file__).parent / "packages"
 ANSWERS = Path(__file__).parent / "answers"
 
 
-def gear() -> object:
+def gear() -> ContextPackage:
     return load_package(PACKAGES / "gear-ja.json")
 
 

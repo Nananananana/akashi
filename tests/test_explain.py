@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -39,23 +40,24 @@ ANSWER = "テントは 2.4kg、ガスは 250mg カートリッジ。タープは
 
 
 @pytest.fixture(scope="module")
-def archived() -> dict:
+def archived() -> dict[str, Any]:
     """A report, serialised and read back — the way a reader meets one."""
     report = audit(ANSWER, load_package(PACKAGES / "gear-ja.json"), DEFAULT)
-    return json.loads(json.dumps(report.to_dict(), ensure_ascii=False))
+    body: dict[str, Any] = json.loads(json.dumps(report.to_dict(), ensure_ascii=False))
+    return body
 
 
 # --- What it says ------------------------------------------------------------
 
 
-def test_it_prints_the_segment_and_its_verdict(archived: dict) -> None:
+def test_it_prints_the_segment_and_its_verdict(archived: dict[str, Any]) -> None:
     printed = explain_segment(archived, "seg_001")
     assert "seg_001" in printed
     assert "contradicted" in printed
     assert "テントは 2.4kg" in printed
 
 
-def test_it_names_the_rule_behind_the_verdict(archived: dict) -> None:
+def test_it_names_the_rule_behind_the_verdict(archived: dict[str, Any]) -> None:
     """In the contract's words rather than new ones. A reader looking at one
     finding should not have to hold `docs/audit-report.md` open beside it."""
     from akashi.domain.verdict import Verdict
@@ -64,7 +66,7 @@ def test_it_names_the_rule_behind_the_verdict(archived: dict) -> None:
     assert Verdict.CONTRADICTED.rule in printed
 
 
-def test_a_grounded_particular_says_where_it_was_found(archived: dict) -> None:
+def test_a_grounded_particular_says_where_it_was_found(archived: dict[str, Any]) -> None:
     printed = explain_segment(archived, "seg_001")
     assert "2.4kg" in printed
     assert "notes/2025-06-03-装備メモ.md" in printed
@@ -72,7 +74,7 @@ def test_a_grounded_particular_says_where_it_was_found(archived: dict) -> None:
 
 
 def test_a_contradicted_particular_says_what_the_source_says_and_why(
-    archived: dict,
+    archived: dict[str, Any],
 ) -> None:
     """The `why` is carried in the report. A finding that cannot say why it is a
     finding is one nobody can appeal, and that holds for the archived copy as
@@ -82,7 +84,7 @@ def test_a_contradicted_particular_says_what_the_source_says_and_why(
     assert "same digits" in printed
 
 
-def test_a_floating_particular_says_it_resolved_nowhere(archived: dict) -> None:
+def test_a_floating_particular_says_it_resolved_nowhere(archived: dict[str, Any]) -> None:
     findings = segments_with_findings(archived)
     printed = "".join(explain_segment(archived, one) for one in findings)
     assert "1.9kg" in printed
@@ -92,14 +94,14 @@ def test_a_floating_particular_says_it_resolved_nowhere(archived: dict) -> None:
 # --- Narrowing ---------------------------------------------------------------
 
 
-def test_a_particular_can_be_named(archived: dict) -> None:
+def test_a_particular_can_be_named(archived: dict[str, Any]) -> None:
     printed = explain_segment(archived, "seg_001", particular="250mg")
     assert "250mg" in printed
     assert "2.4kg" not in printed.split("Particulars", 1)[1]
 
 
 def test_a_particular_that_is_not_there_is_refused_with_the_ones_that_are(
-    archived: dict,
+    archived: dict[str, Any],
 ) -> None:
     with pytest.raises(ContractError, match="carries no particular"):
         explain_segment(archived, "seg_001", particular="9kg")
@@ -110,7 +112,7 @@ def test_a_particular_that_is_not_there_is_refused_with_the_ones_that_are(
 
 
 def test_a_segment_that_is_not_there_is_refused_with_the_ones_that_are(
-    archived: dict,
+    archived: dict[str, Any],
 ) -> None:
     """Refused by name and with the alternatives. A tool that says only "no"
     makes the reader guess, and guessing at an id is how somebody reads the
@@ -126,7 +128,7 @@ def test_a_segment_that_is_not_there_is_refused_with_the_ones_that_are(
 # --- The constraint that makes it worth having -------------------------------
 
 
-def test_it_needs_nothing_but_the_report(tmp_path: Path, archived: dict) -> None:
+def test_it_needs_nothing_but_the_report(tmp_path: Path, archived: dict[str, Any]) -> None:
     """The whole point. Written to a file, with no package and no response
     anywhere near it, and read back by path.
 
@@ -182,7 +184,7 @@ def test_a_statement_with_no_predicate_is_refused(tmp_path: Path) -> None:
 
 
 def test_it_says_which_offsets_the_reader_can_check_and_which_they_cannot(
-    archived: dict,
+    archived: dict[str, Any],
 ) -> None:
     """The question #53 asks, answered where it arises.
 
@@ -216,7 +218,7 @@ def test_a_segment_with_nothing_to_check_says_so_rather_than_looking_empty() -> 
 
 
 def test_the_cli_explains_a_segment(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], archived: dict
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], archived: dict[str, Any]
 ) -> None:
     path = tmp_path / "report.json"
     path.write_text(json.dumps(archived, ensure_ascii=False), encoding="utf-8")
@@ -225,7 +227,7 @@ def test_the_cli_explains_a_segment(
 
 
 def test_the_cli_lists_the_findings_when_no_segment_is_named(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], archived: dict
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], archived: dict[str, Any]
 ) -> None:
     """Discovery without a second command. A reader who has the report but not
     an id gets the ids that are worth asking about."""
@@ -238,7 +240,7 @@ def test_the_cli_lists_the_findings_when_no_segment_is_named(
 
 
 def test_the_cli_refuses_an_unknown_segment_by_name(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], archived: dict
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], archived: dict[str, Any]
 ) -> None:
     path = tmp_path / "report.json"
     path.write_text(json.dumps(archived, ensure_ascii=False), encoding="utf-8")

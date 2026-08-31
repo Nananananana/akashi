@@ -85,6 +85,10 @@ def test_every_shipped_floor_has_room_or_declares_itself_an_invariant() -> None:
         if floor.at_least is not None:
             assert floor.at_least < floor.measured, floor.metric
         else:
+            # `Floor.__post_init__` refuses a bound on neither side or both, so
+            # this is not None -- said here because the type does not carry it
+            # and the reader of this line should not have to go and check.
+            assert floor.at_most is not None, floor.metric
             assert floor.at_most > floor.measured, floor.metric
 
 

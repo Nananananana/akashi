@@ -9,6 +9,8 @@ and the fix is an ADR, not a looser assertion.
 from __future__ import annotations
 
 import unicodedata
+from collections.abc import Collection
+from typing import Any, cast
 
 import pytest
 from hypothesis import assume, given
@@ -191,7 +193,10 @@ TEXT = st.text(
         # Surrogates cannot be encoded and never arrive from a JSON document or
         # a file read as text. Excluding them keeps the generator honest rather
         # than testing a case that cannot occur.
-        exclude_categories=("Cs",),
+        # Annotated because `strict` reads a bare tuple as `tuple[str]`, and
+        # hypothesis wants the literal. The value was always right; the type
+        # was not carrying which strings are allowed.
+        exclude_categories=cast("Collection[Any]", ("Cs",)),
     ),
     max_size=120,
 )

@@ -94,6 +94,9 @@ jobs:
       - name: Hooks
         run: python -m pre_commit run --all-files --show-diff-on-failure
 
+      # Reads `files` from pyproject, which now names src, tests and tools.
+      # It said `src/akashi` and checked 53 of 86 files, and the corpus
+      # generator and every test were outside it.
       - name: Types
         run: python -m mypy
 
