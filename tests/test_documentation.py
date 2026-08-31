@@ -205,3 +205,47 @@ def test_every_local_link_in_every_document_resolves() -> None:
             if path and not (document.parent / path).resolve().exists():
                 broken.append(f"{document.relative_to(ROOT).as_posix()} -> {target}")
     assert not broken, "documents point at files that are not there:\n  " + "\n  ".join(broken)
+
+
+def test_the_contract_says_what_a_package_less_reader_may_conclude() -> None:
+    """A report travels — signed by somebody else, forwarded, filed, read by a
+    party who was not there.
+
+    That reader can confirm strictly less than one holding the package, and
+    which half is which is a property of the *document*, not a courtesy of the
+    tool that prints it. `akashi explain` says it under any segment carrying an
+    outward claim; the contract has to say it too, or the distinction exists
+    only for readers who happen to use akashi's own renderer.
+
+    Presence rather than wording. Pinning the prose would make every edit to it
+    a test failure, and what must not happen is the section going away or
+    stopping naming the fields it is about.
+    """
+    contract = (ROOT / "docs" / "audit-report.md").read_text(encoding="utf-8")
+    assert "What a reader who does not hold the package may conclude" in contract
+
+    outward = contract.split("may conclude", 1)[1].split(chr(10) + "---" + chr(10), 1)[0]
+    for field in ("locations", "contradiction", "answer"):
+        assert field in outward, f"the section does not say where {field!r} falls"
+    assert "an assertion" in outward
+
+
+def test_explain_and_the_contract_agree_on_which_fields_point_outward() -> None:
+    """The two halves meet here and nowhere else.
+
+    `explain` decides to print its footer from `locations` and `contradiction`.
+    The contract lists the fields a package-less reader cannot check. If either
+    moved without the other, a reader would be told one thing by the document
+    and another by the tool, and each half would still pass its own tests.
+    """
+    import inspect
+
+    from akashi.infrastructure.rendering import explanation
+
+    footer = inspect.getsource(explanation._footer)
+    contract = (ROOT / "docs" / "audit-report.md").read_text(encoding="utf-8")
+    outward = contract.split("may conclude", 1)[1].split(chr(10) + "---" + chr(10), 1)[0]
+
+    for field in ("locations", "contradiction"):
+        assert field in footer, f"explain no longer keys its footer on {field!r}"
+        assert field in outward, f"the contract no longer lists {field!r} as an assertion"
