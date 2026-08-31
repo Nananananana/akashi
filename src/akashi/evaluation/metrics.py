@@ -130,6 +130,35 @@ class Score:
         )
 
     @property
+    def detection_recall(self) -> Rate:
+        """Over **every** planted hallucination, including the ones akashi says
+        it cannot see.
+
+        `fabrication_recall` is over the ones akashi is expected to catch, and
+        it is 100%. That number is true and it is not the whole of what was
+        planted: a negation flip, an entity swap and a cross-document stitch are
+        hallucinations that akashi passes on purpose (ADR-0004), and excluding
+        them from the denominator is what makes the first number a hundred.
+
+        Excluding them is right -- the method cannot see them and improving that
+        is not a matter of effort -- but **a declaration lets a reader adjust
+        their expectations, it does not authorise moving the denominator.**
+        Allow that and the cheapest way to improve a rate is to declare more of
+        it out of scope.
+
+        So both are reported, side by side, exactly as the two extraction
+        recalls already are. A reader who watches them move apart learns more
+        than one handed the flattering one.
+        """
+        planted = self.tally.fabrications_planted + self.tally.declared_planted
+        return Rate(
+            "recall over everything planted",
+            self.tally.fabrications_found,
+            planted,
+            note="including the hallucinations ADR-0004 says akashi cannot see",
+        )
+
+    @property
     def false_positive_rate(self) -> Rate:
         return Rate(
             "false positives",
@@ -215,6 +244,7 @@ class Score:
     def rates(self) -> tuple[Rate, ...]:
         return (
             self.fabrication_recall,
+            self.detection_recall,
             self.false_positive_rate,
             self.acknowledged_rate,
             self.declared_miss_rate,

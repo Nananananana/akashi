@@ -21,6 +21,7 @@ python tools/generate_cases.py --check-only        # the corpus is what the gene
 
 | | v0.3 | v0.4 |
 |---|---|---|
+| Detection recall over **everything planted** | 42 of 84 — 50% | 42 of 84 — 50% |
 | Extraction recall over **everything marked** | 87 of 96 — 91% | **91 of 96 — 95%** |
 | Extraction recall over **the kinds akashi claims** | 87 of 87 — 100% | 91 of 96 — 95% |
 | Extraction precision | 100% | **100%** |
@@ -152,6 +153,7 @@ the roadmap changes. A third is not most. **ADR-0004 survives.**
 | | | | |
 |---|---:|---:|---|
 | Fabrication recall | 42 / 42 | 100% | planted hallucinations akashi should catch |
+| **Recall over everything planted** | **42 / 84** | **50%** | **including the ones ADR-0004 says it cannot** |
 | False positives | 0 / 42 | **0%** | controls flagged anyway |
 | Acknowledged false positives | 9 / 9 | 100% | correct values floated, because akashi does no arithmetic |
 | Declared misses passed | 42 / 42 | 100% | hallucinations ADR-0004 says akashi cannot see |
@@ -208,6 +210,19 @@ none, and a floor under localisation would have forbidden exactly that trade.
   hallucinations akashi is known not to catch, published so a reader can price
   it. Improving it would mean building something ADR-0004 says is not possible
   deterministically.
+- **The 100% and the 50% are the same corpus.** Fabrication recall excludes the
+  declared misses, which is why it is a hundred; recall over everything planted
+  includes them. Both are true and the second is the one to quote at somebody
+  who has not read this page.
+
+  Excluding them is right — the method cannot reach a negation flip or a
+  cross-document stitch, and effort does not change that. But **a declaration
+  lets a reader adjust what they expect; it does not move a denominator.** If it
+  did, the cheapest way to improve any rate here would be to declare more of it
+  out of scope, and the extraction section has printed two recalls since v0.3
+  for exactly this reason. Detection printed one until it was noticed that a
+  reader could take 100% away from a corpus where half the planted
+  hallucinations are ones akashi passes on purpose.
 - **The localisation recall is not independent of its generator.** All twelve
   are `unit_swap` plants, produced by a rule that swaps the unit and keeps the
   digits, measured by a rule that looks for digits kept and a unit swapped.
@@ -351,8 +366,9 @@ measurement raises.
 | Extraction precision | 100% | ≥ 90% | |
 | Unbearing segments | 30% | ≤ 55% | |
 
-Three metrics are deliberately **ungated**: `declared misses passed`,
-`acknowledged false positives` and `source localisation`. Gating a number you
+Four metrics are deliberately **ungated**: `declared misses passed`,
+`acknowledged false positives`, `source localisation` and `recall over
+everything planted`. Gating a number you
 want to move is how a measurement becomes a cage — and v0.4 is what that rule
 was for. Localisation recall was cut from 27 of 33 to 12 of 33 to hold
 misdirection at zero, and a floor under it would have made the right change a

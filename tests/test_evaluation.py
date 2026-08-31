@@ -273,3 +273,43 @@ def test_a_missing_corpus_is_a_refusal_and_not_a_traceback(
     error = capsys.readouterr().err
     assert error.startswith("akashi: ")
     assert "Traceback" not in error
+
+
+def test_both_detection_recalls_are_reported_side_by_side(
+    measured: tuple[object, list[str]],
+) -> None:
+    """`fabrication recall` is 100% because the hallucinations akashi cannot see
+    are not in its denominator. That exclusion is right — ADR-0004 says the
+    method cannot reach a negation flip or a cross-document stitch, and no
+    amount of effort changes it — and it is exactly why the second number has to
+    be printed next to it.
+
+    **A declaration lets a reader adjust what they expect. It does not move a
+    denominator.** Allow that and the cheapest way to improve a rate is to
+    declare more of it out of scope.
+
+    The extraction section has reported two recalls for this reason since v0.3.
+    Detection did not, and a reader could take 100% away from a corpus where
+    half the planted hallucinations are ones akashi passes.
+    """
+    breakdown, _ = measured
+    caught = breakdown.overall.fabrication_recall  # type: ignore[attr-defined]
+    everything = breakdown.overall.detection_recall  # type: ignore[attr-defined]
+
+    assert caught.share == 1.0
+    assert everything.total > caught.total, (
+        "the second denominator has to include the declared misses, or it is the "
+        "first number under another name"
+    )
+    assert everything.share is not None
+    assert everything.share < caught.share
+
+
+def test_the_wider_detection_recall_is_not_gated() -> None:
+    """Same reason `declared misses passed` is not: it is a number akashi wants
+    to move and cannot move by trying. A floor under it would forbid adding a
+    plant kind ADR-0004 says is unreachable, which is a thing the corpus should
+    be free to do."""
+    from akashi.evaluation.floors import FLOORS
+
+    assert "recall over everything planted" not in {floor.metric for floor in FLOORS}
