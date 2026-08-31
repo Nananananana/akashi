@@ -15,6 +15,7 @@ import pytest
 
 from akashi import __version__
 from akashi.application import audit, recheck
+from akashi.domain.report import AuditReport
 from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import load_package
 from akashi.infrastructure.rendering import as_statement
@@ -31,7 +32,7 @@ ANSWERS = Path(__file__).parent / "answers"
 ANSWER = (ANSWERS / "gear-ja.txt").read_text(encoding="utf-8")
 
 
-def report():  # type: ignore[no-untyped-def]
+def report() -> AuditReport:
     return audit(
         ANSWER, load_package(PACKAGES / "gear-ja.json"), DEFAULT, akashi_version=__version__
     )

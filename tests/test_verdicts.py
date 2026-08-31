@@ -21,6 +21,7 @@ from akashi.domain.coverage import (
 )
 from akashi.domain.evidence import Evidence, item
 from akashi.domain.extraction import extract_from_segment, kinds_not_extracted
+from akashi.domain.protection import PlaceholderResidue
 from akashi.domain.segment import Segmentation, segment_answer
 from akashi.domain.span import Span
 from akashi.domain.verdict import (
@@ -342,13 +343,13 @@ def test_assessing_the_same_answer_twice_gives_the_same_assessment() -> None:
 # its user to ignore it.
 
 
-def residue_of(text: str):
+def residue_of(text: str) -> tuple[PlaceholderResidue, ...]:
     from akashi.domain.protection import find_placeholders
 
     return find_placeholders(text)
 
 
-def check_with_residue(answer: str, sources: list[str] | None = None):
+def check_with_residue(answer: str, sources: list[str] | None = None) -> list[CheckedSegment]:
     from akashi.domain.evidence import Evidence, item
     from akashi.domain.extraction import extract_from_segment
     from akashi.domain.segment import segment_answer
@@ -371,7 +372,13 @@ def test_a_segment_whose_value_was_masked_is_unverifiable_and_not_floating() -> 
 
     [segment] = check_with_residue("担当は <PERSON_001> です。")
     assert segment.verdict is Verdict.UNVERIFIABLE
-    assert segment.verdict is not Verdict.FLOATING
+    # There was an `is not Verdict.FLOATING` on the next line, for emphasis. It
+    # could not fail -- the assert above already fixes the value -- so it read
+    # like the point of the test and asserted nothing. Removed rather than
+    # replaced: `assert not verdict.is_finding` would only be testing the enum,
+    # and what it was reaching for is already checked by
+    # `test_the_masked_segment_counts_as_unexamined_rather_than_as_a_finding`,
+    # which reads the assessment rather than the value.
 
 
 def test_it_says_why_and_says_which_token() -> None:

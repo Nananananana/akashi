@@ -24,7 +24,12 @@ from akashi.domain.evidence import Evidence, item
 from akashi.domain.extraction import extract_from_answer
 from akashi.domain.particular import ParticularKind
 from akashi.domain.segment import segment_answer
-from akashi.domain.verdict import CheckedParticular, Verdict, check_segment
+from akashi.domain.verdict import (
+    CheckedParticular,
+    CheckedSegment,
+    Verdict,
+    check_segment,
+)
 from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import load_package
 
@@ -32,7 +37,7 @@ PACKAGES = Path(__file__).parent / "packages"
 SCHEMA = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
 
 
-def assess(answer: str, evidence: Evidence, *, sources: bool = True):
+def assess(answer: str, evidence: Evidence, *, sources: bool = True) -> list[CheckedSegment]:
     index = SourceIndex.of(evidence, DEFAULT) if sources else None
     segmentation = segment_answer(answer, DEFAULT)
     found = extract_from_answer(segmentation, DEFAULT)
@@ -47,8 +52,8 @@ def assess(answer: str, evidence: Evidence, *, sources: bool = True):
     ]
 
 
-def only(answer: str, evidence: Evidence, **kw) -> CheckedParticular:
-    checked = [one for seg in assess(answer, evidence, **kw) for one in seg.particulars]
+def only(answer: str, evidence: Evidence, *, sources: bool = True) -> CheckedParticular:
+    checked = [one for seg in assess(answer, evidence, sources=sources) for one in seg.particulars]
     floating = [one for one in checked if not one.locations]
     assert len(floating) == 1, [one.describe() for one in checked]
     return floating[0]

@@ -36,6 +36,7 @@ from pathlib import Path
 import pytest
 
 from akashi.application import audit
+from akashi.domain.package import ContextPackage
 from akashi.domain.verdict import Verdict
 from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import load_package
@@ -52,7 +53,7 @@ ANSWER = "テントの重量は2.4kgです。6月のメモでは3.1kgとあり�
 
 
 @pytest.fixture(scope="module")
-def package():
+def package() -> ContextPackage:
     return load_package(FIXTURE)
 
 
@@ -72,7 +73,7 @@ def test_the_fixture_is_an_instance_of_the_schema_vendored_beside_it() -> None:
     )
 
 
-def test_akashi_reads_the_real_thing_without_refusing(package) -> None:
+def test_akashi_reads_the_real_thing_without_refusing(package: ContextPackage) -> None:
     """The check ADR-0007 exists to pay for. akashi's reader is a second
     implementation of this contract; this is the only test that puts it in front
     of the first implementation's actual output."""
@@ -82,7 +83,7 @@ def test_akashi_reads_the_real_thing_without_refusing(package) -> None:
     assert len(package.evidence.withheld) == 1
 
 
-def test_the_offsets_in_the_fixture_are_the_offsets_akashi_uses(package) -> None:
+def test_the_offsets_in_the_fixture_are_the_offsets_akashi_uses(package: ContextPackage) -> None:
     """Anchors are document coordinates, and a reader opens the file. An
     off-by-one here would point every citation at the wrong line, and no schema
     can catch it because the document is well-formed either way."""
@@ -136,7 +137,7 @@ def test_a_figure_from_the_passage_the_budget_left_out_floats() -> None:
     assert report.provenance.withheld == (("budget_exhausted", 1),)
 
 
-def test_a_package_that_says_it_was_not_redacted_is_audited(package) -> None:
+def test_a_package_that_says_it_was_not_redacted_is_audited(package: ContextPackage) -> None:
     """`protection: null` and `declares_protection` true. A package that said
     nothing at all would be refused under ADR-0008; this one told akashi, and
     what it told akashi was that there is nothing to restore."""
@@ -148,7 +149,7 @@ def test_a_package_that_says_it_was_not_redacted_is_audited(package) -> None:
 # --- End to end ---------------------------------------------------------------
 
 
-def test_the_report_names_the_package_it_audited_against(package) -> None:
+def test_the_report_names_the_package_it_audited_against(package: ContextPackage) -> None:
     """A report that cannot name its inputs is a report nobody can re-derive.
     The id here was computed by the producer, not by akashi."""
     report = audit(ANSWER, package, DEFAULT)
@@ -158,7 +159,7 @@ def test_the_report_names_the_package_it_audited_against(package) -> None:
     )
 
 
-def test_the_same_producer_document_audits_the_same_way_twice(package) -> None:
+def test_the_same_producer_document_audits_the_same_way_twice(package: ContextPackage) -> None:
     """ADR-0003 across the seam rather than within it."""
     first = audit(ANSWER, package, DEFAULT)
     second = audit(ANSWER, load_package(FIXTURE), DEFAULT)
@@ -167,7 +168,7 @@ def test_the_same_producer_document_audits_the_same_way_twice(package) -> None:
 
 
 def test_the_report_produced_from_it_validates_against_akashis_own_contract(
-    package,
+    package: ContextPackage,
 ) -> None:
     """Consume one published contract, produce another. This is the pair
     `proposals/0002` names as the condition for freezing
