@@ -12,11 +12,12 @@ import re
 
 import pytest
 
-from akashi.application import Admission, admit
+from akashi.application import Admission, admit, audit
 from akashi.domain.evidence import Evidence, item
 from akashi.domain.package import ContextPackage, Protection
 from akashi.domain.protection import find_placeholders
 from akashi.errors import ProtectedResponseError
+from akashi.infrastructure.languages import DEFAULT
 from akashi.ports import Restorer
 
 PLAIN = ContextPackage(
@@ -303,3 +304,55 @@ def test_the_refusal_never_quotes_the_restored_values() -> None:
     assert "Roppongi" not in message
     assert "8,000,000" not in message
     assert not re.search(r"\d-\d-\d", message)
+
+
+# --- An assertion on a package that declares no protection -------------------
+
+
+def test_a_restoration_claim_is_recorded_even_when_the_package_says_nothing() -> None:
+    """Found by somebody acting on a recommendation to use the flag.
+
+    `--restored-by` produced a report **byte-identical** to one made without
+    it, because `admit` returned early on the unprotected path and dropped the
+    claim. The docstring called that harmless and pointless, and it was
+    neither: the caller believes they recorded something, and the report says
+    nothing.
+
+    It is not pointless because **the package does not always know.** A
+    redactor that ran after the package was built cannot appear in
+    `provenance.protection`, so this branch is exactly where a real restoration
+    claim arrives — the pipeline that prompted this has `mamori` restoring
+    downstream of `tsumugi` packaging.
+    """
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "金額は 45,000 円。")]),
+    )
+    admission = admit("金額は 45,000 円でした。", package, None, restored_by="mamori")
+    assert admission.restored_by == "mamori"
+    assert admission.asserted
+
+
+def test_the_claim_reaches_the_report_and_says_akashi_did_not_check_it() -> None:
+    """ADR-0013. akashi cannot verify a restoration it did not watch — a
+    surrogate is designed to be indistinguishable from a real value — so the
+    claim is attributed rather than absorbed."""
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "金額は 45,000 円。")]),
+    )
+    report = audit("金額は 45,000 円でした。", package, DEFAULT, restored_by="mamori")
+    assert report.provenance.restored_by == "mamori"
+    assert report.provenance.restoration_asserted
+    assert "did not verify" in report.provenance.describe_restoration()
+
+
+def test_without_the_claim_the_report_says_nothing_about_restoration() -> None:
+    """The other direction. Recording the claim must not invent one."""
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "金額は 45,000 円。")]),
+    )
+    admission = admit("金額は 45,000 円でした。", package, None)
+    assert admission.restored_by == ""
+    assert not admission.asserted

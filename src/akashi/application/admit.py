@@ -82,8 +82,11 @@ def admit(
 
     ``restored_by`` is the caller asserting that they put the values back
     themselves, and naming who did. akashi cannot verify it and records it as
-    an assertion (ADR-0013). Passing it on an unprotected package is harmless
-    and pointless; passing it *and* a restorer is refused, because two answers
+    an assertion (ADR-0013). It is recorded whatever the package says about
+    protection, because the package does not always know: a redactor that ran
+    *after* the package was built cannot have been declared in it, and that is
+    exactly when the caller's word is the only record there is. Passing it
+    *and* a restorer is refused, because two answers
     to "who restored this" is one too many.
 
     Raises ``ProtectedResponseError`` when the answer cannot be audited
@@ -99,7 +102,23 @@ def admit(
     protection = package.protection
 
     if protection is None and not residue:
-        return Admission(answer=answer)
+        # Nothing to restore and nothing to refuse -- but the caller's word is
+        # still the caller's word. This used to drop `restored_by` on the
+        # floor, on the reasoning that an assertion about an unprotected
+        # package is pointless. It is not: a redactor that ran after the
+        # package was built cannot appear in `provenance.protection`, so this
+        # branch is where a real restoration claim arrives, and the report came
+        # back byte-identical to one made with no claim at all.
+        #
+        # Recording it costs nothing and hiding it cost the reader everything
+        # the flag was for. akashi does not check the claim either way -- a
+        # surrogate is designed to be indistinguishable from a real value -- so
+        # it goes on the report attributed to whoever made it.
+        return Admission(
+            answer=answer,
+            restored_by=restored_by,
+            asserted=bool(restored_by),
+        )
 
     if protection is None:
         # The package said nothing about a redactor, and the answer is full of

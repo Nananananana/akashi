@@ -129,6 +129,15 @@ API yet.
   rather than repeated — and it ends by saying **which offsets a reader can
   check and which they cannot**, since an offset into a source document is an
   assertion to anyone who does not hold that document.
+- **`--restored-by` is recorded even when the package declares no protection.**
+  It was silently dropped: the report came back byte-identical to one made
+  without the flag, so a caller who had asserted a restoration had recorded
+  nothing and believed otherwise. The docstring called that *harmless and
+  pointless* and it was neither — **the package does not always know.** A
+  redactor that ran *after* the package was built cannot appear in
+  `provenance.protection`, which makes that branch exactly where a real claim
+  arrives. akashi still checks nothing: the claim goes on the report attributed
+  to whoever made it ([ADR-0013](docs/adr/0013-a-restoration-akashi-did-not-watch-is-a-claim.md)).
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
