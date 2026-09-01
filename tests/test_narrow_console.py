@@ -116,3 +116,16 @@ def test_a_document_the_console_cannot_show_degrades_rather_than_crashing() -> N
 
     with pytest.raises(UnicodeEncodeError):
         body.encode("cp932")
+
+
+def test_the_non_conformance_note_prints_on_a_japanese_console() -> None:
+    """Prose akashi chose, emitted only when a package carries a field its
+    contract does not list -- so the report above never reaches these lines and
+    the encoding of akashi's own words here went unmeasured."""
+    from akashi.infrastructure.packages.contextpackage import read_package
+
+    raw = json.loads((Path(__file__).parent / "packages" / "gear-ja.json").read_text("utf-8"))
+    raw["invented"] = "whatever"
+    printed = as_text(audit(ANSWER, read_package(raw), DEFAULT))
+    assert "does not conform" in printed
+    printed.encode("cp932")

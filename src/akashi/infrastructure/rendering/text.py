@@ -160,6 +160,16 @@ def _provenance(report: AuditReport) -> list[str]:
         listed = ", ".join(f"{count} {rule}" for rule, count in provenance.withheld)
         lines.append(f"{_INDENT}the package withheld {listed}")
         lines.append(f"{_INDENT}akashi cannot check an answer against withheld text")
+    if provenance.unrecognised:
+        # A fact about the document, phrased so it cannot be read as bearing on
+        # any finding (ADR-0012). It says what akashi saw and what it did, and
+        # stops: whether the field is an extension, a newer producer or a
+        # corrupted file is not something akashi can tell from here, and the
+        # contract is explicit that it is not meant to be tellable.
+        listed = ", ".join(provenance.unrecognised)
+        lines.append(f"{_INDENT}the package carries fields the contract does not list: {listed}")
+        lines.append(f"{_INDENT}version 1 is closed, so this package does not conform to it")
+        lines.append(f"{_INDENT}akashi read past them and audited the rest")
     return [*lines, ""]
 
 

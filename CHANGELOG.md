@@ -40,6 +40,23 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **A package that does not conform is audited, and the report says so.**
+  `tsumugi.context-package/1` closed while akashi was not looking: it used to
+  promise that *"a field may be added"* and now says nothing may be, with
+  `additionalProperties: false` on every object. akashi's reader had been
+  ignoring unfamiliar keys and citing that promise as its reason. It now reads
+  past them and writes them down -- `provenance.unrecognised` on the report,
+  and three lines in the Provenance block naming the paths. Unknown is not
+  wrong, so akashi does not refuse; unknown is not nothing, so akashi does not
+  stay quiet. See
+  [ADR-0016](docs/adr/0016-an-unrecognised-field-is-a-fact-about-the-document.md).
+
+  **Nothing in the test suite failed.** Every conformance test checked that
+  akashi reads what the contract permits, and it still does. The daily job that
+  hashes the vendored copy against upstream was the only thing in the
+  repository able to notice, and its whole output on a good day is that two
+  hashes match.
+
 - **`contradicted` ships, and it is a third of the feature it was specified
   as.** akashi now names the source value an answer replaced -- `the source
   says '5mg'` with the offset to open -- but only where the answer kept that

@@ -9,11 +9,26 @@ guessed at, not partially honoured. Guessing at a version is how a consumer
 reads a field that has changed meaning and reports the wrong thing with
 complete confidence.
 
-**A field akashi does not know is ignored; a *value* akashi does not know is
-refused.** The contract promises that fields may be added inside version 1, so
-ignoring an unfamiliar key is what conformance requires. An unfamiliar
-``layer``, on the other hand, is a category akashi has no handling for, and
-treating it as an ordinary fact would launder it.
+**A field akashi does not know is read past and written down; a *value* akashi
+does not know is refused.** An unfamiliar ``layer`` is a category akashi has no
+handling for, and treating it as an ordinary fact would launder it. An
+unfamiliar *field* is not wrong, only unknown -- the distinction ADR-0008 draws
+between *unverifiable* and *floating*, applied to the document.
+
+That used to be the whole of it, on the strength of a promise the contract has
+since withdrawn. Version 1 said *"a field may be added; none will be removed or
+change meaning"*, and ignoring an unfamiliar key was what conformance required.
+It now says v1 is **closed** and that every object sets
+``additionalProperties: false``, which makes an extension indistinguishable from
+corruption -- deliberately (tsumugi ADR-0022). So an unrecognised field means
+this is not a conforming package, and akashi reading it in silence is akashi
+auditing a document whose reader is never told which document it was. They are
+collected in ``ContextPackage.unrecognised`` and the report prints them.
+
+Refusing instead would be the wrong trade twice over: akashi would break on any
+producer that is not tsumugi, and on tsumugi's own version 2 -- and it would
+throw away an audit it is perfectly able to perform in order to report a fact it
+can simply state.
 
 **A missing field is not the same as a field that says nothing.** A package
 with no ``provenance`` has not told akashi that it was unprotected; it has told
@@ -46,6 +61,66 @@ __all__ = [
 #: evidence over a version string would be the wrong trade.
 ACCEPTED_CONTRACT = "tsumugi.context-package"
 ACCEPTED_MAJOR = "1"
+
+#: Every field `tsumugi.context-package/1` lists, per object.
+#:
+#: **Not the fields akashi uses.** ``budget``, ``constraints`` and
+#: ``output_schema`` are named here and read nowhere -- akashi has no use for
+#: them and their presence is not a finding. A list of what akashi consumes
+#: would report the contract's own fields as unrecognised, which is the failure
+#: this is here to prevent rather than cause.
+#:
+#: Transcribed from the schema in ``tests/contracts/`` rather than loaded from
+#: it: that copy is test material, and a released akashi that read it would
+#: turn a vendored file into a runtime dependency (ADR-0007). The transcription
+#: drifting from the copy is itself a test.
+CONTRACT_FIELDS: dict[str, frozenset[str]] = {
+    "": frozenset(
+        {
+            "budget",
+            "constraints",
+            "contract",
+            "created_at",
+            "instructions",
+            "items",
+            "omissions",
+            "output_schema",
+            "package_id",
+            "provenance",
+            "query",
+        }
+    ),
+    "items": frozenset({"anchor", "cost", "item_id", "kind", "provenance", "selection", "text"}),
+    "omissions": frozenset({"anchor", "cost", "reason", "rule", "score"}),
+    "provenance": frozenset(
+        {"corpus_state", "protection", "providers", "settings_hash", "tsumugi_version"}
+    ),
+}
+
+
+def _unrecognised(data: dict[str, Any]) -> tuple[str, ...]:
+    """Dotted paths to fields the contract does not list, in the order found.
+
+    Only the objects the contract names are walked. Going deeper would need
+    akashi to hold a second copy of the whole schema, and the value of the
+    check does not rise with the depth: a package carrying an invented field
+    anywhere carries one here, and one path is enough to say so.
+    """
+    found: list[str] = []
+
+    def scan(obj: object, known: frozenset[str], where: str) -> None:
+        if not isinstance(obj, dict):
+            return
+        found.extend(f"{where}{key}" for key in obj if key not in known)
+
+    scan(data, CONTRACT_FIELDS[""], "")
+    for key in ("items", "omissions"):
+        raw = data.get(key)
+        if isinstance(raw, list):
+            for index, entry in enumerate(raw):
+                scan(entry, CONTRACT_FIELDS[key], f"{key}[{index}].")
+    scan(data.get("provenance"), CONTRACT_FIELDS["provenance"], "provenance.")
+    return tuple(found)
 
 
 def _require(data: dict[str, Any], key: str, where: str) -> Any:
@@ -304,6 +379,7 @@ def read_package(data: object) -> ContextPackage:
         producer_version=producer_version,
         providers=providers,
         corpus_state=corpus_state,
+        unrecognised=_unrecognised(data),
     )
 
 

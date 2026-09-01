@@ -70,6 +70,16 @@ class ContextPackage:
     producer_version: str = ""
     providers: tuple[str, ...] = ()
     corpus_state: str = ""
+    #: Dotted paths to fields the contract does not list, in the order found.
+    #:
+    #: akashi reads the package anyway -- a field it does not know is unknown,
+    #: not wrong, and the same distinction ADR-0008 draws between *unverifiable*
+    #: and *floating* applies to the document as much as to a particular. But
+    #: `tsumugi.context-package/1` is closed and every object in it sets
+    #: ``additionalProperties: false``, so a package carrying one of these does
+    #: not conform, and a reader who is told nothing cannot tell that the audit
+    #: was performed on it. Carried here so the report can say so.
+    unrecognised: tuple[str, ...] = ()
 
     @property
     def is_protected(self) -> bool:

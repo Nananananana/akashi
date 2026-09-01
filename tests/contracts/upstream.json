@@ -6,9 +6,9 @@
       "repo": "Nananananana/tsumugi",
       "path": "src/tsumugi/schemas/context-package-1.json",
       "branch": "main",
-      "commit": "903c17ff932f6d4fbd635616487d7fdf2abe831d",
-      "sha256": "1dd65d2fbc2d3e36f06c39d94b27ef47c199383754896661516d91ab567de61c",
-      "retrieved": "2026-08-30",
+      "commit": "857b8547163f2975761c9a8f97d2d33c375953d8",
+      "sha256": "6e0aa2e86f318b9bda862da7b145759da63a68ca6f00f20d46a15ec12095e0eb",
+      "retrieved": "2026-09-01",
       "licence": "Apache-2.0",
       "why": "akashi's fixtures are checked against the real contract without installing tsumugi (ADR-0007). Test material only; nothing under src/ reads it."
     },
