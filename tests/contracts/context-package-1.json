@@ -8,7 +8,7 @@
   "additionalProperties": false,
   "properties": {
     "contract": {
-      "description": "Frozen at version 1. A field may be added; none will be removed or change meaning. A consumer that does not recognise this refuses the package rather than guessing at it. The -draft suffix is accepted for packages built before the freeze and is no longer produced.",
+      "description": "Frozen at version 1. v1 is closed: nothing may be added, removed, or change meaning. Every object sets additionalProperties: false, so a consumer validating against this schema rejects a package carrying any field it does not list -- which makes an extension indistinguishable from corruption, correctly. Evolution means tsumugi.context-package/2. See ADR-0022. A consumer that does not recognise this refuses the package rather than guessing at it. The -draft suffix is accepted for packages built before the freeze and is no longer produced.",
       "type": "string",
       "pattern": "^tsumugi\\.context-package/1(-draft)?$"
     },

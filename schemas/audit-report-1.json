@@ -245,6 +245,14 @@
               }
             }
           }
+        },
+        "unrecognised": {
+          "description": "Dotted paths to fields the ContextPackage carried that its own contract does not list. tsumugi.context-package/1 is closed and every object in it sets additionalProperties: false, so a package carrying one of these does not conform to the contract it names -- and akashi audited it anyway. Context about the document, on the same footing as withheld: never an explanation of any finding (ADR-0012). Empty for a conforming package.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },

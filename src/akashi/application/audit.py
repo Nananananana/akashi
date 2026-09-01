@@ -89,5 +89,6 @@ def audit(
             restoration_asserted=admission.asserted,
             protection_by=package.protection.by if package.protection else "",
             withheld=tuple(package.evidence.withheld_by_rule().items()),
+            unrecognised=package.unrecognised,
         ),
     )

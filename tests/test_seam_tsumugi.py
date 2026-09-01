@@ -194,3 +194,76 @@ def test_the_seam_works_through_the_command_line(
         "sha256:111ba10a2a3ae513363ed5b795438e3b4247f2fa29eb56136ea60c7608bc4ee6"
     )
     assert any(segment["verdict"] == Verdict.FLOATING.value for segment in body["segments"])
+
+
+# --- The contract closed, and akashi had been reading past the fact ----------
+
+
+def test_the_real_package_carries_nothing_the_contract_does_not_list() -> None:
+    """The baseline. Everything below is the same package with one field added,
+    and it means nothing unless this one is empty."""
+    assert load_package(FIXTURE).unrecognised == ()
+
+
+@pytest.mark.parametrize(
+    ("where", "expected"),
+    [
+        ("root", "invented"),
+        ("item", "items[0].invented"),
+        ("provenance", "provenance.invented"),
+    ],
+)
+def test_a_field_the_contract_does_not_list_reaches_the_reader(where: str, expected: str) -> None:
+    """Read past, and said out loud.
+
+    `tsumugi.context-package/1` is closed: every object sets
+    ``additionalProperties: false``, so this package does not conform to the
+    contract it names. akashi can still audit it and does -- unknown is not
+    wrong -- but a reader who is told nothing cannot tell which document the
+    audit was performed on.
+
+    Asserted on the **rendered text**, not on the dataclass. The field was
+    populated and printed nowhere for the length of one edit, and every test
+    passed: recording a fact and telling somebody are two changes, and only one
+    of them was under test.
+    """
+    from akashi.infrastructure.packages.contextpackage import read_package
+    from akashi.infrastructure.rendering import as_text
+
+    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    target = {"root": raw, "item": raw["items"][0], "provenance": raw["provenance"]}[where]
+    target["invented"] = "whatever"
+
+    package = read_package(raw)
+    assert package.unrecognised == (expected,)
+
+    printed = as_text(audit(ANSWER, package, DEFAULT))
+    assert expected in printed
+    assert "does not conform" in printed
+
+
+def test_it_is_not_worded_as_though_it_explained_a_finding() -> None:
+    """ADR-0012, in the same position as ``withheld``. A non-conforming package
+    is a fact about the document; it is not a reason any particular floated,
+    and a report that let the two blur would be offering an excuse."""
+    from akashi.infrastructure.packages.contextpackage import read_package
+    from akashi.infrastructure.rendering import as_text
+
+    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    raw["invented"] = "whatever"
+    printed = as_text(audit(ANSWER, read_package(raw), DEFAULT))
+
+    provenance = printed.split("Provenance")[1]
+    assert "invented" in provenance, "the fact belongs beside the document, not beside a finding"
+    assert "invented" not in printed.split("Provenance")[0]
+
+
+def test_the_report_carries_it_as_data_too() -> None:
+    """A report is a document (ADR-0002). A fact only in the text rendering is
+    a fact the next consumer of the JSON does not have."""
+    from akashi.infrastructure.packages.contextpackage import read_package
+
+    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    raw["invented"] = "whatever"
+    body = audit(ANSWER, read_package(raw), DEFAULT).to_dict()
+    assert body["provenance"]["unrecognised"] == ["invented"]

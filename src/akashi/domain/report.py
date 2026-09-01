@@ -125,6 +125,11 @@ class ReportProvenance:
     #: How many candidates the package withheld, per rule. Context for the
     #: reader and never an explanation of a finding (ADR-0012).
     withheld: tuple[tuple[str, int], ...] = ()
+    #: Dotted paths to fields the contract does not list. Version 1 is closed,
+    #: so a package carrying one of these does not conform and akashi audited
+    #: it anyway. Context, on the same footing as ``withheld``: it says
+    #: something about the document, never about a finding in it.
+    unrecognised: tuple[str, ...] = ()
 
     def describe_restoration(self) -> str:
         if not self.restored_by:
@@ -217,6 +222,7 @@ class AuditReport:
                 "withheld": [
                     {"rule": rule, "count": count} for rule, count in self.provenance.withheld
                 ],
+                "unrecognised": list(self.provenance.unrecognised),
             },
             "answer": self.answer,
         }

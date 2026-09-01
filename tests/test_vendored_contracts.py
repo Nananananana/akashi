@@ -185,3 +185,42 @@ def test_the_copy_has_not_gone_stale_upstream(entry: dict[str, Any]) -> None:
         f"Refresh the copy, update sha256 and commit in tests/contracts/upstream.json, "
         f"and read the diff before assuming akashi still conforms."
     )
+
+
+def test_the_transcribed_field_names_still_match_the_contract() -> None:
+    """`CONTRACT_FIELDS` is a hand transcription, and this is what keeps it one.
+
+    akashi reports a field the contract does not list, which means it holds a
+    list of the fields the contract *does*. Loading it from the vendored copy at
+    runtime would make test material a runtime dependency (ADR-0007), so it is
+    typed out -- and a transcription nothing compares is a second contract that
+    drifts from the first in silence.
+
+    The failure this catches is the expensive direction: a field tsumugi adds
+    and akashi has not transcribed is reported to every reader as a field the
+    contract does not list, on a package that conforms perfectly.
+    """
+    from akashi.infrastructure.packages.contextpackage import CONTRACT_FIELDS
+
+    schema = json.loads((CONTRACTS / "context-package-1.json").read_text(encoding="utf-8"))
+    defs = schema["$defs"]
+    transcribed = {
+        "": set(schema["properties"]),
+        "items": set(defs["item"]["properties"]),
+        "omissions": set(defs["omission"]["properties"]),
+        "provenance": set(defs["provenance"]["properties"]),
+    }
+    assert {where: set(names) for where, names in CONTRACT_FIELDS.items()} == transcribed
+
+
+def test_every_object_the_transcription_covers_is_closed() -> None:
+    """The premise, checked rather than assumed.
+
+    Reporting an unlisted field as non-conformance is only right while the
+    contract refuses one. An object that allowed extras would make akashi's
+    report say a conforming package does not conform.
+    """
+    schema = json.loads((CONTRACTS / "context-package-1.json").read_text(encoding="utf-8"))
+    for name, node in [("<root>", schema), *schema["$defs"].items()]:
+        if "properties" in node:
+            assert node.get("additionalProperties") is False, f"{name} accepts extra fields"

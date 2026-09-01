@@ -149,17 +149,51 @@ def test_a_contract_that_is_not_a_string_is_refused() -> None:
 # --- Fields akashi does not know ---------------------------------------------
 
 
-def test_an_unfamiliar_field_is_ignored() -> None:
-    """The contract promises fields may be added inside version 1, so ignoring
-    an unfamiliar key is what conformance requires."""
+def test_an_unfamiliar_field_is_read_past_rather_than_refused() -> None:
+    """Unknown is not wrong. Refusing here would break akashi on any producer
+    that is not tsumugi and on tsumugi's own version 2, and would throw away an
+    audit it can perform in order to report a fact it can state."""
     package = minimal(something_new={"invented": True}, another=[1, 2, 3])
     assert len(read_package(package).evidence) == 1
 
 
-def test_an_unfamiliar_field_inside_an_item_is_ignored() -> None:
+def test_an_unfamiliar_field_is_written_down_rather_than_ignored() -> None:
+    """Version 1 is **closed** -- ``additionalProperties: false`` everywhere,
+    so an extension is indistinguishable from corruption, on purpose (tsumugi
+    ADR-0022). This package does not conform, and reading it in silence is
+    auditing a document whose reader is never told which document it was.
+
+    akashi used to ignore these, on the strength of version 1's earlier promise
+    that *"a field may be added"*. The promise was withdrawn; the copy in
+    ``tests/contracts/`` going stale is what surfaced it.
+    """
+    package = minimal(something_new={"invented": True}, another=[1, 2, 3])
+    assert read_package(package).unrecognised == ("something_new", "another")
+
+
+def test_an_unfamiliar_field_inside_an_item_is_written_down_with_its_path() -> None:
+    """The index is in the path. "somewhere in items" sends a reader through
+    the whole list to find what akashi already knew."""
     package = minimal()
     package["items"][0]["invented_field"] = "whatever"
-    assert len(read_package(package).evidence) == 1
+    read = read_package(package)
+    assert len(read.evidence) == 1
+    assert read.unrecognised == ("items[0].invented_field",)
+
+
+def test_a_conforming_package_has_nothing_written_down() -> None:
+    """The half that makes the check worth having. A list that is never empty
+    is a list a reader learns to skip, and the fields akashi does not *use* --
+    ``budget``, ``constraints``, ``output_schema`` -- are named by the contract
+    and must not appear here."""
+    package = minimal(
+        budget={"limit": 1, "estimate": 1, "unit": "token", "estimator": "x"},
+        constraints={},
+        output_schema={},
+        created_at="2026-09-01T00:00:00Z",
+        instructions="",
+    )
+    assert read_package(package).unrecognised == ()
 
 
 def test_an_unfamiliar_layer_is_refused() -> None:
