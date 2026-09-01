@@ -6,8 +6,20 @@ evidence or the verdicts, so it cannot influence what akashi finds -- only what
 akashi is looking at.
 
 A ``Protocol`` rather than a base class, so an implementer never imports this
-module. ``mamori``'s ``PrivacySession`` already satisfies it without knowing
-akashi exists, which is what makes the adapter in v0.5 four lines long.
+module.
+
+**It said ``mamori``'s ``PrivacySession`` already satisfies this, and it does
+not.** That method returns a ``RestorationResult``, and the difference between
+an object carrying ``.text`` and the text is the whole reason
+``infrastructure/adapters/mamori.py`` exists. The adapter is four lines; the
+claim about why was wrong.
+
+``runtime_checkable`` would not have caught it. ``isinstance`` against a
+``Protocol`` checks that the method is *present*, not what it returns, so a
+session passes and the caller gets an object where it expected a string.
+Nothing in akashi calls ``isinstance`` on this, which is the only reason the
+marker has cost nothing so far -- the adapter checks the return value at the
+seam instead, where the message can say what went wrong.
 """
 
 from __future__ import annotations

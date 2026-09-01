@@ -180,7 +180,8 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   `domain/anchor`, `domain/matching`, `domain/evidence` (the closed world),
   `infrastructure/packages` (the ContextPackage reader), `domain/package`,
   `domain/verdict`, `domain/coverage`, `domain/protection`, `domain/report`,
-  `ports/restorer`, `application/admit`, `application/audit`,
+  `ports/restorer`, `infrastructure/adapters/mamori` (the seam to the
+  redactor, which imports nothing), `application/admit`, `application/audit`,
   `domain/contradiction` (what the source says instead),
   `infrastructure/rendering` (text and JSON), `interfaces/cli`, and the
   `und`/`en`/`ja`/`zh` packs in `infrastructure/languages/`. All ten particular
@@ -298,6 +299,13 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   misleads. A version difference is named first and explicitly is not tampering.
   It re-derives with **the packs the report names**, not this machine's default.
   Exit codes: `0` identical, `1` could not run, `5` re-derived and different.
+- **The `mamori` adapter imports `mamori`.** Not a joke about the contract: it
+  does not. `PrivacySession.restore` returns a `RestorationResult`, and lifting
+  `.text` off it needs no knowledge of the class, so akashi installs and runs
+  without the library and a caller who has a session hands it over. The port's
+  docstring claimed the session *already* satisfied the protocol, which was
+  wrong in exactly the way `runtime_checkable` cannot catch: `isinstance`
+  checks that the method is there, not what it returns.
 - **`akashi explain` prints one segment in full, from the report and nothing
   else.** No package, no response, no re-audit — which is the point rather than
   a convenience. ADR-0002 says a report is a document, and a document that needs
