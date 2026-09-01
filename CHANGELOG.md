@@ -146,6 +146,16 @@ API yet.
   losing the audit. Not `encoding="utf-8"`: that makes the characters
   representable and the terminal decodes them as `cp932` anyway, turning the
   Japanese akashi most often prints into mojibake.
+- **The `mamori` adapter, and the reason it is not zero lines.**
+  `ports/restorer.py` said `mamori`'s `PrivacySession` *"already satisfies"* the
+  port. It does not: `restore` returns a `RestorationResult`, and the difference
+  between an object carrying `.text` and the text is the whole adapter.
+  `runtime_checkable` would not have caught it — `isinstance` against a
+  `Protocol` checks that the method is **present**, not what it returns — so a
+  session passes and akashi runs a regex over the result object three layers
+  away. `MamoriRestorer` checks at the seam, where the message can name what
+  went wrong, and **imports nothing**: akashi installs and runs without the
+  library.
 - Three ADRs written while building, each correcting something the pre-code
   design got wrong: [0011](docs/adr/0011-the-script-is-decided-at-the-boundary.md)
   (the script is decided per boundary, not per document),
