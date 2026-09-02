@@ -15,6 +15,8 @@ from typing import Any
 
 import pytest
 
+from conftest import published_schema
+
 jsonschema = pytest.importorskip("jsonschema", reason="a dev dependency; see [dev] in pyproject")
 
 from akashi.application import audit  # noqa: E402
@@ -31,7 +33,7 @@ from akashi.infrastructure.packages import load_package  # noqa: E402
 from akashi.infrastructure.rendering import as_dict  # noqa: E402
 
 ROOT = Path(__file__).parent.parent
-SCHEMA = ROOT / "schemas" / "audit-report-1.json"
+SCHEMA = published_schema()
 PACKAGES = Path(__file__).parent / "packages"
 ANSWERS = Path(__file__).parent / "answers"
 CASES = Path(__file__).parent / "cases"

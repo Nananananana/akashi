@@ -313,3 +313,26 @@ def test_the_cli_writes_nothing_to_disk(workspace: Path) -> None:
     before = sorted(path.name for path in workspace.iterdir())
     run("audit", "--package", "package.json", "--response", "answer.txt")
     assert sorted(path.name for path in workspace.iterdir()) == before
+
+
+def test_the_command_line_says_where_its_reach_ends(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A restorer is a live object holding a mapping; argv carries names. So
+    `--restored-by` is not a lesser version of passing a restorer -- it is the
+    only correct output the command line can produce, and the report says
+    "asserted" because that is the truth of what happened.
+
+    The seam repository read the two lines as better and worse and went looking
+    for a flag that does not exist. Pinned as an intention rather than left as
+    an absence: if a future version grows one, this is where somebody has to
+    decide that on purpose, including how argv would carry a mapping.
+    """
+    from akashi.interfaces.cli.main import main
+
+    with pytest.raises(SystemExit):
+        main(["audit", "--help"])
+    printed = capsys.readouterr().out
+    assert "--restored-by" in printed
+    assert "--restorer" not in printed
+    assert "only restoration the command line can reach" in " ".join(printed.split())

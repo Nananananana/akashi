@@ -5,10 +5,15 @@ you and the context it was given, and separate what the answer took from its
 evidence from what it produced on its own — deterministically, offline, with no
 model in the path and nothing installed alongside it.
 
-> **Status: v0.1, v0.2 and v0.3.** `akashi audit` works; `akashi recheck`
-> re-derives a report from the inputs it names; `akashi eval` measures both
-> against a labelled corpus and nine hand-marked realistic answers, gated on
-> floors. Nothing is released and the API is not stable.
+> **Status: v0.1 through v0.4, and v0.5 in progress.** `akashi audit` works;
+> `akashi recheck` re-derives a report from the inputs it names; `akashi
+> explain` prints one finding in full from the report alone; `akashi
+> certificate` renders a report as one self-contained HTML file for somebody
+> who will sign it; `akashi eval` measures against a labelled corpus and nine
+> hand-marked realistic answers, gated on floors; `akashi doctor` says what is
+> installed and what this console will do to prose and to a document; `akashi
+> mcp` speaks MCP over stdio, for the assistant that produced the answer rather
+> than a person at a terminal. Nothing is released and the API is not stable.
 > [`docs/measurements.md`](docs/measurements.md) is what it currently scores;
 > [`docs/proposals/0002-what-building-it-taught.md`](docs/proposals/0002-what-building-it-taught.md)
 > is the rest of the roadmap.
@@ -94,6 +99,26 @@ worth more than a total check whose confidence cannot be examined.
 - **The world is what was sent**, not the corpus. A figure the model guessed that
   happens to exist somewhere in your archive is still floating
   ([ADR-0006](docs/adr/0006-audit-against-what-was-sent.md)).
+
+## For an agent rather than a person
+
+The thing that most wants an audit is the assistant that just produced the
+answer, holding the package it was given. `akashi mcp` speaks MCP over stdio,
+on the standard library, so it costs no dependency and reaches no network:
+
+```json
+{
+  "mcpServers": {
+    "akashi": { "command": "akashi", "args": ["mcp"] }
+  }
+}
+```
+
+Three tools -- `audit`, `recheck`, `explain` -- over the same use cases as the
+commands above. **They take text and objects, never paths.** The command line
+opens a file the user named, because the user is the person holding the files;
+here the model chooses the arguments, and a tool that opened a path would be a
+file-read primitive with an audit report as the channel out.
 
 ## Where it sits
 

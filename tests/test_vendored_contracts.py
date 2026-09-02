@@ -224,3 +224,27 @@ def test_every_object_the_transcription_covers_is_closed() -> None:
     for name, node in [("<root>", schema), *schema["$defs"].items()]:
         if "properties" in node:
             assert node.get("additionalProperties") is False, f"{name} accepts extra fields"
+
+
+def test_the_producers_contract_still_cannot_carry_the_placeholder_enumeration() -> None:
+    """#52's premise, pinned to the contract rather than to a memory of it.
+
+    akashi cannot tell a token a redactor minted from one an author typed. The
+    enumeration that would settle it -- `mamori.protection-scope/1`'s
+    ``placeholders`` -- reaches akashi through nothing, because akashi reads one
+    document and `tsumugi`'s ``provenance.protection`` carries three fields with
+    ``additionalProperties: false``.
+
+    This is what makes the refusal message honest rather than lazy, and it is
+    the thing most likely to change without anybody telling akashi. If a v2
+    carries the enumeration, this test fails and whoever is here should reopen
+    #52 rather than discovering the possibility by accident.
+    """
+    schema = json.loads((CONTRACTS / "context-package-1.json").read_text(encoding="utf-8"))
+    protection = schema["$defs"]["provenance"]["properties"]["protection"]
+
+    assert protection.get("additionalProperties") is False
+    assert set(protection["properties"]) == {"by", "scope", "reversible"}, (
+        "the producer's protection block changed shape; if it can now carry a "
+        "placeholder enumeration, #52 became decidable and should be reopened"
+    )

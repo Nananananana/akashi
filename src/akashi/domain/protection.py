@@ -21,6 +21,38 @@ surrogate is by design indistinguishable from a real name. Nothing here will
 ever see one. The reliable signal is ``provenance.protection`` on the package,
 which exists precisely so a downstream consumer can tell; the pattern below
 catches the case where the package says nothing and the answer says everything.
+
+**What this cannot decide, and why it stays that way (#52).**
+``<PERSON_001>`` is a string a person can type. Seeing one, akashi cannot tell a
+token `mamori` minted from one an author wrote in a quotation, and both ways of
+being wrong are silent: an honest quotation reported as unrestored residue, or
+a real placeholder audited against as ordinary text.
+
+`mamori.protection-scope/1` carries a ``placeholders`` enumeration that would
+settle it -- every token it minted, by design recoverable from the protected
+text with one regular expression, so listing them discloses nothing. **It
+cannot reach akashi.** akashi reads one document, and `tsumugi`'s
+``provenance.protection`` carries ``by``, ``scope`` and ``reversible`` with
+``additionalProperties: false``. Version 1 of that contract is now closed
+(ADR-0016), so the field cannot be added to it. The enumeration exists, in a
+record akashi is never handed.
+
+So akashi says it cannot tell, rather than guessing, and the refusal in
+``application/admit.py`` names what would settle it. That is the honest shape
+and not a placeholder for a better one: taking `mamori`'s record as a second
+input would make akashi read a second foreign contract -- a vendored copy, a
+drift job, a conformance suite, a seam test (ADR-0007) -- to decide a question
+whose answer would still be somebody's word.
+
+**And when somebody does build it, the branch is on the contract identifier.**
+#52 proposed branching on ``mode``, because ``placeholders`` was said to be
+absent under ``surrogate``. `mamori`'s contract now says the opposite twice:
+``placeholders`` is **required**, and ``mode`` is *"a summary of how values were
+substituted, **not a switch selecting which array to read**"* -- one document
+routinely carries both. The signal is
+``mamori.protection-scope/1`` versus ``mamori.protection-scope/1+surrogate``,
+which a token-only consumer refuses through the check it already has. Reading
+``mode`` as a switch is the exact misreading that contract is worded to prevent.
 """
 
 from __future__ import annotations

@@ -7,7 +7,7 @@ freeze is that condition, not a date
 ([ADR-0002](adr/0002-the-audit-report-is-a-document.md)).
 
 `akashi audit --json` produces this. The schema is
-[`schemas/audit-report-1.json`](../schemas/audit-report-1.json) and ships inside
+[`src/akashi/schemas/audit-report-1.json`](../src/akashi/schemas/audit-report-1.json) and ships inside
 the wheel; the conformance suite is `tests/test_report_conformance.py`.
 
 *This document is the contract, for producers and consumers alike. It is not a
@@ -27,6 +27,26 @@ It is a **document**, not an object. JSON, portable, versioned, readable by a
 program that has never heard of Python. A compliance record that can only be
 read by importing the library that wrote it is a record that depends on that
 library still existing.
+
+**It is UTF-8, and that is part of the contract rather than a detail of how it
+was written.** RFC 8259 requires it of any JSON exchanged between systems, and
+this document is exchanged by definition. It matters more here than in most
+places: `audited.response_hash` is `sha256` over the **UTF-8 bytes** of
+`answer`, and every span in the report is an offset into that same string, so a
+report stored in another encoding carries a hash of bytes it does not contain
+and offsets into a string a consumer cannot reconstruct.
+
+It is spelled out here because akashi got it wrong: redirected on a Japanese
+Windows console, `akashi audit --json` wrote `cp932`, and akashi could not read
+back the document it had just written.
+
+**The contract was not what was deficient.** RFC 8259 §8.1 already requires
+UTF-8 of JSON exchanged between systems that are not part of a closed
+ecosystem, and this document already said the report is JSON — so the
+requirement was in force and the implementation violated it. Writing it out
+above is a **pin against repeating the violation**, not a repair of an
+under-specified contract. Stated that way round because the other way round
+excuses the producer, and the producer was akashi.
 
 A consumer holding a report needs nothing else. `answer` is in it verbatim and
 every span indexes that string, so a finding can be followed without the
@@ -335,6 +355,12 @@ the only thing keeping the two representations in step.**
 
 A producer that is not akashi passes the same suite. That is the whole point of
 writing the contract down.
+
+**And the bytes are checked separately from the shape.** A report that parses
+after being decoded with the reader's platform encoding is not a conforming
+report; the encoding is a property of the file, and a suite that only ever sees
+already-parsed dictionaries cannot see it. `tests/test_narrow_console.py`
+writes a report through a `cp932` stream and requires the bytes to be UTF-8.
 
 
 ---

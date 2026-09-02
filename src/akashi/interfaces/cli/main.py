@@ -30,7 +30,7 @@ from typing import TextIO
 
 from akashi import __version__
 from akashi.application import audit, recheck
-from akashi.errors import AkashiError
+from akashi.errors import AkashiError, ContractError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
 from akashi.evaluation.floors import check as check_floors
@@ -38,16 +38,20 @@ from akashi.evaluation.marked import load_marked, score_extraction
 from akashi.evaluation.rendering import as_dict as evaluation_dict
 from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.evaluation.rendering import measured_values
+from akashi.infrastructure.installation import inspect as inspect_installation
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
 from akashi.infrastructure.rendering import (
+    as_diagnosis,
     as_json,
     as_statement,
     as_text,
+    certificate,
     explain_segment,
     segments_with_findings,
 )
 from akashi.infrastructure.reports import load_report, load_report_or_statement
+from akashi.interfaces.mcp import serve as mcp_serve
 
 __all__ = ["main"]
 
@@ -120,7 +124,11 @@ def _parser() -> argparse.ArgumentParser:
         metavar="WHO",
         help=(
             "assert that you restored the answer yourself, naming who did. akashi "
-            "cannot verify this and reports it as your claim (ADR-0013)"
+            "cannot verify this and reports it as your claim (ADR-0013). This is "
+            "the only restoration the command line can reach: a restorer is a live "
+            "object holding the mapping, and argv carries names. For a report that "
+            "says 'restored by' rather than 'asserted restored by', call "
+            "akashi.audit(..., restorer=...) in the process that holds the session"
         ),
     )
     audit_command.add_argument(
@@ -180,6 +188,61 @@ def _parser() -> argparse.ArgumentParser:
         help="narrow to one particular by its text, for a segment carrying a dozen",
     )
 
+    commands.add_parser(
+        "mcp",
+        help="speak MCP over stdio, for an agent rather than a person",
+        description=(
+            "Serves the same use cases as this CLI over JSON-RPC on stdin and stdout, "
+            "so an assistant holding a package and an answer can audit before handing "
+            "the answer on. Read-only, and it takes no paths: the model chooses the "
+            "arguments, and a tool that opened a file the model named would be a "
+            "file-read primitive with a report as the channel out. Nothing is printed "
+            "on stdout that is not a protocol message."
+        ),
+    )
+
+    commands.add_parser(
+        "doctor",
+        help="what is installed, what is missing, and what this console will do",
+        description=(
+            "Reports the running installation: akashi's version, the contract it "
+            "ships and its hash, the language packs, what this console can print, "
+            "and which siblings are importable. It decides nothing -- these are "
+            "facts about a machine, and the two defects this project shipped that "
+            "were invisible in development were both facts about a machine."
+        ),
+    )
+
+    certificate_command = commands.add_parser(
+        "certificate",
+        help="the report as one HTML file, for somebody who will sign it",
+        description=(
+            "Renders a report as a single self-contained HTML document: the answer "
+            "with every particular marked where it stands, what was not checked "
+            "first, and the traced particulars a signer is signing. Reads the report "
+            "and nothing else. No scripts, no network, no fonts -- opening it fetches "
+            "nothing -- and the same report always renders to the same bytes, because "
+            "a signature is over bytes."
+        ),
+    )
+    certificate_command.add_argument(
+        "report",
+        metavar="REPORT",
+        help="the audit report, as JSON; an in-toto statement is read through its predicate",
+    )
+    certificate_command.add_argument(
+        "--out",
+        metavar="PATH",
+        default="",
+        help="write here instead of standard output. Refuses to overwrite (--force)",
+    )
+    certificate_command.add_argument(
+        "--force",
+        action="store_true",
+        help="overwrite the file at --out. A certificate somebody already signed is "
+        "not a file to replace by accident",
+    )
+
     eval_command = commands.add_parser(
         "eval",
         help="run the labelled corpus and print what it establishes",
@@ -234,6 +297,36 @@ def _read(location: str) -> str:
     return Path(location).read_text(encoding="utf-8")
 
 
+def _document(text: str, out: TextIO) -> None:
+    """A document leaves as UTF-8, whatever the console happens to be.
+
+    ``_read`` above already says it for input -- *UTF-8 either way and never the
+    platform encoding* -- and nothing said it for output, so akashi read
+    deliberately and wrote by accident. Redirected on a Japanese Windows
+    console, ``--json`` wrote ``cp932``: not valid JSON (RFC 8259 requires
+    UTF-8), refused by ``recheck``, ``explain`` and ``certificate``, and
+    carrying a ``response_hash`` taken over UTF-8 bytes the file does not
+    contain. **akashi could not read the document akashi had just written.**
+
+    This is the other half of the narrow-console problem. Prose on a screen
+    degrades to what the console can show, because losing a character beats
+    losing the audit. A *document* must not degrade at all -- it is read by a
+    program somewhere else, and a `?` in it is corruption rather than a
+    concession. So the bytes go to the buffer underneath the stream rather than
+    through its encoder.
+
+    A stream with no ``buffer`` is a test's ``StringIO``, which holds text and
+    has no encoding to get wrong.
+    """
+    buffer = getattr(out, "buffer", None)
+    if buffer is None:
+        out.write(text)
+        return
+    out.flush()
+    buffer.write(text.encode("utf-8"))
+    buffer.flush()
+
+
 def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
     package = load_package(arguments.package)
     answer = _read(arguments.response)
@@ -252,11 +345,14 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         )
         statement = as_statement(report, subject=subject)
         rendered = json.dumps(statement, ensure_ascii=False, indent=2) + "\n"
+        _document(rendered, out)
     elif arguments.json:
-        rendered = as_json(report)
+        _document(as_json(report), out)
     else:
-        rendered = as_text(report)
-    print(rendered, end="", file=out)
+        # Prose, for a reader at a terminal. This one goes through the console's
+        # encoder so that a document it cannot represent costs characters rather
+        # than the whole audit.
+        print(as_text(report), end="", file=out)
 
     if arguments.fail_on_findings and report.has_findings:
         return FOUND
@@ -288,6 +384,63 @@ def _explain(arguments: argparse.Namespace, out: TextIO) -> int:
         end="",
         file=out,
     )
+    return AUDITED
+
+
+def _mcp(_arguments: argparse.Namespace, _out: TextIO) -> int:
+    """Speak MCP on stdin and stdout until the client goes away.
+
+    It does not take the `out` this function is handed. Every other command
+    writes prose through the console's encoder so a character it cannot show
+    costs a character rather than the audit; this is a document channel to a
+    program, where a `?` is corruption, so the server binds UTF-8 on both
+    directions itself.
+    """
+    return mcp_serve()
+
+
+def _doctor(_arguments: argparse.Namespace, out: TextIO) -> int:
+    """What is here, and what is not.
+
+    Prose for a person, so it goes through the console's encoder -- and it is
+    the one command most likely to be run *because* the console is the problem,
+    so every word of it is ASCII.
+
+    Exits ``REFUSED`` when something akashi promised to ship is absent. A
+    diagnostic that returns success whatever it found is a diagnostic no script
+    can use, and this one is going to be run by people pasting its output into
+    an issue.
+    """
+    installation = inspect_installation(DEFAULT)
+    print(as_diagnosis(installation), end="", file=out)
+    return REFUSED if installation.missing else AUDITED
+
+
+def _certificate(arguments: argparse.Namespace, out: TextIO) -> int:
+    """The report as one HTML file.
+
+    Written as bytes with an explicit UTF-8 encoding rather than through the
+    console's, because the file is the artefact: a certificate that came out
+    `cp932` on the machine that made it is a certificate that loses the answer
+    it audited on the machine that reads it, and the answer is the thing every
+    offset on the page indexes.
+    """
+    document = load_report_or_statement(arguments.report)
+    page = certificate(document)
+
+    if not arguments.out:
+        print(page, end="", file=out)
+        return AUDITED
+
+    destination = Path(arguments.out)
+    if destination.exists() and not arguments.force:
+        raise ContractError(
+            f"{destination} exists. A certificate is an artefact somebody may have "
+            f"already signed or filed, so this does not overwrite one by accident; "
+            f"pass --force if replacing it is what you meant."
+        )
+    destination.write_bytes(page.encode("utf-8"))
+    print(f"akashi: wrote {destination}", file=out)
     return AUDITED
 
 
@@ -327,7 +480,7 @@ def _recheck(arguments: argparse.Namespace, out: TextIO) -> int:
             "rederived_version": result.rederived_version,
             "differences": list(result.differences),
         }
-        print(json.dumps(body, ensure_ascii=False, indent=2), file=out)
+        _document(json.dumps(body, ensure_ascii=False, indent=2) + "\n", out)
     else:
         print(f"akashi recheck - {result.describe()}", file=out)
         if not result.matches:
@@ -370,16 +523,19 @@ def _eval(arguments: argparse.Namespace, out: TextIO) -> int:
             "breaches": [breach.describe() for breach in breaches],
             "measured": measured,
         }
-        rendered = json.dumps(body, ensure_ascii=False, indent=2) + "\n"
+        _document(json.dumps(body, ensure_ascii=False, indent=2) + "\n", out)
     else:
-        rendered = evaluation_text(
-            breakdown,
-            notes,
-            cases=len(cases),
-            extraction=extraction,
-            floors=(measured, breaches),
+        print(
+            evaluation_text(
+                breakdown,
+                notes,
+                cases=len(cases),
+                extraction=extraction,
+                floors=(measured, breaches),
+            ),
+            end="",
+            file=out,
         )
-    print(rendered, end="", file=out)
     if arguments.gate and breaches:
         # Named on stderr as well, because a build log is read from the end and
         # the reason a gate went red should not need scrolling for.
@@ -434,6 +590,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _recheck(arguments, sys.stdout)
         if arguments.command == "explain":
             return _explain(arguments, sys.stdout)
+        if arguments.command == "certificate":
+            return _certificate(arguments, sys.stdout)
+        if arguments.command == "doctor":
+            return _doctor(arguments, sys.stdout)
+        if arguments.command == "mcp":
+            return _mcp(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first
             parser.error(f"unknown command {arguments.command!r}")
         return _audit(arguments, sys.stdout)

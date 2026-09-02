@@ -26,6 +26,7 @@ from akashi.infrastructure.rendering.attestation import (
 )
 from akashi.infrastructure.reports import read_report
 from akashi.interfaces.cli.main import AUDITED, main
+from conftest import published_schema
 
 PACKAGES = Path(__file__).parent / "packages"
 ANSWERS = Path(__file__).parent / "answers"
@@ -255,12 +256,11 @@ def test_the_identifiers_are_not_in_a_namespace_somebody_could_buy() -> None:
     now. The values are read from the code and the schema, never from prose.
     """
     import json
-    from pathlib import Path
 
     from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
 
     held = "https://github.com/Nananananana/akashi/"
-    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    schema = published_schema()
     identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
 
     for name, value in (("predicateType", PREDICATE_TYPE), ("$id", identifier)):
@@ -294,7 +294,9 @@ def test_the_route_the_contract_tells_a_consumer_to_take_actually_works() -> Non
 
     jsonschema = pytest.importorskip("jsonschema")
     contract = Path(__file__).parents[1] / "docs" / "audit-report.md"
-    links = re.findall(r"\]\((\.\./schemas/[^)]+)\)", contract.read_text(encoding="utf-8"))
+    links = re.findall(
+        r"\]\((\.\./src/akashi/schemas/[^)]+)\)", contract.read_text(encoding="utf-8")
+    )
     assert len(links) == 1, f"the contract names {len(links)} schema paths; it should name one"
 
     schema = (contract.parent / links[0]).resolve()
@@ -343,11 +345,10 @@ def test_the_two_identifiers_agree_on_the_version_they_name() -> None:
     nothing else notices.
     """
     import json
-    from pathlib import Path
 
     from akashi.infrastructure.rendering.attestation import PREDICATE_TYPE
 
-    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    schema = published_schema()
     identifier = json.loads(schema.read_text(encoding="utf-8"))["$id"]
 
     predicate_major = PREDICATE_TYPE.rsplit("/v", 1)[-1].removesuffix("-draft")
