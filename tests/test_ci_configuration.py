@@ -35,6 +35,7 @@ assertions are about structure, and a comment cannot satisfy one.
 
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -190,3 +191,77 @@ def test_doctor_is_run_against_a_real_install() -> None:
         assert not step.get("continue-on-error"), (
             "a doctor step that cannot fail the job is a doctor step that reports nothing"
         )
+
+
+def _job(name: str) -> dict[str, object]:
+    workflow = yaml.safe_load((WORKFLOWS / "ci.yml").read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+    assert name in jobs, f"ci.yml has no {name!r} job; jobs are {sorted(jobs)}"
+    return dict(jobs[name])
+
+
+def test_the_seam_job_installs_the_sibling_by_direct_reference() -> None:
+    """#59. `mamori` is on no index, and the name is free there, so an index
+    install would be a different package with the same name."""
+    steps = _job("seam-mamori")["steps"]
+    assert isinstance(steps, list)
+    installs = [
+        step
+        for step in steps
+        if "git+https://github.com/Nananananana/mamori.git" in str(step.get("run", ""))
+    ]
+    assert installs, "the seam job does not install mamori by direct git reference"
+
+
+def test_the_seam_job_pins_a_commit_and_exports_it() -> None:
+    """A seam result that cannot be tied to a revision is not reproducible, and
+    the test that checks the pin reads it from the environment -- so if the
+    variable disappears, that check skips itself in the one place it applies.
+    This is what stops that.
+    """
+    job = _job("seam-mamori")
+    env = job.get("env")
+    assert isinstance(env, dict)
+    reference = str(env.get("AKASHI_SEAM_MAMORI_REF", ""))
+    assert len(reference) == 40 and all(c in "0123456789abcdef" for c in reference), (
+        f"AKASHI_SEAM_MAMORI_REF should be a full commit sha, not {reference!r}"
+    )
+    assert env.get("AKASHI_SEAM_MAMORI"), (
+        "without this the seam file is not collected at all, and `-m siblings` would select nothing"
+    )
+
+
+def test_no_continue_on_error_anywhere_in_the_seam_job() -> None:
+    """Observed in `tsumugi`: a job-level `continue-on-error` swallowed an
+    install failure and the job had never run once. Nothing said so, because a
+    swallowed setup failure looks exactly like a passing job.
+
+    A setup failure must be red, and it is a different finding from "the seam
+    failed" -- only the second is a fact about the seam.
+    """
+    job = _job("seam-mamori")
+    assert not job.get("continue-on-error"), "the seam job may not swallow its own failures"
+    steps = job["steps"]
+    assert isinstance(steps, list)
+    for step in steps:
+        assert not step.get("continue-on-error"), (
+            f"step {step.get('name')!r} cannot fail the job, so it reports nothing"
+        )
+
+
+def test_the_direct_reference_is_not_in_the_distribution_metadata() -> None:
+    """#59's first trap, and the expensive one. An extra reaches the built
+    distribution as `Requires-Dist: mamori @ git+... ; extra == 'siblings'`, and
+    PyPI refuses **any** distribution whose metadata carries a direct
+    reference. One line in an extra nobody installs would make the whole
+    distribution unpublishable.
+    """
+    config = tomllib.loads((WORKFLOWS.parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
+    project = config["project"]
+    declared = list(project.get("dependencies", []))
+    for group in (project.get("optional-dependencies") or {}).values():
+        declared.extend(group)
+    offenders = [one for one in declared if "@" in one and "git+" in one]
+    assert not offenders, (
+        f"a direct reference in project metadata makes the distribution unpublishable: {offenders}"
+    )

@@ -171,3 +171,45 @@ jobs:
       - name: doctor agrees the installation is sound
         run: |
           akashi doctor
+
+  # The seam against the real redactor (#59). Four ways this job could be green
+  # and prove nothing, three of them observed in sibling repositories:
+  #
+  #   1. `mamori` is on no index, and the name is free there. It comes in by
+  #      direct git reference -- in a STEP, never in pyproject.toml: an extra
+  #      reaches the built distribution as `Requires-Dist: ... @ git+...`, and
+  #      PyPI refuses any distribution whose metadata carries one. A line in an
+  #      extra nobody installs would make the whole distribution unpublishable.
+  #   2. `import mamori` proves a module of that name exists, not that it is
+  #      ours. PEP 610's direct_url.json is checked before anything runs.
+  #   3. `continue-on-error` goes on a STEP, never on the job. Observed in
+  #      tsumugi: a job-level one swallowed an install failure and the job had
+  #      never run once. A setup failure must be red, and it is a different
+  #      finding from "the seam failed".
+  #   4. No importorskip in the seam test. Verified in a sibling: pytest against
+  #      a venv without the library exits 0, green, with zero seam tests run.
+  #      Here the file imports it at the top, so absence is an error -- and
+  #      `-m siblings` collecting nothing exits 5, so an empty selection is red
+  #      too.
+  seam-mamori:
+    name: the seam against the real redactor
+    runs-on: ubuntu-latest
+    env:
+      AKASHI_SEAM_MAMORI: "1"
+      AKASHI_SEAM_MAMORI_REF: "0b7da4cf979785db9290d8533e4cae5cd9cdbec8"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install akashi and its test tooling
+        run: pip install -e ".[dev]"
+
+      - name: Install the sibling by pinned direct reference
+        run: |
+          pip install "mamori @ git+https://github.com/Nananananana/mamori.git@$AKASHI_SEAM_MAMORI_REF"
+
+      - name: Run the seam
+        run: |
+          python -m pytest -m siblings

@@ -14,10 +14,29 @@ from pathlib import Path
 
 import pytest
 
+#: The seam against the real `mamori` is not collected unless it is asked for.
+#:
+#: A marker is not enough. Markers deselect at *selection* time, and this file
+#: imports the library at the top -- deliberately, so that its absence in the job
+#: that installs it is an error rather than a skip (#59). Collection happens
+#: first, so without this the whole suite fails on every machine that does not
+#: have the sibling, which is every machine except one CI job.
+#:
+#: Ignoring it here cannot make that job pass quietly: the job selects
+#: `-m siblings`, and pytest exits 5 when it collects nothing. A forgotten
+#: variable is red, not green.
+collect_ignore = [] if os.environ.get("AKASHI_SEAM_MAMORI") else ["test_seam_mamori.py"]
+
 
 @pytest.fixture(autouse=True)
 def _no_akashi_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Strip every ``AKASHI_*`` variable for the duration of a test."""
+    """Strip every ``AKASHI_*`` variable for the duration of a test.
+
+    This includes the two the seam job sets, so `test_seam_mamori.py` reads
+    them at import time. A test that read ``AKASHI_SEAM_MAMORI_REF`` from
+    inside its own body would find it gone and skip the pin check in the one
+    place the pin exists.
+    """
     for name in list(os.environ):
         if name.startswith("AKASHI_"):
             monkeypatch.delenv(name, raising=False)

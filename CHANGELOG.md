@@ -40,6 +40,34 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **The seam against the real redactor (#59).** A CI job installs `mamori` by
+  pinned git reference and runs the adapter against the library rather than
+  against a reading of it. Every claim #76 made from a stand-in holds against
+  the class: `isinstance(session, Restorer)` is **True**, `restore` returns a
+  `RestorationResult`, and without the adapter the failure is
+  `TypeError: expected string or bytes-like object` from inside a regular
+  expression, three layers from the mistake.
+
+  Four ways the job could have been green and proved nothing, three of them
+  observed in sibling repositories, are closed and each is watched failing:
+  the direct reference lives in a **step** and never in `pyproject.toml` (one
+  line of it in an extra makes the whole distribution unpublishable); identity
+  is checked through PEP 610's `direct_url.json`, so an index install fails
+  rather than passing; `continue-on-error` is on no step and no job; and the
+  seam file imports `mamori` at the top, so absence is an error and not a skip.
+
+  **`mypy` catches what `runtime_checkable` does not.** Type-checking the real
+  library through that file gives *"Subclass of `PrivacySession` and `Restorer`
+  cannot exist: would have incompatible method signatures"*. The mismatch is
+  statically visible; only the runtime check says yes -- which makes
+  `runtime_checkable` worse than no check here, since it answers the question a
+  reader asked with the answer to a narrower one.
+
+  A marker was not enough on its own: markers deselect at *selection* time and
+  collection happens first, so the file is also gated out of collection. The
+  job cannot pass by collecting nothing either -- `pytest -m siblings` exits 5
+  on an empty set.
+
 - **A test of akashi's own that would have passed having read nothing.**
   `test_the_adapter_imports_nothing` walked `adapters/*.py` and asserted only
   inside the loop, so a renamed package makes it green with zero modules read.

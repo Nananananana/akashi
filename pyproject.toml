@@ -97,9 +97,15 @@ testpaths = ["tests"]
 # so must its test suite: a check that cannot run on a developer's machine, or
 # inside the networks that most need this tool, is a check that gets disabled.
 # The one job that runs them asks for them by name.
-addopts = "-q -m 'not network'"
+addopts = "-q -m 'not network and not siblings'"
 markers = [
     "network: reaches a host outside this machine. Deselected by default; run with -m network",
+    # Needs a sibling library installed. Deselected by default because the
+    # ordinary suite runs where it genuinely is not expected -- and NOT skipped
+    # inside the test, because in the job that installs it deliberately, absence
+    # means the install step lied (#59). `pytest -m siblings` collecting nothing
+    # exits 5, so an empty selection cannot pass either.
+    "siblings: needs a sibling library installed. Run with -m siblings",
 ]
 
 [tool.ruff]
