@@ -40,6 +40,20 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **A test of akashi's own that would have passed having read nothing.**
+  `test_the_adapter_imports_nothing` walked `adapters/*.py` and asserted only
+  inside the loop, so a renamed package makes it green with zero modules read.
+  It now checks its population first, and a scan of every test file for that
+  shape is a test -- narrowed to loops over what the *filesystem* handed back,
+  which is the collection that silently becomes empty.
+
+  Same family as the skipping guard above, different spelling: `for x in []`
+  spells an empty population *"all passed"*, `if not found: skip` spells it
+  *"not applicable"*. Reported by the cross-repository review, which found
+  fourteen in another project. akashi's architecture tests were already safe --
+  `_modules()` refuses at collection time -- and pointing `SRC` at a renamed
+  directory was measured to confirm it rather than assumed.
+
 - **What akashi cannot decide about a placeholder, said out loud (#52).**
   `<PERSON_001>` is a string a person can type, and akashi cannot tell a token a
   redactor minted from one an author quoted. The refusal now names the limit and

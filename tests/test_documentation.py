@@ -8,6 +8,7 @@ asserted.
 
 from __future__ import annotations
 
+import ast
 import re
 import tomllib
 from pathlib import Path
@@ -264,3 +265,66 @@ def test_explain_and_the_contract_agree_on_which_fields_point_outward() -> None:
     for field in ("locations", "contradiction"):
         assert field in footer, f"explain no longer keys its footer on {field!r}"
         assert field in outward, f"the contract no longer lists {field!r} as an assertion"
+
+
+def test_no_test_asserts_only_inside_a_loop_over_something_it_discovered() -> None:
+    """`for x in []: assert ...` is green, and so is `if not found: skip`.
+
+    Both spell an empty population as a pass, and both go quiet on exactly the
+    day the thing they guard moves -- which is not hypothetical here: when
+    `schemas/` moved into the package tree (#57), the test guarding its
+    packaging began skipping itself and reported nothing.
+
+    The dangerous shape is narrow, so this check is too. A loop over a
+    *hypothesis* strategy or a literal is fine; a loop over what the filesystem
+    or the import system happened to hand back is not, because that is the
+    collection that silently becomes empty. Those must assert their population
+    before iterating it.
+
+    Reported by the cross-repository review, which found fourteen of these in
+    another project: pointing its source root at a renamed directory left every
+    architecture rule passing.
+    """
+    discovery = {"glob", "rglob", "iterdir", "walk", "walk_packages", "iter_modules", "listdir"}
+    offenders: list[str] = []
+
+    for path in sorted((ROOT / "tests").glob("test_*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for function in [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test_")
+        ]:
+            called = {
+                node.func.attr
+                if isinstance(node.func, ast.Attribute)
+                else getattr(node.func, "id", "")
+                for node in ast.walk(function)
+                if isinstance(node, ast.Call)
+            }
+            if not called & discovery:
+                continue
+            in_a_loop = {
+                id(inner)
+                for loop in ast.walk(function)
+                if isinstance(loop, ast.For)
+                for inner in ast.walk(loop)
+            }
+            asserts_outside = [
+                node
+                for node in ast.walk(function)
+                if isinstance(node, ast.Assert) and id(node) not in in_a_loop
+            ]
+            loops_that_assert = [
+                loop
+                for loop in ast.walk(function)
+                if isinstance(loop, ast.For)
+                and any(isinstance(node, ast.Assert) for node in ast.walk(loop))
+            ]
+            if loops_that_assert and not asserts_outside:
+                offenders.append(f"{path.name}:{function.lineno} {function.name}")
+
+    assert not offenders, (
+        "these tests assert only inside a loop over a collection they discovered, so "
+        "an empty collection passes silently:\n  " + "\n  ".join(offenders)
+    )

@@ -165,7 +165,13 @@ def test_the_adapter_imports_nothing() -> None:
     where the package is absent.
     """
     source = Path(__file__).parents[1] / "src" / "akashi" / "infrastructure" / "adapters"
-    for module in sorted(source.glob("*.py")):
+    modules = sorted(source.glob("*.py"))
+    assert modules, (
+        f"no modules under {source} -- this test would pass having read nothing. "
+        f"`for x in []: assert ...` is green, so the population is checked before "
+        f"the loop rather than assumed by it. Has the adapters package moved?"
+    )
+    for module in modules:
         tree = ast.parse(module.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
