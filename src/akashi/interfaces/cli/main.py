@@ -51,6 +51,7 @@ from akashi.infrastructure.rendering import (
     segments_with_findings,
 )
 from akashi.infrastructure.reports import load_report, load_report_or_statement
+from akashi.interfaces.mcp import serve as mcp_serve
 
 __all__ = ["main"]
 
@@ -185,6 +186,19 @@ def _parser() -> argparse.ArgumentParser:
         metavar="TEXT",
         default="",
         help="narrow to one particular by its text, for a segment carrying a dozen",
+    )
+
+    commands.add_parser(
+        "mcp",
+        help="speak MCP over stdio, for an agent rather than a person",
+        description=(
+            "Serves the same use cases as this CLI over JSON-RPC on stdin and stdout, "
+            "so an assistant holding a package and an answer can audit before handing "
+            "the answer on. Read-only, and it takes no paths: the model chooses the "
+            "arguments, and a tool that opened a file the model named would be a "
+            "file-read primitive with a report as the channel out. Nothing is printed "
+            "on stdout that is not a protocol message."
+        ),
     )
 
     commands.add_parser(
@@ -371,6 +385,18 @@ def _explain(arguments: argparse.Namespace, out: TextIO) -> int:
         file=out,
     )
     return AUDITED
+
+
+def _mcp(_arguments: argparse.Namespace, _out: TextIO) -> int:
+    """Speak MCP on stdin and stdout until the client goes away.
+
+    It does not take the `out` this function is handed. Every other command
+    writes prose through the console's encoder so a character it cannot show
+    costs a character rather than the audit; this is a document channel to a
+    program, where a `?` is corruption, so the server binds UTF-8 on both
+    directions itself.
+    """
+    return mcp_serve()
 
 
 def _doctor(_arguments: argparse.Namespace, out: TextIO) -> int:
@@ -568,6 +594,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _certificate(arguments, sys.stdout)
         if arguments.command == "doctor":
             return _doctor(arguments, sys.stdout)
+        if arguments.command == "mcp":
+            return _mcp(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first
             parser.error(f"unknown command {arguments.command!r}")
         return _audit(arguments, sys.stdout)

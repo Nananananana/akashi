@@ -128,6 +128,30 @@ API yet.
   pins that premise, so a v2 that carries it reopens the question instead of the
   reasoning quietly going stale.
 
+- **`akashi mcp`, the agent-facing surface.** JSON-RPC over stdio on the
+  standard library -- which is not a preference: ADR-0001 forbids a runtime
+  dependency and the import-linter contract forbids `socket`, `http`, `urllib`
+  and `asyncio`, all of which an MCP SDK brings. Three tools -- `audit`,
+  `recheck`, `explain` -- as thin over `akashi.application` as the CLI is.
+
+  **It takes no paths.** The CLI opens a file the user named, because the user
+  is the person holding the files; here the *model* chooses the arguments, and a
+  tool that opened a path would be a file-read primitive with a report as the
+  channel out, since a report quotes the answer verbatim. Read-only, checked by
+  taking the filesystem away and calling a tool.
+
+  Speaks the **2026-07-28** revision -- stateless, no handshake, every request
+  carrying its version in `_meta`, every result naming its `resultType` -- and
+  also answers `initialize`, because the specification's own compatibility
+  matrix says a legacy client against a modern-only server *fails with no
+  fall-forward*, and most clients shipped today are legacy. Every protocol fact
+  was read from the specification rather than inferred from a client that
+  happened to work.
+
+  The transport binds UTF-8 both ways with `errors` left strict. Third place
+  today's rule applied: prose degrades, a document does not, and a `?` in a
+  protocol message is corruption.
+
 - **`akashi doctor`, and the schema moved to where one route reaches it
   (#57).** `doctor` reports the running installation: akashi's version, the
   contract it ships and its `sha256`, the language packs, what this console
