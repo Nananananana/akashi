@@ -128,6 +128,19 @@ API yet.
   pins that premise, so a v2 that carries it reopens the question instead of the
   reasoning quietly going stale.
 
+- **The document rule is now structural rather than remembered.** *Prose
+  degrades, a document does not* held today because every document path was
+  found and changed by hand; a fourth one -- a new `--json`, a new export --
+  would be written as `print(json.dumps(...), file=out)` and would go out in the
+  console's encoding on the machine that has one, with every test passing. A
+  test walks the CLI's AST and requires a serialized document to reach the
+  caller through `_document` or not at all.
+
+  Prompted by the cross-repository review's third column: **structural** (you
+  cannot break it without deleting code), **disciplined** (a person is keeping
+  it), **accidental** (true, and nobody designed or maintains it). This rule was
+  in the second column and is now in the first.
+
 - **`akashi mcp`, the agent-facing surface.** JSON-RPC over stdio on the
   standard library -- which is not a preference: ADR-0001 forbids a runtime
   dependency and the import-linter contract forbids `socket`, `http`, `urllib`

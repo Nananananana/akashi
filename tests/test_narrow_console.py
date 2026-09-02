@@ -293,3 +293,46 @@ def test_one_run_degrades_the_prose_and_leaves_the_document_intact(
     document = as_json(report).encode("utf-8")
     assert json.loads(document.decode("utf-8"))["answer"] == answer
     assert "?" not in json.loads(document.decode("utf-8"))["answer"]
+
+
+def test_no_document_output_bypasses_the_utf8_writer() -> None:
+    """The rule, made structural instead of remembered.
+
+    `prose degrades, a document does not` held today because every document
+    path was found and changed by hand. A fourth one -- a new `--json`, a new
+    export -- would be written as `print(json.dumps(...), file=out)` and would
+    go out in the console's encoding on the machine that has one, and every
+    test would pass.
+
+    So: in the CLI, a `json.dumps` result reaches the caller through
+    `_document` or not at all. Checked with AST rather than by grepping for
+    `print`, because the question is what the value flows into.
+    """
+    import ast
+
+    source = Path(__file__).parents[1] / "src" / "akashi" / "interfaces" / "cli" / "main.py"
+    tree = ast.parse(source.read_text(encoding="utf-8"))
+
+    def dumps_inside(node: ast.AST) -> bool:
+        return any(
+            isinstance(inner, ast.Call)
+            and isinstance(inner.func, ast.Attribute)
+            and inner.func.attr == "dumps"
+            for inner in ast.walk(node)
+        )
+
+    offenders: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call) or not dumps_inside(node):
+            continue
+        name = (
+            node.func.attr if isinstance(node.func, ast.Attribute) else getattr(node.func, "id", "")
+        )
+        if name in {"dumps", "_document"}:
+            continue
+        offenders.append(f"line {node.lineno}: json.dumps(...) flows into {name or '<expr>'}()")
+
+    assert not offenders, (
+        "a serialized document must leave through _document, which writes UTF-8 bytes "
+        "whatever the console is:\n  " + "\n  ".join(offenders)
+    )
