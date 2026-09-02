@@ -162,3 +162,12 @@ jobs:
           assert not extra, f"akashi pulled in runtime dependencies: {extra}"
           print("runtime dependencies:", len(extra))
           PY
+
+      # The command whose whole subject is the machine it is run on, run on a
+      # machine nobody set up for it. It exits non-zero when something akashi
+      # promised to ship is absent, so this is the check that the contract
+      # reaches a real install *and* that the reader of it works -- one step
+      # covering both halves of #57.
+      - name: doctor agrees the installation is sound
+        run: |
+          akashi doctor

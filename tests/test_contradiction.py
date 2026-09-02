@@ -32,9 +32,10 @@ from akashi.domain.verdict import (
 )
 from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import load_package
+from conftest import published_schema
 
 PACKAGES = Path(__file__).parent / "packages"
-SCHEMA = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+SCHEMA = published_schema()
 
 
 def assess(answer: str, evidence: Evidence, *, sources: bool = True) -> list[CheckedSegment]:

@@ -7,7 +7,7 @@ freeze is that condition, not a date
 ([ADR-0002](adr/0002-the-audit-report-is-a-document.md)).
 
 `akashi audit --json` produces this. The schema is
-[`schemas/audit-report-1.json`](../schemas/audit-report-1.json) and ships inside
+[`src/akashi/schemas/audit-report-1.json`](../src/akashi/schemas/audit-report-1.json) and ships inside
 the wheel; the conformance suite is `tests/test_report_conformance.py`.
 
 *This document is the contract, for producers and consumers alike. It is not a

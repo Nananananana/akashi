@@ -157,8 +157,36 @@ def test_the_seam_runs_through_the_installed_entry_point() -> None:
 
 
 def test_the_zero_dependency_job_opens_the_installed_artefact() -> None:
-    """`force-include` does not apply to an editable install, so this is the
-    only place the shipped schema exists to be opened. If the step goes, the
-    promise that the contract ships is back to being checked declaration
-    against declaration."""
+    """The one job with a *real* install rather than an editable one.
+
+    Since #57 the schema lives inside the package tree, so an editable install
+    can open it too -- which makes this step cheaper rather than redundant: it
+    is now the only place that checks the path resolves in the artefact a user
+    actually receives, and those two stopped being the same file the day the
+    build was misconfigured (`docs/measurements.md`).
+    """
     assert "importlib.resources" in commands_in(WORKFLOWS / "ci.yml")
+
+
+def test_doctor_is_run_against_a_real_install() -> None:
+    """`akashi doctor` exits non-zero when something akashi promised to ship is
+    absent, so running it here covers both halves of #57 at once: the contract
+    reaches a real install, and the reader that reports on it works there.
+
+    Asserted structurally rather than by grepping the file, because a `doctor`
+    inside a comment or a `continue-on-error` step reads the same to `grep` and
+    proves nothing.
+    """
+    steps = [
+        step
+        for job in yaml.safe_load((WORKFLOWS / "ci.yml").read_text(encoding="utf-8"))[
+            "jobs"
+        ].values()
+        for step in job.get("steps", [])
+        if "akashi doctor" in str(step.get("run", ""))
+    ]
+    assert steps, "no CI step runs `akashi doctor`"
+    for step in steps:
+        assert not step.get("continue-on-error"), (
+            "a doctor step that cannot fail the job is a doctor step that reports nothing"
+        )

@@ -91,9 +91,6 @@ packages = ["src/akashi"]
 # The contract ships inside the wheel: a consumer validating a report should
 # not have to fetch a schema from the internet, and an auditor whose schema
 # lives on someone else's server is not an auditor.
-[tool.hatch.build.targets.wheel.force-include]
-"schemas" = "akashi/schemas"
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Network tests are deselected by default. akashi audits offline by design and

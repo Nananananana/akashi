@@ -26,7 +26,7 @@ back into the source documents, and the account of what could not be checked. A
 reader holding one needs nothing else — no database, no package, no second
 request.
 
-The schema is published in `schemas/audit-report-1.json` and ships inside the
+The schema is published in `src/akashi/schemas/audit-report-1.json` and ships inside the
 wheel. A consumer validating a report does not fetch a schema from the internet.
 
 The dataclasses still exist and are still the internal representation. They are

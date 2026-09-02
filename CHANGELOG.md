@@ -40,6 +40,29 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **`akashi doctor`, and the schema moved to where one route reaches it
+  (#57).** `doctor` reports the running installation: akashi's version, the
+  contract it ships and its `sha256`, the language packs, what this console
+  will do to prose and to documents, and which siblings are importable. **It
+  decides nothing** -- a function returning "healthy" would be a second place a
+  verdict comes from, and a reader would take the word instead of the facts. It
+  exits non-zero only when something akashi *promised* to ship is absent; a
+  missing sibling is a fact about the machine, not a fault.
+
+  It never imports a sibling to report on it -- `find_spec` answers the
+  question and runs none of that package's code, which is not something a
+  diagnostic should do to a machine its user is already suspicious of.
+
+  `schemas/` moved to `src/akashi/schemas/` and the `force-include` block is
+  gone. `force-include` does not apply to an editable install, so the path only
+  existed after a real install and nothing local could look at it; one route
+  now works in a checkout, an editable install and a wheel. #57 asked for a
+  reader before the move, and `doctor` is one.
+
+  **The guard on the old arrangement skipped itself when the directory moved.**
+  It began `if not (ROOT / "schemas").glob("*.json"): pytest.skip(...)`, so it
+  stopped running the moment its subject changed. Replaced with one that fails.
+
 - **`akashi certificate`.** A report as one self-contained HTML file, for
   somebody who will sign it: the answer with every particular marked where it
   stands, what was not checked first, and `Traced` promoted to the middle of

@@ -28,3 +28,19 @@ def isolated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     """Run inside ``tmp_path``, so a relative path cannot reach the repository."""
     monkeypatch.chdir(tmp_path)
     yield tmp_path
+
+
+def published_schema() -> Path:
+    """The report contract, reached the way a consumer reaches it.
+
+    `importlib.resources` rather than a path from this file, which is the whole
+    point of #57: the schema moved into the package tree, so one route now
+    works in a source checkout, an editable install and a wheel. A test that
+    kept walking up from `__file__` would keep passing while the route akashi
+    documents was broken -- and that route being broken is precisely how the
+    schema shipped empty once before (`docs/measurements.md`).
+    """
+    from importlib.resources import files
+
+    shipped = files("akashi") / "schemas" / "audit-report-1.json"
+    return Path(str(shipped))

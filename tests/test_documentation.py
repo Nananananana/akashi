@@ -93,43 +93,58 @@ def test_there_is_no_architecture_document_yet() -> None:
     )
 
 
-def test_a_published_schema_is_packaged_with_the_wheel() -> None:
-    """ADR-0002: the contract ships inside the wheel.
+def test_the_published_schema_is_inside_the_package_tree() -> None:
+    """ADR-0002: the contract ships inside the wheel, and #57: by one route.
 
-    The ``force-include`` block in ``pyproject.toml`` is commented out while
-    ``schemas/`` is empty, because hatchling refuses to build against a
-    force-include that resolves to nothing. This is what stops that comment
-    from outliving its reason.
+    It used to reach the wheel through ``force-include`` from a ``schemas/``
+    directory at the repository root. That builds a correct wheel and has a
+    known hole: **``force-include`` does not apply to an editable install**, so
+    the path only existed after a real install and nothing local could look at
+    it. `doctor` is the reader that made the move worth making, and now one
+    route -- ``importlib.resources`` -- works in a checkout, an editable
+    install and a wheel alike.
 
-    **This reads the effective configuration rather than the text**, so a block
-    that has been commented out is simply absent and the assertion fails. It
-    also checks where the files are sent, because a destination of
-    ``akashi/schema`` would build a perfectly good wheel that no consumer can
-    read.
-
-    What it cannot do is open the artefact. ``force-include`` does not apply to
-    an editable install, so the developer's own tree never has the schema at
-    that path and a test looking for it would fail for everybody. The one place
-    a real install exists is the ``dependency count is zero`` CI job, and the
-    check that opens it lives there.
+    **This test replaced one that skipped itself.** The old version began
+    ``if not (ROOT / "schemas").glob("*.json"): pytest.skip(...)``, so the
+    moment the directory moved it stopped running and reported nothing. A guard
+    whose absence-of-subject is spelled as a skip is a guard that disappears
+    exactly when the thing it guards changes.
     """
-    published = sorted(path.name for path in (ROOT / "schemas").glob("*.json"))
-    if not published:
-        pytest.skip("no schema published yet; v0.2")
-
-    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    wheel = config["tool"]["hatch"]["build"]["targets"]["wheel"]
-    assert "force-include" in wheel, (
-        "schemas/ now holds a published contract, so the force-include block in "
-        "pyproject.toml must be uncommented. A consumer validating a report should not "
-        "have to fetch a schema from the internet."
+    package = Path(
+        tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["hatch"][
+            "build"
+        ]["targets"]["wheel"]["packages"][0]
+    )
+    published = sorted(path.name for path in (ROOT / package / "schemas").glob("*.json"))
+    assert published, (
+        f"{package}/schemas holds akashi's published contract. If a schema moved, "
+        f"this test is the reader that has to move with it -- do not make it skip."
     )
 
-    package = Path(wheel["packages"][0]).name
-    assert wheel["force-include"] == {"schemas": f"{package}/schemas"}, (
-        f"the schemas must land inside the {package} package directory, or "
-        f"importlib.resources cannot find them and the wheel ships a contract "
-        f"nobody can open: {wheel['force-include']}"
+    from importlib.resources import files
+
+    for name in published:
+        shipped = files("akashi") / "schemas" / name
+        assert shipped.is_file(), (
+            f"{name} is on disk and importlib.resources cannot reach it, which is the "
+            f"route docs/audit-report.md sends a consumer down"
+        )
+
+
+def test_no_force_include_smuggles_a_contract_into_the_wheel() -> None:
+    """The half that would otherwise rot silently.
+
+    With the schemas inside the package tree, ``force-include`` is not needed
+    and its presence would mean two routes to the same file -- one that works
+    in an editable install and one that does not, disagreeing only on the
+    machine where it matters.
+    """
+    config = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    wheel = config["tool"]["hatch"]["build"]["targets"]["wheel"]
+    assert "force-include" not in wheel, (
+        "the schemas live inside the package tree now (#57); a force-include beside "
+        f"that is a second route that behaves differently in an editable install: "
+        f"{wheel.get('force-include')}"
     )
 
 
