@@ -40,6 +40,36 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **`akashi certificate`.** A report as one self-contained HTML file, for
+  somebody who will sign it: the answer with every particular marked where it
+  stands, what was not checked first, and `Traced` promoted to the middle of
+  the page because that section is what a signer is signing. It reads the
+  report and nothing else, and it is a **pure function of it** -- no timestamp,
+  no host name -- because a signature is over bytes and a certificate that
+  differed between runs would mean a signature over one copy did not verify the
+  other. No scripts, no network, no fonts; a test asserts the absence rather
+  than the intention. Standing is carried by underline shape and a mark, never
+  by colour alone, so the page still says which particulars are grounded when
+  it is printed in monochrome. Answers #53: a span into the answer points at
+  text on the page, a location points at a document the holder does not have,
+  and the certificate says which is which rather than letting a signer assume
+  one status for both.
+
+- **`--json` was not UTF-8 on the machine that needed it most.** Redirected on
+  a Japanese Windows console, `akashi audit --json > report.json` wrote
+  `cp932`: not valid JSON (RFC 8259), refused by `recheck`, `explain` and
+  `certificate`, and carrying a `response_hash` taken over UTF-8 bytes the file
+  did not contain. **akashi could not read the document akashi had just
+  written**, and it had been so since `--json` shipped.
+
+  `_read` had said the rule for input all along -- *UTF-8 either way and never
+  the platform encoding* -- and nothing said it for output, so akashi read
+  deliberately and wrote by accident. A document now leaves through the buffer
+  underneath the stream; prose still goes through the console's encoder, because
+  losing a character beats losing the audit and a `?` in a *document* is
+  corruption rather than a concession. [`docs/audit-report.md`](docs/audit-report.md)
+  now names the encoding, which it never did -- the reason this was possible.
+
 - **A package that does not conform is audited, and the report says so.**
   `tsumugi.context-package/1` closed while akashi was not looking: it used to
   promise that *"a field may be added"* and now says nothing may be, with

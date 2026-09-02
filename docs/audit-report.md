@@ -28,6 +28,20 @@ program that has never heard of Python. A compliance record that can only be
 read by importing the library that wrote it is a record that depends on that
 library still existing.
 
+**It is UTF-8, and that is part of the contract rather than a detail of how it
+was written.** RFC 8259 requires it of any JSON exchanged between systems, and
+this document is exchanged by definition. It matters more here than in most
+places: `audited.response_hash` is `sha256` over the **UTF-8 bytes** of
+`answer`, and every span in the report is an offset into that same string, so a
+report stored in another encoding carries a hash of bytes it does not contain
+and offsets into a string a consumer cannot reconstruct.
+
+This is stated because it was not, and akashi got it wrong. Redirected on a
+Japanese Windows console, `akashi audit --json` wrote `cp932` — akashi could
+not read back the document akashi had just written. A contract that does not
+name its encoding is a contract every producer will eventually get wrong,
+including the one that wrote the contract.
+
 A consumer holding a report needs nothing else. `answer` is in it verbatim and
 every span indexes that string, so a finding can be followed without the
 package, the corpus, or akashi.
@@ -335,6 +349,12 @@ the only thing keeping the two representations in step.**
 
 A producer that is not akashi passes the same suite. That is the whole point of
 writing the contract down.
+
+**And the bytes are checked separately from the shape.** A report that parses
+after being decoded with the reader's platform encoding is not a conforming
+report; the encoding is a property of the file, and a suite that only ever sees
+already-parsed dictionaries cannot see it. `tests/test_narrow_console.py`
+writes a report through a `cp932` stream and requires the bytes to be UTF-8.
 
 
 ---

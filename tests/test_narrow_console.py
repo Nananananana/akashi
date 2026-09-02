@@ -31,7 +31,9 @@ mojibake.
 
 from __future__ import annotations
 
+import io
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -129,3 +131,128 @@ def test_the_non_conformance_note_prints_on_a_japanese_console() -> None:
     printed = as_text(audit(ANSWER, read_package(raw), DEFAULT))
     assert "does not conform" in printed
     printed.encode("cp932")
+
+
+# --- the other half: a document is not prose ---------------------------------
+#
+# `_tolerate_a_narrow_console` is right for prose and wrong for a document. A
+# reader losing a character to `?` keeps the audit; a *program* reading a `?`
+# in a report has corruption. akashi read input as UTF-8 deliberately -- the
+# docstring on `_read` says so -- and wrote output in whatever the console was,
+# by accident.
+
+
+def cp932_console() -> io.TextIOWrapper:
+    """A stdout that behaves like the owner's, bytes and all."""
+    return io.TextIOWrapper(io.BytesIO(), encoding="cp932", errors="replace")
+
+
+def written(stream: io.TextIOWrapper) -> bytes:
+    stream.flush()
+    buffer = stream.buffer
+    assert isinstance(buffer, io.BytesIO)
+    return buffer.getvalue()
+
+
+def test_the_json_report_is_utf8_on_a_japanese_console(monkeypatch: pytest.MonkeyPatch) -> None:
+    """`akashi audit --json > report.json` on the owner's machine wrote
+    `cp932`: not valid JSON (RFC 8259 requires UTF-8), refused by `recheck`,
+    `explain` and `certificate`, and carrying a `response_hash` taken over
+    UTF-8 bytes the file did not contain.
+
+    **akashi could not read the document akashi had just written.**
+    """
+    from akashi.interfaces.cli.main import main
+
+    stream = cp932_console()
+    monkeypatch.setattr(sys, "stdout", stream)
+    answer = Path(__file__).parent / "answers" / "gear-ja.txt"
+    code = main(
+        [
+            "audit",
+            "--package",
+            str(PACKAGES / "gear-ja.json"),
+            "--response",
+            str(answer),
+            "--json",
+        ]
+    )
+    assert code == 0
+    raw = written(stream)
+    body = json.loads(raw.decode("utf-8"))
+    assert body["answer"] == answer.read_text(encoding="utf-8")
+    assert "�" not in body["answer"], "a replacement character is corruption in a document"
+
+
+def test_the_text_report_still_goes_through_the_console(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The half that must *not* change. Prose degrades rather than crashing,
+    which is what #75 decided; a fix that sent everything out as UTF-8 bytes
+    would put mojibake on the owner's screen instead."""
+    from akashi.interfaces.cli.main import main
+
+    stream = cp932_console()
+    monkeypatch.setattr(sys, "stdout", stream)
+    main(
+        [
+            "audit",
+            "--package",
+            str(PACKAGES / "gear-ja.json"),
+            "--response",
+            str(Path(__file__).parent / "answers" / "gear-ja.txt"),
+        ]
+    )
+    raw = written(stream)
+    assert "テントは".encode("cp932") in raw
+    assert "テントは".encode() not in raw
+
+
+def test_the_report_akashi_wrote_is_a_report_akashi_can_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The round trip, which is the whole claim of `docs/audit-report.md`. It
+    was false on this machine for every version that had a `--json`."""
+    from akashi.infrastructure.reports import load_report
+    from akashi.interfaces.cli.main import main
+
+    stream = cp932_console()
+    monkeypatch.setattr(sys, "stdout", stream)
+    main(
+        [
+            "audit",
+            "--package",
+            str(PACKAGES / "gear-ja.json"),
+            "--response",
+            str(Path(__file__).parent / "answers" / "gear-ja.txt"),
+            "--json",
+        ]
+    )
+    archive = tmp_path / "report.json"
+    archive.write_bytes(written(stream))
+
+    document = load_report(archive)
+    assert document["contract"].startswith("akashi.audit-report/")
+
+    from akashi.infrastructure.rendering import certificate
+
+    assert "<h2>Traced</h2>" in certificate(document)
+
+
+def test_the_attestation_is_utf8_too(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The one most likely to be signed, and therefore the one where a byte
+    that is not what the signer thinks it is costs the most."""
+    from akashi.interfaces.cli.main import main
+
+    stream = cp932_console()
+    monkeypatch.setattr(sys, "stdout", stream)
+    main(
+        [
+            "audit",
+            "--package",
+            str(PACKAGES / "gear-ja.json"),
+            "--response",
+            str(Path(__file__).parent / "answers" / "gear-ja.txt"),
+            "--attestation",
+        ]
+    )
+    statement = json.loads(written(stream).decode("utf-8"))
+    assert statement["_type"].startswith("https://in-toto.io/Statement/")
