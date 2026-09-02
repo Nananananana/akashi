@@ -163,6 +163,30 @@ def admit(
         )
 
     restored = restorer.restore(answer)
+    if not isinstance(restored, str):
+        # The guard has to be here, in front of the thing it guards.
+        #
+        # `infrastructure/adapters/mamori.py` raises a message about exactly
+        # this -- and only a caller who already wrapped their session ever
+        # reaches it. A caller who passed the session raw got
+        # `TypeError: expected string or bytes-like object` from four frames
+        # further in, out of a regular expression, saying nothing about
+        # restorers. The adapter's docstring claimed to replace that error while
+        # sitting behind the mistake that produces it.
+        #
+        # `Restorer` is `runtime_checkable`, which is why nothing caught it
+        # earlier: `isinstance` on a Protocol checks that the method is present,
+        # not what it returns. `mypy` does catch it, so a caller who type-checks
+        # was told; this is for the one who did not.
+        raise ProtectedResponseError(
+            f"the restorer returned {type(restored).__name__}, and akashi's Restorer "
+            f"port hands back the restored text. A `mamori` session returns a "
+            f"RestorationResult and is wrapped by "
+            f"akashi.infrastructure.adapters.MamoriRestorer; anything else carrying "
+            f"its text on an attribute needs an adapter of its own. Passing it raw "
+            f"crashes several frames further in, inside a regular expression, where "
+            f"nothing says the word restorer."
+        )
     remaining = find_placeholders(restored)
     if len(remaining) == len(residue) and residue:
         raise ProtectedResponseError(

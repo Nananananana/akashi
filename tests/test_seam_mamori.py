@@ -228,3 +228,39 @@ def test_a_session_for_another_scope_puts_nothing_back_and_is_refused(
     )
     with pytest.raises(ProtectedResponseError, match="put nothing back"):
         admit(protected, package, MamoriRestorer(stranger))
+
+
+def test_a_raw_session_is_refused_at_the_seam_and_not_four_frames_in(
+    session: PrivacySession,
+) -> None:
+    """The defect the seam repository found by running the real chain.
+
+    `audit(..., restorer=session)` with the session unwrapped used to raise
+    `TypeError: expected string or bytes-like object` from inside
+    `domain/protection.py`, four frames from the mistake. The adapter carried a
+    message about exactly that case and sat **behind** it: only a caller who had
+    already wrapped their session could read it.
+
+    The check is now in `admit`, in front of the thing it guards, and this is
+    the case that would go quiet again if it moved back.
+    """
+    from akashi.errors import ProtectedResponseError
+
+    protection = session.protect(ORIGINAL)
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", ORIGINAL)]),
+        protection=Protection(
+            by=f"mamori@{mamori.__version__}",
+            scope=protection.scope,
+            reversible=protection.reversible,
+        ),
+        declares_protection=True,
+    )
+    with pytest.raises(ProtectedResponseError, match="returned RestorationResult"):
+        audit(
+            protection.protected_text,
+            package,
+            DEFAULT,
+            restorer=session,  # type: ignore[arg-type]
+        )

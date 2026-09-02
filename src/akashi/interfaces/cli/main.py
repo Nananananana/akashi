@@ -123,7 +123,11 @@ def _parser() -> argparse.ArgumentParser:
         metavar="WHO",
         help=(
             "assert that you restored the answer yourself, naming who did. akashi "
-            "cannot verify this and reports it as your claim (ADR-0013)"
+            "cannot verify this and reports it as your claim (ADR-0013). This is "
+            "the only restoration the command line can reach: a restorer is a live "
+            "object holding the mapping, and argv carries names. For a report that "
+            "says 'restored by' rather than 'asserted restored by', call "
+            "akashi.audit(..., restorer=...) in the process that holds the session"
         ),
     )
     audit_command.add_argument(

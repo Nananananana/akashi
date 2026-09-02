@@ -50,6 +50,23 @@ API yet.
   which is why it is set now rather than after the next one. Found by
   `iriguchi` (#44).
 
+- **A guard that sat behind the mistake it was written for.** Passing a
+  `mamori` session to `audit(restorer=...)` **without** the adapter raised
+  `TypeError: expected string or bytes-like object` four frames in, out of a
+  regular expression. The adapter carried a message about exactly that case --
+  and only a caller who had already wrapped their session could ever read it.
+  The check is now in `admit`, in front of the thing it guards, and names the
+  wrapper rather than only refusing. Found by the seam repository running the
+  real chain; neither akashi's unit tests nor its own seam test had a caller
+  who passed the session raw.
+
+- **`--restored-by` is not a lesser `restorer`.** A restorer is a live object
+  holding a mapping and argv carries names, so it is the only restoration the
+  command line can reach -- and the report says *asserted* because that is the
+  truth of what happened. The help now says where the boundary is, because the
+  seam repository read the two report lines as better and worse and went looking
+  for a flag that does not exist.
+
 - **The seam against the real redactor (#59).** A CI job installs `mamori` by
   pinned git reference and runs the adapter against the library rather than
   against a reading of it. Every claim #76 made from a stand-in holds against
