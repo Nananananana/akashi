@@ -38,9 +38,11 @@ from akashi.evaluation.marked import load_marked, score_extraction
 from akashi.evaluation.rendering import as_dict as evaluation_dict
 from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.evaluation.rendering import measured_values
+from akashi.infrastructure.installation import inspect as inspect_installation
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
 from akashi.infrastructure.rendering import (
+    as_diagnosis,
     as_json,
     as_statement,
     as_text,
@@ -49,6 +51,7 @@ from akashi.infrastructure.rendering import (
     segments_with_findings,
 )
 from akashi.infrastructure.reports import load_report, load_report_or_statement
+from akashi.interfaces.mcp import serve as mcp_serve
 
 __all__ = ["main"]
 
@@ -121,7 +124,11 @@ def _parser() -> argparse.ArgumentParser:
         metavar="WHO",
         help=(
             "assert that you restored the answer yourself, naming who did. akashi "
-            "cannot verify this and reports it as your claim (ADR-0013)"
+            "cannot verify this and reports it as your claim (ADR-0013). This is "
+            "the only restoration the command line can reach: a restorer is a live "
+            "object holding the mapping, and argv carries names. For a report that "
+            "says 'restored by' rather than 'asserted restored by', call "
+            "akashi.audit(..., restorer=...) in the process that holds the session"
         ),
     )
     audit_command.add_argument(
@@ -179,6 +186,31 @@ def _parser() -> argparse.ArgumentParser:
         metavar="TEXT",
         default="",
         help="narrow to one particular by its text, for a segment carrying a dozen",
+    )
+
+    commands.add_parser(
+        "mcp",
+        help="speak MCP over stdio, for an agent rather than a person",
+        description=(
+            "Serves the same use cases as this CLI over JSON-RPC on stdin and stdout, "
+            "so an assistant holding a package and an answer can audit before handing "
+            "the answer on. Read-only, and it takes no paths: the model chooses the "
+            "arguments, and a tool that opened a file the model named would be a "
+            "file-read primitive with a report as the channel out. Nothing is printed "
+            "on stdout that is not a protocol message."
+        ),
+    )
+
+    commands.add_parser(
+        "doctor",
+        help="what is installed, what is missing, and what this console will do",
+        description=(
+            "Reports the running installation: akashi's version, the contract it "
+            "ships and its hash, the language packs, what this console can print, "
+            "and which siblings are importable. It decides nothing -- these are "
+            "facts about a machine, and the two defects this project shipped that "
+            "were invisible in development were both facts about a machine."
+        ),
     )
 
     certificate_command = commands.add_parser(
@@ -353,6 +385,35 @@ def _explain(arguments: argparse.Namespace, out: TextIO) -> int:
         file=out,
     )
     return AUDITED
+
+
+def _mcp(_arguments: argparse.Namespace, _out: TextIO) -> int:
+    """Speak MCP on stdin and stdout until the client goes away.
+
+    It does not take the `out` this function is handed. Every other command
+    writes prose through the console's encoder so a character it cannot show
+    costs a character rather than the audit; this is a document channel to a
+    program, where a `?` is corruption, so the server binds UTF-8 on both
+    directions itself.
+    """
+    return mcp_serve()
+
+
+def _doctor(_arguments: argparse.Namespace, out: TextIO) -> int:
+    """What is here, and what is not.
+
+    Prose for a person, so it goes through the console's encoder -- and it is
+    the one command most likely to be run *because* the console is the problem,
+    so every word of it is ASCII.
+
+    Exits ``REFUSED`` when something akashi promised to ship is absent. A
+    diagnostic that returns success whatever it found is a diagnostic no script
+    can use, and this one is going to be run by people pasting its output into
+    an issue.
+    """
+    installation = inspect_installation(DEFAULT)
+    print(as_diagnosis(installation), end="", file=out)
+    return REFUSED if installation.missing else AUDITED
 
 
 def _certificate(arguments: argparse.Namespace, out: TextIO) -> int:
@@ -531,6 +592,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _explain(arguments, sys.stdout)
         if arguments.command == "certificate":
             return _certificate(arguments, sys.stdout)
+        if arguments.command == "doctor":
+            return _doctor(arguments, sys.stdout)
+        if arguments.command == "mcp":
+            return _mcp(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first
             parser.error(f"unknown command {arguments.command!r}")
         return _audit(arguments, sys.stdout)

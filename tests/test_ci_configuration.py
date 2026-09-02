@@ -35,6 +35,7 @@ assertions are about structure, and a comment cannot satisfy one.
 
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -157,8 +158,136 @@ def test_the_seam_runs_through_the_installed_entry_point() -> None:
 
 
 def test_the_zero_dependency_job_opens_the_installed_artefact() -> None:
-    """`force-include` does not apply to an editable install, so this is the
-    only place the shipped schema exists to be opened. If the step goes, the
-    promise that the contract ships is back to being checked declaration
-    against declaration."""
+    """The one job with a *real* install rather than an editable one.
+
+    Since #57 the schema lives inside the package tree, so an editable install
+    can open it too -- which makes this step cheaper rather than redundant: it
+    is now the only place that checks the path resolves in the artefact a user
+    actually receives, and those two stopped being the same file the day the
+    build was misconfigured (`docs/measurements.md`).
+    """
     assert "importlib.resources" in commands_in(WORKFLOWS / "ci.yml")
+
+
+def test_doctor_is_run_against_a_real_install() -> None:
+    """`akashi doctor` exits non-zero when something akashi promised to ship is
+    absent, so running it here covers both halves of #57 at once: the contract
+    reaches a real install, and the reader that reports on it works there.
+
+    Asserted structurally rather than by grepping the file, because a `doctor`
+    inside a comment or a `continue-on-error` step reads the same to `grep` and
+    proves nothing.
+    """
+    steps = [
+        step
+        for job in yaml.safe_load((WORKFLOWS / "ci.yml").read_text(encoding="utf-8"))[
+            "jobs"
+        ].values()
+        for step in job.get("steps", [])
+        if "akashi doctor" in str(step.get("run", ""))
+    ]
+    assert steps, "no CI step runs `akashi doctor`"
+    for step in steps:
+        assert not step.get("continue-on-error"), (
+            "a doctor step that cannot fail the job is a doctor step that reports nothing"
+        )
+
+
+def _job(name: str) -> dict[str, object]:
+    workflow = yaml.safe_load((WORKFLOWS / "ci.yml").read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+    assert name in jobs, f"ci.yml has no {name!r} job; jobs are {sorted(jobs)}"
+    return dict(jobs[name])
+
+
+def test_the_seam_job_installs_the_sibling_by_direct_reference() -> None:
+    """#59. `mamori` is on no index, and the name is free there, so an index
+    install would be a different package with the same name."""
+    steps = _job("seam-mamori")["steps"]
+    assert isinstance(steps, list)
+    installs = [
+        step
+        for step in steps
+        if "git+https://github.com/Nananananana/mamori.git" in str(step.get("run", ""))
+    ]
+    assert installs, "the seam job does not install mamori by direct git reference"
+
+
+def test_the_seam_job_pins_a_commit_and_exports_it() -> None:
+    """A seam result that cannot be tied to a revision is not reproducible, and
+    the test that checks the pin reads it from the environment -- so if the
+    variable disappears, that check skips itself in the one place it applies.
+    This is what stops that.
+    """
+    job = _job("seam-mamori")
+    env = job.get("env")
+    assert isinstance(env, dict)
+    reference = str(env.get("AKASHI_SEAM_MAMORI_REF", ""))
+    assert len(reference) == 40 and all(c in "0123456789abcdef" for c in reference), (
+        f"AKASHI_SEAM_MAMORI_REF should be a full commit sha, not {reference!r}"
+    )
+    assert env.get("AKASHI_SEAM_MAMORI"), (
+        "without this the seam file is not collected at all, and `-m siblings` would select nothing"
+    )
+
+
+def test_no_continue_on_error_anywhere_in_the_seam_job() -> None:
+    """Observed in `tsumugi`: a job-level `continue-on-error` swallowed an
+    install failure and the job had never run once. Nothing said so, because a
+    swallowed setup failure looks exactly like a passing job.
+
+    A setup failure must be red, and it is a different finding from "the seam
+    failed" -- only the second is a fact about the seam.
+    """
+    job = _job("seam-mamori")
+    assert not job.get("continue-on-error"), "the seam job may not swallow its own failures"
+    steps = job["steps"]
+    assert isinstance(steps, list)
+    for step in steps:
+        assert not step.get("continue-on-error"), (
+            f"step {step.get('name')!r} cannot fail the job, so it reports nothing"
+        )
+
+
+def test_the_direct_reference_is_not_in_the_distribution_metadata() -> None:
+    """#59's first trap, and the expensive one. An extra reaches the built
+    distribution as `Requires-Dist: mamori @ git+... ; extra == 'siblings'`, and
+    PyPI refuses **any** distribution whose metadata carries a direct
+    reference. One line in an extra nobody installs would make the whole
+    distribution unpublishable.
+    """
+    config = tomllib.loads((WORKFLOWS.parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
+    project = config["project"]
+    declared = list(project.get("dependencies", []))
+    for group in (project.get("optional-dependencies") or {}).values():
+        declared.extend(group)
+    offenders = [one for one in declared if "@" in one and "git+" in one]
+    assert not offenders, (
+        f"a direct reference in project metadata makes the distribution unpublishable: {offenders}"
+    )
+
+
+def test_the_seam_job_type_checks_the_file_the_ordinary_run_excludes() -> None:
+    """`tests/test_seam_mamori.py` is excluded from the default mypy run,
+    because it can only be checked where `mamori` is installed. That exclusion
+    is a hole unless somewhere checks it, and this is what says somewhere does.
+
+    The alternative -- `ignore_missing_imports` for `mamori` -- would type-check
+    the seam against `Any`, which agrees with every reading of the sibling. That
+    is the thing a seam exists not to do.
+    """
+    config = tomllib.loads((WORKFLOWS.parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
+    excluded = str(config["tool"]["mypy"].get("exclude", ""))
+    assert "test_seam_mamori" in excluded, (
+        "if the seam file is no longer excluded from the ordinary mypy run, "
+        "delete this test and the step it guards rather than leaving both"
+    )
+
+    steps = _job("seam-mamori")["steps"]
+    assert isinstance(steps, list)
+    checked = [
+        step
+        for step in steps
+        if "mypy" in str(step.get("run", "")) and "test_seam_mamori" in str(step.get("run", ""))
+    ]
+    assert checked, "the seam file is excluded from mypy everywhere, so it is checked nowhere"

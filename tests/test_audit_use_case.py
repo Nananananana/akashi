@@ -20,6 +20,7 @@ from akashi.domain.verdict import Verdict
 from akashi.errors import ProtectedResponseError
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
+from conftest import published_schema
 
 PACKAGES = Path(__file__).parent / "packages"
 ANSWERS = Path(__file__).parent / "answers"
@@ -244,7 +245,7 @@ def test_the_report_of_a_partly_masked_answer_still_validates() -> None:
     import json
 
     jsonschema = pytest.importorskip("jsonschema")
-    schema = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+    schema = published_schema()
     jsonschema.validate(
         audit(MASKED, protected_package(), DEFAULT).to_dict(),
         json.loads(schema.read_text(encoding="utf-8")),

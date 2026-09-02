@@ -40,6 +40,154 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **`empty_parameter_set_mark = "fail_at_collect"`.** pytest's default marks an
+  empty parameter set as a **skip** -- the same sentence akashi wrote by hand
+  and was caught by, except nobody wrote this one. Point a discovery constant at
+  a renamed directory and every rule parametrized over it collects nothing and
+  stays green. Measured on akashi's own architecture tests: with the setting,
+  one collection error; without it, five silent skips, same code. akashi's
+  `_modules()` already refuses at collection time so nothing changes today,
+  which is why it is set now rather than after the next one. Found by
+  `iriguchi` (#44).
+
+- **A guard that sat behind the mistake it was written for.** Passing a
+  `mamori` session to `audit(restorer=...)` **without** the adapter raised
+  `TypeError: expected string or bytes-like object` four frames in, out of a
+  regular expression. The adapter carried a message about exactly that case --
+  and only a caller who had already wrapped their session could ever read it.
+  The check is now in `admit`, in front of the thing it guards, and names the
+  wrapper rather than only refusing. Found by the seam repository running the
+  real chain; neither akashi's unit tests nor its own seam test had a caller
+  who passed the session raw.
+
+- **`--restored-by` is not a lesser `restorer`.** A restorer is a live object
+  holding a mapping and argv carries names, so it is the only restoration the
+  command line can reach -- and the report says *asserted* because that is the
+  truth of what happened. The help now says where the boundary is, because the
+  seam repository read the two report lines as better and worse and went looking
+  for a flag that does not exist.
+
+- **The seam against the real redactor (#59).** A CI job installs `mamori` by
+  pinned git reference and runs the adapter against the library rather than
+  against a reading of it. Every claim #76 made from a stand-in holds against
+  the class: `isinstance(session, Restorer)` is **True**, `restore` returns a
+  `RestorationResult`, and without the adapter the failure is
+  `TypeError: expected string or bytes-like object` from inside a regular
+  expression, three layers from the mistake.
+
+  Four ways the job could have been green and proved nothing, three of them
+  observed in sibling repositories, are closed and each is watched failing:
+  the direct reference lives in a **step** and never in `pyproject.toml` (one
+  line of it in an extra makes the whole distribution unpublishable); identity
+  is checked through PEP 610's `direct_url.json`, so an index install fails
+  rather than passing; `continue-on-error` is on no step and no job; and the
+  seam file imports `mamori` at the top, so absence is an error and not a skip.
+
+  **`mypy` catches what `runtime_checkable` does not.** Type-checking the real
+  library through that file gives *"Subclass of `PrivacySession` and `Restorer`
+  cannot exist: would have incompatible method signatures"*. The mismatch is
+  statically visible; only the runtime check says yes -- which makes
+  `runtime_checkable` worse than no check here, since it answers the question a
+  reader asked with the answer to a narrower one.
+
+  A marker was not enough on its own: markers deselect at *selection* time and
+  collection happens first, so the file is also gated out of collection. The
+  job cannot pass by collecting nothing either -- `pytest -m siblings` exits 5
+  on an empty set.
+
+- **A test of akashi's own that would have passed having read nothing.**
+  `test_the_adapter_imports_nothing` walked `adapters/*.py` and asserted only
+  inside the loop, so a renamed package makes it green with zero modules read.
+  It now checks its population first, and a scan of every test file for that
+  shape is a test -- narrowed to loops over what the *filesystem* handed back,
+  which is the collection that silently becomes empty.
+
+  Same family as the skipping guard above, different spelling: `for x in []`
+  spells an empty population *"all passed"*, `if not found: skip` spells it
+  *"not applicable"*. Reported by the cross-repository review, which found
+  fourteen in another project. akashi's architecture tests were already safe --
+  `_modules()` refuses at collection time -- and pointing `SRC` at a renamed
+  directory was measured to confirm it rather than assumed.
+
+- **What akashi cannot decide about a placeholder, said out loud (#52).**
+  `<PERSON_001>` is a string a person can type, and akashi cannot tell a token a
+  redactor minted from one an author quoted. The refusal now names the limit and
+  the way out rather than only saying no.
+
+  **#52 asked for a mechanism that its own companion contract has since ruled
+  out.** It said to branch on `mode`, because `placeholders` was absent under
+  `surrogate`. `mamori.protection-scope/1` now makes `placeholders` **required**
+  and says `mode` is *"a summary of how values were substituted, **not a switch
+  selecting which array to read**"* -- the signal is the contract identifier,
+  `/1` against `/1+surrogate`. Implementing #52 as written would have built the
+  exact misreading that contract is worded to prevent.
+
+  And it is not decidable here at all: the enumeration would have to reach
+  akashi through `tsumugi`'s `provenance.protection`, which carries three fields
+  with `additionalProperties: false` in a version that is now closed. A test
+  pins that premise, so a v2 that carries it reopens the question instead of the
+  reasoning quietly going stale.
+
+- **The document rule is now structural rather than remembered.** *Prose
+  degrades, a document does not* held today because every document path was
+  found and changed by hand; a fourth one -- a new `--json`, a new export --
+  would be written as `print(json.dumps(...), file=out)` and would go out in the
+  console's encoding on the machine that has one, with every test passing. A
+  test walks the CLI's AST and requires a serialized document to reach the
+  caller through `_document` or not at all.
+
+  Prompted by the cross-repository review's third column: **structural** (you
+  cannot break it without deleting code), **disciplined** (a person is keeping
+  it), **accidental** (true, and nobody designed or maintains it). This rule was
+  in the second column and is now in the first.
+
+- **`akashi mcp`, the agent-facing surface.** JSON-RPC over stdio on the
+  standard library -- which is not a preference: ADR-0001 forbids a runtime
+  dependency and the import-linter contract forbids `socket`, `http`, `urllib`
+  and `asyncio`, all of which an MCP SDK brings. Three tools -- `audit`,
+  `recheck`, `explain` -- as thin over `akashi.application` as the CLI is.
+
+  **It takes no paths.** The CLI opens a file the user named, because the user
+  is the person holding the files; here the *model* chooses the arguments, and a
+  tool that opened a path would be a file-read primitive with a report as the
+  channel out, since a report quotes the answer verbatim. Read-only, checked by
+  taking the filesystem away and calling a tool.
+
+  Speaks the **2026-07-28** revision -- stateless, no handshake, every request
+  carrying its version in `_meta`, every result naming its `resultType` -- and
+  also answers `initialize`, because the specification's own compatibility
+  matrix says a legacy client against a modern-only server *fails with no
+  fall-forward*, and most clients shipped today are legacy. Every protocol fact
+  was read from the specification rather than inferred from a client that
+  happened to work.
+
+  The transport binds UTF-8 both ways with `errors` left strict. Third place
+  today's rule applied: prose degrades, a document does not, and a `?` in a
+  protocol message is corruption.
+
+- **`akashi doctor`, and the schema moved to where one route reaches it
+  (#57).** `doctor` reports the running installation: akashi's version, the
+  contract it ships and its `sha256`, the language packs, what this console
+  will do to prose and to documents, and which siblings are importable. **It
+  decides nothing** -- a function returning "healthy" would be a second place a
+  verdict comes from, and a reader would take the word instead of the facts. It
+  exits non-zero only when something akashi *promised* to ship is absent; a
+  missing sibling is a fact about the machine, not a fault.
+
+  It never imports a sibling to report on it -- `find_spec` answers the
+  question and runs none of that package's code, which is not something a
+  diagnostic should do to a machine its user is already suspicious of.
+
+  `schemas/` moved to `src/akashi/schemas/` and the `force-include` block is
+  gone. `force-include` does not apply to an editable install, so the path only
+  existed after a real install and nothing local could look at it; one route
+  now works in a checkout, an editable install and a wheel. #57 asked for a
+  reader before the move, and `doctor` is one.
+
+  **The guard on the old arrangement skipped itself when the directory moved.**
+  It began `if not (ROOT / "schemas").glob("*.json"): pytest.skip(...)`, so it
+  stopped running the moment its subject changed. Replaced with one that fails.
+
 - **`akashi certificate`.** A report as one self-contained HTML file, for
   somebody who will sign it: the answer with every particular marked where it
   stands, what was not checked first, and `Traced` promoted to the middle of
@@ -68,7 +216,12 @@ API yet.
   underneath the stream; prose still goes through the console's encoder, because
   losing a character beats losing the audit and a `?` in a *document* is
   corruption rather than a concession. [`docs/audit-report.md`](docs/audit-report.md)
-  now names the encoding, which it never did -- the reason this was possible.
+  now names the encoding as a **pin against repeating this**, not as a repair:
+  RFC 8259 §8.1 already required UTF-8 of exchanged JSON and the contract
+  already said the report is JSON, so the requirement was in force and akashi
+  violated it. (This entry first blamed the contract for being silent.
+  `tsumugi` pointed out that it was not, and was right -- the other way round
+  excuses the producer, and the producer was akashi.)
 
 - **A package that does not conform is audited, and the report says so.**
   `tsumugi.context-package/1` closed while akashi was not looking: it used to

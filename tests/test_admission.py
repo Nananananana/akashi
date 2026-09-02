@@ -356,3 +356,98 @@ def test_without_the_claim_the_report_says_nothing_about_restoration() -> None:
     admission = admit("金額は 45,000 円でした。", package, None)
     assert admission.restored_by == ""
     assert not admission.asserted
+
+
+def test_the_refusal_says_what_akashi_cannot_decide_rather_than_only_no() -> None:
+    """#52. `<PERSON_001>` is a string a person can type, and akashi cannot tell
+    a token a redactor minted from one an author quoted.
+
+    Both ways of being wrong are silent -- an honest quotation reported as
+    unrestored residue, a real placeholder audited against as ordinary text --
+    so the refusal names the limit and the way out instead of leaving a caller
+    to guess which of the two akashi thinks it is looking at.
+
+    #52 asks for "can say which of the two it found, **or says it cannot**".
+    This is the second, and it is the honest one: the enumeration that would
+    settle it is in the redactor's own record, and the document akashi reads has
+    no field that can carry it (pinned in `test_vendored_contracts.py`).
+    """
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "the form's name box")]),
+    )
+    with pytest.raises(ProtectedResponseError) as refusal:
+        admit("The form reads <PERSON_001> in the name box.", package)
+
+    message = str(refusal.value)
+    assert "cannot tell a token a redactor minted from one an author typed" in message
+    assert "the package should say so and akashi will audit it" in message
+
+
+def test_the_refusal_does_not_claim_the_answer_was_redacted() -> None:
+    """The claim akashi is not entitled to. It found a shape; a shape is not a
+    provenance, and a message that asserted one would be the fabrication this
+    whole module exists to refuse -- committed by the auditor."""
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "x")]),
+    )
+    with pytest.raises(ProtectedResponseError) as refusal:
+        admit("<PERSON_001> signed it.", package)
+
+    message = str(refusal.value)
+    assert "placeholder-shaped" in message
+    assert "was redacted" not in message
+    assert "is a placeholder" not in message
+
+
+def test_a_restorer_that_returns_an_object_is_named_at_the_seam() -> None:
+    """The guard has to be in front of the thing it guards.
+
+    `infrastructure/adapters/mamori.py` raises a message about exactly this --
+    and only a caller who already wrapped their session ever reaches it. One who
+    passed the session raw got `TypeError: expected string or bytes-like object`
+    four frames further in, out of a regular expression, saying nothing about
+    restorers. **The adapter's docstring claimed to replace that error while
+    sitting behind the mistake that produces it.**
+
+    Found by the seam repository running the real chain, not by a test here.
+    """
+
+    class Session:
+        """The shape a `mamori` session presents: a result object, not text."""
+
+        def restore(self, text: str) -> object:
+            return type("RestorationResult", (), {"text": text})()
+
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "担当は田中太郎です。")]),
+        protection=Protection(by="mamori@0.29.0", scope="session-1", reversible=True),
+        declares_protection=True,
+    )
+    with pytest.raises(ProtectedResponseError, match="returned RestorationResult"):
+        admit("担当は <PERSON_001> です。", package, Session())  # type: ignore[arg-type]
+
+
+def test_that_message_names_the_adapter_rather_than_only_refusing() -> None:
+    """A refusal that says no and stops leaves the caller to guess. This one
+    names the wrapper, and says what happens without it -- which is the part
+    that turns a repeat of the mistake into a recognisable one."""
+
+    class Session:
+        def restore(self, text: str) -> object:
+            return type("RestorationResult", (), {"text": text})()
+
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "x")]),
+        protection=Protection(by="mamori", scope="s", reversible=True),
+        declares_protection=True,
+    )
+    with pytest.raises(ProtectedResponseError) as refusal:
+        admit("<PERSON_001>", package, Session())  # type: ignore[arg-type]
+
+    message = str(refusal.value)
+    assert "MamoriRestorer" in message
+    assert "needs an adapter of its own" in message

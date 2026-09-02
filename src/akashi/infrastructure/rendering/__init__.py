@@ -17,11 +17,13 @@ from __future__ import annotations
 
 from .attestation import as_statement
 from .certificate import certificate
+from .diagnosis import as_text as as_diagnosis
 from .explanation import explain_segment, segments_with_findings
 from .json_report import as_dict, as_json
 from .text import as_text
 
 __all__ = [
+    "as_diagnosis",
     "as_dict",
     "as_json",
     "as_statement",

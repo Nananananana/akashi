@@ -41,11 +41,12 @@ from akashi.domain.verdict import Verdict
 from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import load_package
 from akashi.interfaces.cli.main import AUDITED, main
+from conftest import published_schema
 
 CONTRACTS = Path(__file__).parent / "contracts"
 FIXTURE = CONTRACTS / "context-package-seam.json"
 SCHEMA = CONTRACTS / "context-package-1.json"
-REPORT_SCHEMA = Path(__file__).parents[1] / "schemas" / "audit-report-1.json"
+REPORT_SCHEMA = published_schema()
 
 #: Quotes one document, quotes the one it supersedes, and invents a third
 #: figure that happens to live in the passage the budget left out.

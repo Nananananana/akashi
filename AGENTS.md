@@ -283,7 +283,7 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
   actually wrong), `declared_miss` (is akashi's silence a stated limit). The
   plants where they disagree are the reason the corpus is worth more than a
   hallucination benchmark.
-- **Contract: `akashi.audit-report/1-draft`.** `schemas/audit-report-1.json`
+- **Contract: `akashi.audit-report/1-draft`.** `src/akashi/schemas/audit-report-1.json`
   publishes it and ships inside the wheel; `docs/audit-report.md` is the
   contract for producers and consumers; `tests/test_report_conformance.py`
   checks seven rules against every report the corpus can produce, plus seven
