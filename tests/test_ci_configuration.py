@@ -265,3 +265,29 @@ def test_the_direct_reference_is_not_in_the_distribution_metadata() -> None:
     assert not offenders, (
         f"a direct reference in project metadata makes the distribution unpublishable: {offenders}"
     )
+
+
+def test_the_seam_job_type_checks_the_file_the_ordinary_run_excludes() -> None:
+    """`tests/test_seam_mamori.py` is excluded from the default mypy run,
+    because it can only be checked where `mamori` is installed. That exclusion
+    is a hole unless somewhere checks it, and this is what says somewhere does.
+
+    The alternative -- `ignore_missing_imports` for `mamori` -- would type-check
+    the seam against `Any`, which agrees with every reading of the sibling. That
+    is the thing a seam exists not to do.
+    """
+    config = tomllib.loads((WORKFLOWS.parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
+    excluded = str(config["tool"]["mypy"].get("exclude", ""))
+    assert "test_seam_mamori" in excluded, (
+        "if the seam file is no longer excluded from the ordinary mypy run, "
+        "delete this test and the step it guards rather than leaving both"
+    )
+
+    steps = _job("seam-mamori")["steps"]
+    assert isinstance(steps, list)
+    checked = [
+        step
+        for step in steps
+        if "mypy" in str(step.get("run", "")) and "test_seam_mamori" in str(step.get("run", ""))
+    ]
+    assert checked, "the seam file is excluded from mypy everywhere, so it is checked nowhere"

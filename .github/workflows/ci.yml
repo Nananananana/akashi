@@ -210,6 +210,16 @@ jobs:
         run: |
           pip install "mamori @ git+https://github.com/Nananananana/mamori.git@$AKASHI_SEAM_MAMORI_REF"
 
+      # The one place this file can be type-checked, and the reason it is
+      # excluded from the ordinary mypy run rather than silenced with
+      # ignore_missing_imports: that would check the seam against `Any`, which
+      # agrees with every reading of the sibling -- the thing this exists not to
+      # do. mypy reads a file named on the command line even when `exclude`
+      # would have skipped it.
+      - name: Type-check the seam where its subject exists
+        run: |
+          python -m mypy tests/test_seam_mamori.py
+
       - name: Run the seam
         run: |
           python -m pytest -m siblings

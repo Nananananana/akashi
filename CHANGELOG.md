@@ -40,6 +40,16 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **`empty_parameter_set_mark = "fail_at_collect"`.** pytest's default marks an
+  empty parameter set as a **skip** -- the same sentence akashi wrote by hand
+  and was caught by, except nobody wrote this one. Point a discovery constant at
+  a renamed directory and every rule parametrized over it collects nothing and
+  stays green. Measured on akashi's own architecture tests: with the setting,
+  one collection error; without it, five silent skips, same code. akashi's
+  `_modules()` already refuses at collection time so nothing changes today,
+  which is why it is set now rather than after the next one. Found by
+  `iriguchi` (#44).
+
 - **The seam against the real redactor (#59).** A CI job installs `mamori` by
   pinned git reference and runs the adapter against the library rather than
   against a reading of it. Every claim #76 made from a stand-in holds against
@@ -152,7 +162,12 @@ API yet.
   underneath the stream; prose still goes through the console's encoder, because
   losing a character beats losing the audit and a `?` in a *document* is
   corruption rather than a concession. [`docs/audit-report.md`](docs/audit-report.md)
-  now names the encoding, which it never did -- the reason this was possible.
+  now names the encoding as a **pin against repeating this**, not as a repair:
+  RFC 8259 §8.1 already required UTF-8 of exchanged JSON and the contract
+  already said the report is JSON, so the requirement was in force and akashi
+  violated it. (This entry first blamed the contract for being silent.
+  `tsumugi` pointed out that it was not, and was right -- the other way round
+  excuses the producer, and the producer was akashi.)
 
 - **A package that does not conform is audited, and the report says so.**
   `tsumugi.context-package/1` closed while akashi was not looking: it used to

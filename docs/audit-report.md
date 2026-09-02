@@ -36,11 +36,17 @@ places: `audited.response_hash` is `sha256` over the **UTF-8 bytes** of
 report stored in another encoding carries a hash of bytes it does not contain
 and offsets into a string a consumer cannot reconstruct.
 
-This is stated because it was not, and akashi got it wrong. Redirected on a
-Japanese Windows console, `akashi audit --json` wrote `cp932` — akashi could
-not read back the document akashi had just written. A contract that does not
-name its encoding is a contract every producer will eventually get wrong,
-including the one that wrote the contract.
+It is spelled out here because akashi got it wrong: redirected on a Japanese
+Windows console, `akashi audit --json` wrote `cp932`, and akashi could not read
+back the document it had just written.
+
+**The contract was not what was deficient.** RFC 8259 §8.1 already requires
+UTF-8 of JSON exchanged between systems that are not part of a closed
+ecosystem, and this document already said the report is JSON — so the
+requirement was in force and the implementation violated it. Writing it out
+above is a **pin against repeating the violation**, not a repair of an
+under-specified contract. Stated that way round because the other way round
+excuses the producer, and the producer was akashi.
 
 A consumer holding a report needs nothing else. `answer` is in it verbatim and
 every span indexes that string, so a finding can be followed without the
