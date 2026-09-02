@@ -133,7 +133,12 @@ def admit(
             f"({_examples(residue)}) and the package declares no protection"
             f"{' at all' if not package.declares_protection else ''}. "
             f"Auditing it would report every honest particular as floating. "
-            f"Restore the answer before auditing it, or pass a restorer."
+            f"Restore the answer before auditing it, or pass a restorer. "
+            f"akashi cannot tell a token a redactor minted from one an author "
+            f"typed in a quotation: the enumeration that would settle it is in "
+            f"the redactor's own record, and the package akashi reads has no "
+            f"field that can carry it (#52). If nothing redacted this answer, "
+            f"the package should say so and akashi will audit it."
         )
 
     if not protection.reversible:

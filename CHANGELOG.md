@@ -40,6 +40,25 @@ API yet.
   title after one, a legal form on an organisation -- took extraction recall
   over everything a person marked from 91% to 95% and unbearing segments from
   35% to 30%.
+- **What akashi cannot decide about a placeholder, said out loud (#52).**
+  `<PERSON_001>` is a string a person can type, and akashi cannot tell a token a
+  redactor minted from one an author quoted. The refusal now names the limit and
+  the way out rather than only saying no.
+
+  **#52 asked for a mechanism that its own companion contract has since ruled
+  out.** It said to branch on `mode`, because `placeholders` was absent under
+  `surrogate`. `mamori.protection-scope/1` now makes `placeholders` **required**
+  and says `mode` is *"a summary of how values were substituted, **not a switch
+  selecting which array to read**"* -- the signal is the contract identifier,
+  `/1` against `/1+surrogate`. Implementing #52 as written would have built the
+  exact misreading that contract is worded to prevent.
+
+  And it is not decidable here at all: the enumeration would have to reach
+  akashi through `tsumugi`'s `provenance.protection`, which carries three fields
+  with `additionalProperties: false` in a version that is now closed. A test
+  pins that premise, so a v2 that carries it reopens the question instead of the
+  reasoning quietly going stale.
+
 - **`akashi doctor`, and the schema moved to where one route reaches it
   (#57).** `doctor` reports the running installation: akashi's version, the
   contract it ships and its `sha256`, the language packs, what this console

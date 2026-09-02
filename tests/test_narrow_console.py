@@ -256,3 +256,40 @@ def test_the_attestation_is_utf8_too(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     statement = json.loads(written(stream).decode("utf-8"))
     assert statement["_type"].startswith("https://in-toto.io/Statement/")
+
+
+def test_one_run_degrades_the_prose_and_leaves_the_document_intact(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Both halves of the rule, on one answer, from the user's side.
+
+    The characters here are in no string literal in this repository -- they
+    arrive in the answer, the way they arrive in real use. A scan of the code
+    for characters akashi chose could not find this path, and it is the widest
+    one akashi has: akashi echoes text it did not write.
+
+    `?` in the prose is a character lost and an audit kept. `?` in the document
+    would be corruption, because a program reads that file.
+    """
+    from akashi.infrastructure.packages.contextpackage import read_package
+    from akashi.infrastructure.rendering import as_json, as_text
+
+    # 为 em-dash é bullet check: five characters cp932 has no encoding for.
+    answer = "重量为9.9千克 — café • ✓ the tent is 9.9kg."
+    unrepresentable = "为—é•✓"
+    for character in unrepresentable:
+        with pytest.raises(UnicodeEncodeError):
+            character.encode("cp932")
+
+    raw = json.loads((PACKAGES / "gear-ja.json").read_text(encoding="utf-8"))
+    report = audit(answer, read_package(raw), DEFAULT)
+
+    prose = as_text(report).encode("cp932", errors="replace")
+    assert prose.count(b"?") == len(unrepresentable), (
+        "the segment carrying them has to reach the page for this to measure "
+        "anything -- a grounded answer prints no segment text at all"
+    )
+
+    document = as_json(report).encode("utf-8")
+    assert json.loads(document.decode("utf-8"))["answer"] == answer
+    assert "?" not in json.loads(document.decode("utf-8"))["answer"]

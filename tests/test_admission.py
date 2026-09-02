@@ -356,3 +356,46 @@ def test_without_the_claim_the_report_says_nothing_about_restoration() -> None:
     admission = admit("金額は 45,000 円でした。", package, None)
     assert admission.restored_by == ""
     assert not admission.asserted
+
+
+def test_the_refusal_says_what_akashi_cannot_decide_rather_than_only_no() -> None:
+    """#52. `<PERSON_001>` is a string a person can type, and akashi cannot tell
+    a token a redactor minted from one an author quoted.
+
+    Both ways of being wrong are silent -- an honest quotation reported as
+    unrestored residue, a real placeholder audited against as ordinary text --
+    so the refusal names the limit and the way out instead of leaving a caller
+    to guess which of the two akashi thinks it is looking at.
+
+    #52 asks for "can say which of the two it found, **or says it cannot**".
+    This is the second, and it is the honest one: the enumeration that would
+    settle it is in the redactor's own record, and the document akashi reads has
+    no field that can carry it (pinned in `test_vendored_contracts.py`).
+    """
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "the form's name box")]),
+    )
+    with pytest.raises(ProtectedResponseError) as refusal:
+        admit("The form reads <PERSON_001> in the name box.", package)
+
+    message = str(refusal.value)
+    assert "cannot tell a token a redactor minted from one an author typed" in message
+    assert "the package should say so and akashi will audit it" in message
+
+
+def test_the_refusal_does_not_claim_the_answer_was_redacted() -> None:
+    """The claim akashi is not entitled to. It found a shape; a shape is not a
+    provenance, and a message that asserted one would be the fabrication this
+    whole module exists to refuse -- committed by the auditor."""
+    package = ContextPackage(
+        contract="tsumugi.context-package/1",
+        evidence=Evidence.of([item("itm_01", "x")]),
+    )
+    with pytest.raises(ProtectedResponseError) as refusal:
+        admit("<PERSON_001> signed it.", package)
+
+    message = str(refusal.value)
+    assert "placeholder-shaped" in message
+    assert "was redacted" not in message
+    assert "is a placeholder" not in message
