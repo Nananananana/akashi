@@ -14,12 +14,12 @@ being checked.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
 from akashi.domain.report import CONTRACT
 from akashi.errors import ContractError
+from akashi.infrastructure.documents import parse
 
 __all__ = ["ACCEPTED_REPORT", "load_report", "load_report_or_statement", "read_report"]
 
@@ -70,11 +70,7 @@ def load_report(path: Path | str) -> dict[str, Any]:
         raise ContractError(f"cannot read the report at {location}: {error}") from error
     except UnicodeDecodeError as error:
         raise ContractError(f"the report at {location} is not UTF-8: {error}") from error
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as error:
-        raise ContractError(f"the report at {location} is not JSON: {error}") from error
-    return read_report(data)
+    return read_report(parse(raw, what="report", where=str(location)))
 
 
 def load_report_or_statement(path: Path | str) -> dict[str, Any]:
@@ -93,13 +89,11 @@ def load_report_or_statement(path: Path | str) -> dict[str, Any]:
     """
     location = Path(path)
     try:
-        data = json.loads(location.read_text(encoding="utf-8"))
+        data = parse(location.read_text(encoding="utf-8"), what="report", where=str(location))
     except OSError as error:
         raise ContractError(f"cannot read the report at {location}: {error}") from error
     except UnicodeDecodeError as error:
         raise ContractError(f"the report at {location} is not UTF-8: {error}") from error
-    except json.JSONDecodeError as error:
-        raise ContractError(f"the report at {location} is not JSON: {error}") from error
 
     if isinstance(data, dict) and str(data.get("_type", "")).startswith("https://in-toto.io/"):
         if "predicate" not in data:

@@ -141,6 +141,25 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **A deeply nested document reached the user as a traceback, and killed the
+  MCP server.** `json.loads` recurses; a `RecursionError` is not a
+  `json.JSONDecodeError`, so it went past every reader akashi has. On the CLI it
+  printed a traceback — which akashi's own rule calls the wrong answer, because
+  a traceback reads as a bug in the tool rather than as a fact about the file.
+  On the MCP surface the exception left the request generator, left the loop and
+  **ended the process**: stdout empty, no reply, no reason. That loop exists so
+  that one bad message is not the end of a session.
+
+  `infrastructure/documents.py` counts nesting depth before parsing rather than
+  catching the failure after. Catching would depend on a recursion limit a
+  caller can change and on a C stack that differs by build — and where the stack
+  runs out first there is no exception to catch. Counting is arithmetic: it
+  cannot exhaust anything and gives the same answer everywhere, which an audit
+  needs (ADR-0003).
+
+  `MAX_DEPTH = 64`, set the way a floor is: the deepest JSON in this repository
+  is **10** (the two published schemas) and a real package is **5**.
+
 - **Extraction was quadratic in the length of an answer, and the answer is
   text somebody else wrote.** akashi audits what a model produced and `akashi
   mcp` lets the model choose the arguments, so the length and shape of an answer

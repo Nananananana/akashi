@@ -38,7 +38,6 @@ can refuse rather than assume.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +46,7 @@ from akashi.domain.evidence import Evidence, EvidenceItem, Withheld
 from akashi.domain.package import ContextPackage, Protection
 from akashi.domain.span import Span
 from akashi.errors import ContractError
+from akashi.infrastructure.documents import parse
 
 __all__ = [
     "ACCEPTED_CONTRACT",
@@ -401,8 +401,4 @@ def load_package(path: Path | str) -> ContextPackage:
             f"wrong encoding audits as fabricated in full."
         ) from error
 
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as error:
-        raise ContractError(f"the package at {location} is not JSON: {error}") from error
-    return read_package(data)
+    return read_package(parse(raw, what="package", where=str(location)))
