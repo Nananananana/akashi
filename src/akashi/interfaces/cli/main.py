@@ -30,6 +30,7 @@ from typing import TextIO
 
 from akashi import __version__
 from akashi.application import audit, recheck
+from akashi.domain.matching import DEFAULT_MATCHER, MATCHERS, matcher_named
 from akashi.errors import AkashiError, ContractError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
@@ -129,6 +130,18 @@ def _parser() -> argparse.ArgumentParser:
             "object holding the mapping, and argv carries names. For a report that "
             "says 'restored by' rather than 'asserted restored by', call "
             "akashi.audit(..., restorer=...) in the process that holds the session"
+        ),
+    )
+    audit_command.add_argument(
+        "--matcher",
+        default="",
+        metavar="NAME",
+        choices=["", *sorted(MATCHERS)],
+        help=(
+            f"which strings count as the same string: {', '.join(sorted(MATCHERS))}. "
+            f"The default is {DEFAULT_MATCHER.name}, which is what every number in "
+            f"docs/measurements.md was measured with. The name goes on the report and "
+            f"into its id, because it changes every count"
         ),
     )
     audit_command.add_argument(
@@ -338,6 +351,7 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         chosen,
         restored_by=arguments.restored_by,
         akashi_version=__version__,
+        matcher=matcher_named(arguments.matcher) if arguments.matcher else DEFAULT_MATCHER,
     )
     if arguments.attestation:
         subject = arguments.subject or (

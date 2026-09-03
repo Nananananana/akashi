@@ -56,6 +56,30 @@ package, the corpus, or akashi.
 
 ---
 
+## Which strings counted as the same string
+
+`audited.matcher` names the algorithm that decided whether a particular occurs
+in the text that was sent. It is **required**, and it is in `report_id`.
+
+| name | what it does |
+| --- | --- |
+| `normalized` | the default, and what every number in [`docs/measurements.md`](measurements.md) was measured with. Comparison over the folded form; a particular's internal spacing is free, so `2.4kg` finds `2.4 kg`; a match sitting inside a longer token of the same kind is rejected |
+| `exact` | the same boundary rules with no spacing tolerance. A stronger claim per grounded particular and a weaker recall |
+
+Both fold the text. A matcher that did not would compare a full-width `２.４kg`
+against a half-width one and report an honest citation as fabricated, which is
+not a stricter audit but a broken one — and half of what akashi reads is CJK.
+
+**It is in the id because it changes every count**, exactly as the language pack
+set does. Two audits that answered this question differently must not be able to
+carry one id; that is the thing `recheck` exists to make impossible, and
+`recheck` re-derives with the matcher the report *names* rather than with
+whatever the process defaults to.
+
+A report that does not say which matcher produced it cannot be re-derived, so
+this is required rather than optional. A consumer reading `1-draft` should
+expect fields to move (§1).
+
 ## What it does not say
 
 Said first, because the omissions in a contract matter more than the fields.

@@ -23,7 +23,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from .anchor import Anchor, Layer
-from .matching import find_all
+from .matching import DEFAULT_MATCHER, Matcher
 from .particular import Particular
 from .span import Span
 from .text import SearchForm, search_form
@@ -80,9 +80,15 @@ class EvidenceItem:
             )
         object.__setattr__(self, "form", search_form(self.text))
 
-    def locate(self, form: str) -> tuple[Anchor, ...]:
-        """Every place ``form`` stands alone in this item, in document coordinates."""
-        return tuple(self.anchor.narrowed(span) for span in find_all(form, self.form))
+    def locate(self, form: str, matcher: Matcher = DEFAULT_MATCHER) -> tuple[Anchor, ...]:
+        """Every place ``form`` stands alone in this item, in document coordinates.
+
+        ``matcher`` is which strings count as the same string, and it is the
+        question the whole audit turns on. Its name reaches the report and the
+        report's id, so two runs that answered it differently cannot be
+        mistaken for one another.
+        """
+        return tuple(self.anchor.narrowed(span) for span in matcher.find(form, self.form))
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,7 +138,9 @@ class Evidence:
     def characters(self) -> int:
         return sum(len(entry.text) for entry in self.items)
 
-    def locate(self, particular: Particular) -> tuple[Location, ...]:
+    def locate(
+        self, particular: Particular, matcher: Matcher = DEFAULT_MATCHER
+    ) -> tuple[Location, ...]:
         """Every place this particular stands alone in the text that was sent.
 
         Ordered by item and then by position, so that a report over the same
@@ -147,7 +155,7 @@ class Evidence:
                     layer=entry.layer,
                     producer=entry.producer,
                 )
-                for anchor in entry.locate(particular.form)
+                for anchor in entry.locate(particular.form, matcher)
             )
         return tuple(found)
 

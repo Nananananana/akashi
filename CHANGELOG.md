@@ -141,6 +141,49 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **Which strings count as the same string is a choice now, and it has a
+  name.** `domain/matching.py` answered the question the whole audit turns on
+  and never said which answer it gave. `audited.matcher` names it, `--matcher`
+  and the MCP `matcher` argument select it, and **it is in `report_id`** — for
+  the same reason the language packs are: it changes every count, and two audits
+  that answered differently must not be able to carry one id. `recheck`
+  re-derives with the matcher the report *names*, not with whatever the process
+  defaults to.
+
+  Two ship, and the second is not decoration — a port with one implementation is
+  a port nobody has tried to satisfy, which is what `Restorer` taught (#76).
+  `normalized` is the default and what every published number was measured with;
+  `exact` applies the same boundary rules with no spacing tolerance. Both fold
+  the text: turning that off as well would report a full-width `２.４kg` against
+  a half-width one as fabricated, which is not stricter but broken.
+
+  **And the corpus cannot tell them apart.** Over all 30 cases they ground
+  identically, particular for particular. The evidence holds 45 quantities
+  written with a space and no answer ever re-spaces one, because the generator
+  quotes the evidence verbatim — so the tolerance this module argues for at
+  length is worth nothing any published number measures. A test asserts the
+  agreement so the gap is visible, and says to delete itself when the corpus
+  grows the case.
+
+- **Two particulars did not resolve back into the text they were extracted
+  from.** Found by the round-trip property test, both pre-existing, both the
+  same shape — a comma between digits that reads as a thousands separator and is
+  not. It is the dangerous direction: akashi reporting an honest citation as
+  fabricated.
+
+  ```text
+  2026-08-30，300g   the `30` before the comma is a day, so `30,300` is no number
+  45,000，300g       the number's separator is half-width and the pause full-width;
+                     NFKC folded both to `,` and lost the author's own distinction
+  ```
+
+  `_is_number_tail` reads what is in front of the run before calling it a
+  number. `_same_width` requires a separator to have been written the way the
+  digits around it were — so a fully full-width `４５，０００` still binds, and a
+  half-width number beside a full-width pause does not. Both counterexamples are
+  pinned as `@example`, captured as strings before the tests were touched, per
+  the rule added with #60.
+
 - **A deeply nested document reached the user as a traceback, and killed the
   MCP server.** `json.loads` recurses; a `RecursionError` is not a
   `json.JSONDecodeError`, so it went past every reader akashi has. On the CLI it

@@ -242,6 +242,18 @@ def test_nothing_grounds_against_an_empty_package(answer: str) -> None:
 # keeps the accumulated database -- while the first instinctive edit to print
 # the input would have orphaned it silently.
 @example(source="2026-08-30，2.4kg")
+# Two more, captured as strings before anything was edited and pinned with the
+# fixes. Both are the same shape as the first and neither was reachable from it:
+# a comma between digits that reads as a thousands separator and is not.
+#
+#   `2026-08-30，300g`   the `30` before the comma is a *day*, so `30,300` is not
+#                        a number. `_is_number_tail` reads what is in front of
+#                        the run before deciding it is one.
+#   `45,000，300g`       the number's own separator is half-width and the pause is
+#                        full-width; NFKC folded both to `,` and with it the
+#                        distinction the author made. `_same_width` keeps it.
+@example(source="2026-08-30，300g")
+@example(source="45,000，300g")
 @SLOW
 def test_every_particular_of_the_sources_grounds_in_the_sources(source: str) -> None:
     """The round trip. Everything akashi can extract from the text that was

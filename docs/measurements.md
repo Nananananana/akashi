@@ -451,6 +451,31 @@ particulars extracted from the corpus    412  ->  412   identical, in order, at 
 
 Every metric below is unchanged by it, which is the other half of the claim.
 
+## What the corpus cannot tell apart
+
+`domain/matching.py` justifies a spacing tolerance at length: `2.4kg` finds
+`2.4 kg`, `第30条` finds `第 30 条`, and the module's own docstring calls it one
+of the two problems a plain substring search gets wrong. Unit tests cover it.
+
+Making the matcher selectable made it measurable, and the answer is that **no
+published number here measures it at all**:
+
+| matcher | grounded | floating | share |
+| --- | --- | --- | --- |
+| `normalized` | 102 | 52 | 66.2% |
+| `exact` | 102 | 52 | 66.2% |
+
+Identical, particular for particular, over all 30 cases. The evidence contains
+**45** quantities written with a space (`14 days`, `4 weeks`, `30 days`), and
+**zero** answers re-space one — because the generator writes answers that quote
+the evidence verbatim.
+
+So this is a statement about the corpus, not about the matchers. A model
+re-spaces a quantity constantly, and the tolerance is why akashi survives that;
+what is missing is a case that shows it. `tests/test_matcher_choice.py` asserts
+the two agree, so the gap stops being invisible: **when the corpus grows a case
+that re-spaces a quantity, that test fails and should be deleted.**
+
 ## The floors
 
 Set on 2026-08-30 against the run above, in

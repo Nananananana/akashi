@@ -36,6 +36,7 @@ from enum import Enum
 
 from .contradiction import Contradiction, SourceIndex
 from .evidence import Evidence, Location
+from .matching import DEFAULT_MATCHER, Matcher
 from .particular import Particular
 from .protection import PlaceholderResidue
 from .segment import Segment
@@ -211,6 +212,7 @@ def check_segment(
     evidence: Evidence,
     sources: SourceIndex | None = None,
     residue: Sequence[PlaceholderResidue] = (),
+    matcher: Matcher = DEFAULT_MATCHER,
 ) -> CheckedSegment:
     """Resolve one segment's particulars against the text that was sent.
 
@@ -252,7 +254,7 @@ def check_segment(
         )
 
     resolved = tuple(
-        CheckedParticular(particular=particular, locations=evidence.locate(particular))
+        CheckedParticular(particular=particular, locations=evidence.locate(particular, matcher))
         for particular in particulars
     )
     if not resolved:

@@ -19,6 +19,7 @@ from akashi.domain.contradiction import SourceIndex
 from akashi.domain.coverage import assess
 from akashi.domain.extraction import extract_from_segment, kinds_not_extracted
 from akashi.domain.language import LanguagePack
+from akashi.domain.matching import DEFAULT_MATCHER, Matcher
 from akashi.domain.package import ContextPackage
 from akashi.domain.report import Audited, AuditReport, ReportProvenance, content_hash
 from akashi.domain.segment import segment_answer
@@ -38,6 +39,7 @@ def audit(
     restorer: Restorer | None = None,
     restored_by: str = "",
     akashi_version: str = "",
+    matcher: Matcher = DEFAULT_MATCHER,
 ) -> AuditReport:
     """Audit ``answer`` against ``package``, or refuse.
 
@@ -64,6 +66,7 @@ def audit(
             # what can be audited and mark what cannot, rather than reporting a
             # masked value as a fabrication.
             admission.residue,
+            matcher,
         )
         for segment in segmentation.segments
     ]
@@ -83,6 +86,7 @@ def audit(
             # report rather than a note beside it.
             packs=tuple(sorted(pack.code for pack in packs)),
             akashi_version=akashi_version,
+            matcher=matcher.name,
         ),
         provenance=ReportProvenance(
             restored_by=admission.restored_by,

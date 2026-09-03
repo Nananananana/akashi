@@ -36,7 +36,8 @@
         "segmenters",
         "extractors",
         "packs",
-        "akashi_version"
+        "akashi_version",
+        "matcher"
       ],
       "additionalProperties": false,
       "properties": {
@@ -76,6 +77,11 @@
         },
         "akashi_version": {
           "type": "string"
+        },
+        "matcher": {
+          "description": "Which strings counted as the same string. akashi ships 'normalized' -- folded form, a particular's internal spacing free, and a match rejected when it sits inside a longer token of the same kind -- and 'exact', which is the same boundary rules with no spacing tolerance. This is in report_id for the same reason the language packs are: it changes every count on the report, and two runs that answered it differently must not be able to claim one id. Required: a report that does not say which one produced it cannot be re-derived.",
+          "type": "string",
+          "minLength": 1
         }
       }
     },

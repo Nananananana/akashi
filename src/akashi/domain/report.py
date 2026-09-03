@@ -68,7 +68,8 @@ def report_id(audited: Audited) -> str:
     and ``dataclasses.astuple`` would silently change the answer the next time a
     field is added.
 
-    **The pack set is in the hash and this is the part that is easy to miss.**
+    **The pack set and the matcher are in the hash, and that is the part that is
+    easy to miss.**
     Narrowing the packs changes the segmentation and therefore every count on
     the report; two audits that hashed the same either way could claim one id
     for different findings.
@@ -86,6 +87,7 @@ def report_id(audited: Audited) -> str:
             ",".join(audited.segmenters),
             ",".join(audited.extractors),
             ",".join(audited.packs),
+            audited.matcher,
         ]
     )
     return f"sha256:{hashlib.sha256(canonical.encode('utf-8')).hexdigest()}"
@@ -109,6 +111,9 @@ class Audited:
     #: decides the segmentation and therefore every count on the report.
     packs: tuple[str, ...] = ()
     akashi_version: str = ""
+    #: Which strings count as the same string. In the id for the same reason
+    #: the packs are: it changes every count on the report.
+    matcher: str = "normalized"
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,6 +191,7 @@ class AuditReport:
                 "extractors": list(self.audited.extractors),
                 "packs": list(self.audited.packs),
                 "akashi_version": self.audited.akashi_version,
+                "matcher": self.audited.matcher,
             },
             "unchecked": [
                 {

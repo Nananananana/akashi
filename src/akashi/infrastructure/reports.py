@@ -28,7 +28,7 @@ ACCEPTED_MAJOR = "1"
 
 #: Everything ``recheck`` needs to know it is looking at the right inputs.
 _REQUIRED = ("contract", "report_id", "audited", "answer")
-_REQUIRED_AUDITED = ("package_id", "response_hash", "packs", "akashi_version")
+_REQUIRED_AUDITED = ("package_id", "response_hash", "packs", "akashi_version", "matcher")
 
 
 def _check_contract(value: object) -> str:

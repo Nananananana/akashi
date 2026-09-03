@@ -33,6 +33,7 @@ from typing import IO, Any, Final
 from akashi import __version__
 from akashi.application import audit as run_audit
 from akashi.application.recheck import recheck as run_recheck
+from akashi.domain.matching import DEFAULT_MATCHER, Matcher, matcher_named
 from akashi.errors import AkashiError
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import read_package
@@ -125,6 +126,17 @@ TOOLS: Final[list[dict[str, Any]]] = [
                         "Assert that you restored a pseudonymized answer yourself, "
                         "naming who did. akashi cannot verify it and the report says "
                         "so."
+                    ),
+                },
+                "matcher": {
+                    "type": "string",
+                    "description": (
+                        "Which strings count as the same string: 'normalized' (the "
+                        "default, and what every published measurement used) folds the "
+                        "text and lets a particular's internal spacing vary; 'exact' "
+                        "applies the same boundary rules with no spacing tolerance. The "
+                        "name is on the report and in its id, because it changes every "
+                        "count."
                     ),
                 },
             },
@@ -293,6 +305,7 @@ class McpServer:
             self._packs(tool),
             restored_by=tool.text("restored_by", required=False),
             akashi_version=__version__,
+            matcher=self._matcher(tool),
         )
         return as_text(report), report.to_dict()
 
@@ -322,6 +335,15 @@ class McpServer:
             tool.text("segment_id"),
             particular=tool.text("particular", required=False) or None,
         )
+
+    def _matcher(self, tool: Request) -> Matcher:
+        name = tool.text("matcher", required=False)
+        if not name:
+            return DEFAULT_MATCHER
+        try:
+            return matcher_named(name)
+        except ValueError as error:
+            raise RpcError(INVALID_PARAMS, str(error)) from error
 
     def _packs(self, tool: Request) -> tuple[Any, ...]:
         codes = tool.params.get("languages")
