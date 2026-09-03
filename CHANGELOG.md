@@ -141,6 +141,36 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **Extraction was quadratic in the length of an answer, and the answer is
+  text somebody else wrote.** akashi audits what a model produced and `akashi
+  mcp` lets the model choose the arguments, so the length and shape of an answer
+  are attacker-controlled. Measured end to end:
+
+  ```text
+  16,000 characters of ordinary prose    0.09 s
+  16,000 characters of digits           38.09 s     x4.0 per doubling
+  ```
+
+  Quadratic to three digits, across five sizes — 420x the cost of prose the same
+  length, and an hour at ten times the length. The cause is the ordinary
+  "long prefix matches, short suffix fails" shape: `\d[\d,.]*\d` followed by a
+  unit that is not there. Read with `re`'s own parser, **32 of the 40 shipped
+  rules** have an unbounded repetition.
+
+  `MAX_RUN = 256` bounds every repetition at compile time — **a bound and not a
+  timeout**, because an audit is reproducible (ADR-0003) and a run that gives up
+  after a second gives a different report on a slower machine. Set the way a
+  floor is: the longest particular in the corpus is 21 characters.
+
+  ```text
+  unbounded repeats   102 -> 0        particulars from the corpus   412 -> 412 identical
+  16,000 digits       38.09 s -> 1.60 s, and linear
+  ```
+
+  Every measured score is unchanged. The structural test reads what `_compiled`
+  actually produces rather than what the helper would return — written the other
+  way round first, and unwiring the bound left it green.
+
 - **The family diagram, with an honest dead end (#48).** Counting mentions
   across the six repositories, the `iriguchi` column was entirely zero: it
   referenced `mamori` 36 times and nothing referenced it. The library named

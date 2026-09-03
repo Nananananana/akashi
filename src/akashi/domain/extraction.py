@@ -43,15 +43,114 @@ __all__ = [
 ]
 
 
+#: The longest run a single repetition in a rule may match.
+#:
+#: **This is a bound on the cost of an audit, and it is set the way a floor is**
+#: (see `evaluation/floors.py`): deliberately far above what was measured, with
+#: the gap stated. Over the whole corpus the longest particular is **21
+#: characters**, the 99th percentile is 14, and the longest evidence item or
+#: segment is 94. A run of 256 is an order of magnitude past all of them.
+#:
+#: Without it, akashi is quadratic in the length of a segment, and the input is
+#: untrusted by construction -- auditing text a model produced is the whole job,
+#: and `akashi mcp` lets the model choose the arguments. Measured before the
+#: bound, end to end:
+#:
+#: ..  code-block:: text
+#:
+#:     16,000 characters of ordinary prose   0.09 s
+#:     16,000 characters of digits          38.09 s      x4.0 per doubling
+#:
+#: The cause is the ordinary "long prefix matches, short suffix fails" shape:
+#: ``\d[\d,.]*\d`` followed by a unit consumes the run, fails to find the unit,
+#: and retries at every shorter length, at every start position. Nothing exotic,
+#: nothing that reads as a mistake, and 32 of the 40 shipped rules have the
+#: shape.
+#:
+#: A *time* limit was the obvious alternative and is not available: an audit is
+#: reproducible (ADR-0003), and a run that gives up after a second gives a
+#: different report on a slower machine.
+MAX_RUN = 256
+
+
+def _bounded(pattern: str, limit: int = MAX_RUN) -> str:
+    """``pattern`` with every unbounded repetition capped at ``limit``.
+
+    ``*`` becomes ``{0,limit}``, ``+`` becomes ``{1,limit}``, ``{n,}`` becomes
+    ``{n,limit}``; a lazy or possessive modifier is carried across. Written as a
+    scanner rather than a regular expression over a regular expression, because
+    the two places this has to be exactly right -- inside a character class, and
+    after a backslash -- are the two places that reading is hardest.
+
+    A rewritten rule is not the rule as written, so this is checked rather than
+    trusted: `tests/test_extraction.py` asserts every shipped pattern still
+    compiles, that no compiled pattern contains an unbounded repeat, and that
+    the whole corpus extracts **the same particulars, in the same order, at the
+    same offsets** with the bound in place.
+    """
+    out: list[str] = []
+    index = 0
+    inside_class = False
+    while index < len(pattern):
+        character = pattern[index]
+
+        if character == "\\" and index + 1 < len(pattern):
+            out.append(pattern[index : index + 2])
+            index += 2
+            continue
+
+        if inside_class:
+            out.append(character)
+            index += 1
+            if character == "]":
+                inside_class = False
+            continue
+
+        if character == "[":
+            # `[]]` and `[^]]` hold a literal `]` first; consuming it here is
+            # what keeps the class from ending on its own opening bracket.
+            out.append(character)
+            index += 1
+            if index < len(pattern) and pattern[index] == "^":
+                out.append("^")
+                index += 1
+            if index < len(pattern) and pattern[index] == "]":
+                out.append("]")
+                index += 1
+            inside_class = True
+            continue
+
+        if character in "*+":
+            out.append("{0," if character == "*" else "{1,")
+            out.append(f"{limit}}}")
+            index += 1
+            if index < len(pattern) and pattern[index] in "?+":
+                out.append(pattern[index])
+                index += 1
+            continue
+
+        if character == "{":
+            closing = pattern.find("}", index)
+            body = pattern[index + 1 : closing] if closing != -1 else ""
+            if closing != -1 and body.endswith(",") and body[:-1].isdigit():
+                out.append(f"{{{body}{limit}}}")
+                index = closing + 1
+                continue
+
+        out.append(character)
+        index += 1
+    return "".join(out)
+
+
 @lru_cache(maxsize=512)
 def _compiled(pattern: str) -> re.Pattern[str]:
-    """Compiled once per pattern per process.
+    """Compiled once per pattern per process, with its repetitions bounded.
 
     The cache is keyed by the pattern text rather than by the rule object, so
     two packs that happen to share a pattern share the compilation and nothing
     depends on object identity.
     """
-    return re.compile(pattern)
+    return re.compile(_bounded(pattern))
 
 
 def rules_of(packs: Sequence[LanguagePack]) -> tuple[ExtractionRule, ...]:

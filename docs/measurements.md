@@ -414,6 +414,43 @@ answered and answering it again would be measuring the obvious.
 
 ---
 
+## The cost of an audit, on input somebody else chose
+
+akashi audits text a model produced, and `akashi mcp` lets the model choose the
+arguments. So the length and the shape of an answer are numbers an attacker
+controls, and until v0.5 extraction was **quadratic** in them.
+
+Measured end to end through `akashi audit`, one segment, all four packs:
+
+| answer | 8,000 chars | 16,000 chars | growth per doubling |
+| --- | --- | --- | --- |
+| ordinary prose | 0.05 s | 0.09 s | ×1.8 |
+| **digits only, before the bound** | 10.06 s | **38.09 s** | **×4.0** |
+| digits only, after the bound | 0.85 s | 1.60 s | ×1.9 |
+
+`x4.0 per doubling` is quadratic to three digits, held across five sizes. At
+16,000 characters the adversarial answer costs **420 times** what prose of the
+same length costs; at 160,000 it would cost an hour.
+
+**The cause is not exotic.** `\d[\d,.]*\d` followed by a unit consumes the
+run, fails to find the unit, and retries at every shorter length, at every
+start position. Read with `re`'s own parser rather than by eye, **32 of the 40
+shipped rules have an unbounded repetition** and 102 unbounded repeats between
+them; 28 use lookaround.
+
+**The fix is a bound, not a timeout.** An audit is reproducible (ADR-0003), and
+a run that gives up after a second gives a different report on a slower machine.
+`MAX_RUN = 256` caps every repetition at compile time, set the way a floor is:
+the longest particular in the whole corpus is **21 characters**, the 99th
+percentile is 14, and the longest evidence item or segment is 94.
+
+```text
+unbounded repeats in the shipped rules   102  ->  0
+particulars extracted from the corpus    412  ->  412   identical, in order, at the same offsets
+```
+
+Every metric below is unchanged by it, which is the other half of the claim.
+
 ## The floors
 
 Set on 2026-08-30 against the run above, in
