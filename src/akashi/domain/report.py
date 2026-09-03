@@ -153,6 +153,15 @@ class AuditReport:
     audited: Audited = field(default_factory=Audited)
     provenance: ReportProvenance = field(default_factory=ReportProvenance)
     contract: str = CONTRACT
+    #: What a language model said about the claims akashi could not settle, each
+    #: under the name of the model that said it (ADR-0017).
+    #:
+    #: **Not verdicts, and not in `report_id`.** akashi's verdicts are decided by
+    #: comparing strings and are the same on every machine on every day; these
+    #: are not, and keeping them out of the id is what lets the same audit carry
+    #: judgements or not and still be re-derivable. Nothing merges the two, and
+    #: they share no vocabulary.
+    judged: tuple[Any, ...] = ()
 
     @property
     def report_id(self) -> str:
@@ -211,7 +220,7 @@ class AuditReport:
                 "checked": coverage.checked,
                 "kinds_not_extracted": list(coverage.kinds_not_extracted),
             },
-            "limits": list(self.assessment.limits),
+            "limits": [*self.assessment.limits, *_judgement_limits(self.judged)],
             "counts": {
                 "segments": self.assessment.counts(),
                 "particulars": self.assessment.particular_counts(),
@@ -230,6 +239,16 @@ class AuditReport:
                 ],
                 "unrecognised": list(self.provenance.unrecognised),
             },
+            "judged": [
+                {
+                    "segment_id": one.segment_id,
+                    "particular": one.particular,
+                    "standing": one.standing.value,
+                    "because": one.because,
+                    "model": one.model,
+                }
+                for one in self.judged
+            ],
             "answer": self.answer,
         }
 
@@ -299,3 +318,25 @@ def _particular_dict(one: CheckedParticular) -> dict[str, Any]:
             "why": found.why,
         }
     return body
+
+
+#: Said on the artefact when a judge ran, because the artefact travels and the
+#: documentation does not (ADR-0005). Two runs of the same audit with the same
+#: judge can disagree, and a reader holding one report has no way to know that
+#: unless the report says it.
+JUDGEMENT_LIMITS: tuple[str, ...] = (
+    "A judgement in 'judged' is a language model's opinion, not an akashi verdict. "
+    "It is not reproducible: the same claim asked again, or asked after the model "
+    "changes, can come back differently, and the model that answered is named "
+    "beside each one so that a reader can tell which run they are holding.",
+    "'supported' means a model thought the evidence entails the claim. It does not "
+    "mean the claim is in the text that was sent -- akashi already reported that, "
+    "and reported it 'floating', which is why the claim was sent at all.",
+    "Judgements do not change report_id, and rechecking this report re-derives the "
+    "audit without them. What a judge adds is an annotation on an audit; it is not "
+    "part of one.",
+)
+
+
+def _judgement_limits(judged: tuple[Any, ...]) -> tuple[str, ...]:
+    return JUDGEMENT_LIMITS if judged else ()

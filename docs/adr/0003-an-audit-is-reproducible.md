@@ -1,6 +1,17 @@
 # 3. An audit is reproducible, and no model runs inside one
 
-**Status:** accepted
+**Status:** accepted, amended by
+[ADR-0017](0017-a-judge-annotates-an-audit-it-does-not-make-one.md)
+
+> **Amendment.** The sentence below — *"There is no flag that turns a model
+> on"* — is no longer true, and the reasoning that produced it still is.
+> ADR-0017 adds `--judge`, and draws the line one step further out: **a verdict
+> may not come from a model, and that is not the same rule as nothing a model
+> says may appear on the artefact.** The audit stays byte-identical and
+> `report_id` still hashes only the deterministic inputs; a judgement lands in
+> its own field, in its own vocabulary, under the name of the model that gave
+> it. Read this ADR for why the reproducibility argument holds, and ADR-0017 for
+> where it stops.
 
 Related: `tsumugi`'s ADR-0003, which asks the same of a package.
 

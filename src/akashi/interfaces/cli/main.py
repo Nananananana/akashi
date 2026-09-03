@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
 import json
 import sys
 from collections.abc import Sequence
@@ -143,6 +144,21 @@ def _parser() -> argparse.ArgumentParser:
             f"The default is {DEFAULT_MATCHER.name}, which is what every number in "
             f"docs/measurements.md was measured with. The name goes on the report and "
             f"into its id, because it changes every count"
+        ),
+    )
+    audit_command.add_argument(
+        "--judge",
+        default=None,
+        metavar="MODEL",
+        nargs="?",
+        const="",
+        help=(
+            "ask a language model about the claims akashi could not settle, and record "
+            "what it said. Needs `pip install 'akashi[claude]'` and an API key, and it "
+            "is the one thing in akashi that reaches the network. A judgement is NOT a "
+            "verdict: it lands in its own section under the name of the model that gave "
+            "it, it is not reproducible, and it does not change report_id (ADR-0017). "
+            "Defaults to claude-opus-5"
         ),
     )
     audit_command.add_argument(
@@ -362,6 +378,21 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         akashi_version=__version__,
         matcher=matcher_named(matcher_name) if matcher_name else DEFAULT_MATCHER,
     )
+    if arguments.judge is not None:
+        # After the audit and never during it. akashi has already decided every
+        # verdict by comparing strings; this adds an annotation about the ones
+        # it could not settle, and cannot move anything it did.
+        # Imported here and nowhere else. `import akashi` must not reach an
+        # HTTP client on a machine that happens to have the extra installed,
+        # and a module-level import would make it do exactly that.
+        from akashi.application.judging import judge_report
+        from akashi.infrastructure.adapters.claude_judge import DEFAULT_MODEL, ClaudeJudge
+
+        chosen_judge = ClaudeJudge(model=arguments.judge or DEFAULT_MODEL)
+        report = dataclasses.replace(
+            report, judged=judge_report(report, chosen_judge, package.evidence)
+        )
+
     if arguments.attestation:
         subject = arguments.subject or (
             "response" if arguments.response == "-" else Path(arguments.response).name

@@ -141,6 +141,45 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **`akashi audit --judge`: a language model answers the part akashi cannot,
+  and the artefact keeps the two apart.** ADR-0003 said no model runs at audit
+  time, *ever*, and its reasoning still holds — a verdict that moves when nobody
+  changed anything is not an audit trail. What it got wrong is the step from
+  *"a verdict must not come from a model"* to *"nothing a model says may appear
+  on the artefact"*. [ADR-0017](docs/adr/0017-a-judge-annotates-an-audit-it-does-not-make-one.md)
+  amends it.
+
+  The cost of the old line is measured, not hypothetical: `verdict correctness`
+  sits at **59%**, and the gap is largely text the evidence supports in other
+  words. RAGAS, DeepEval and TruLens all answer that question; akashi's answer
+  was to not answer.
+
+  Six rules make it safe. A judgement shares **no word** with a verdict
+  (`supported` / `unsupported` / `unclear` against `grounded` / `floating` /
+  `contradicted`); they never share a section; **`report_id` does not move**, so
+  `recheck` still re-derives the audit with no network; a judge only sees what
+  akashi could not settle; every judgement names its model; and three sentences
+  join `limits` saying it is an opinion and is not reproducible.
+
+  `pip install akashi` still installs nothing and reaches nothing —
+  `akashi[claude]` is an extra, and `akashi.infrastructure.adapters` deliberately
+  does not re-export the judge, so `import akashi` loads no HTTP client even
+  where the extra is present. CI checks that on a machine that has it.
+
+- **A structural contract that was quietly weaker than its name.** `no-network`
+  read *"Nothing in akashi touches the network"* and measurement says otherwise:
+
+  ```text
+  a module here writing `import socket`      BROKEN
+  a module here writing `import anthropic`   KEPT      (anthropic opens sockets)
+  ```
+
+  import-linter does not traverse into an external package, so that contract and
+  that sentence were the same statement only while akashi had zero dependencies.
+  It is renamed to what it checks, and a second contract keeps the SDK to one
+  module — with no `ignore_imports` carve-out, because an exception that protects
+  nothing implies a check that is not happening.
+
 - **Settings, where the tools around it keep them.** `[tool.akashi]` in
   `pyproject.toml`, a standalone `akashi.toml`, `AKASHI_*` in the environment,
   and the command line, in that order of increasing precedence — the convention,

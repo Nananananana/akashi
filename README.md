@@ -66,6 +66,42 @@ It leads with what was **not** checked and ends with what the report does not
 establish. That is a deliberate reversal of what every dashboard in this
 category does, and it is why the page can be handed to a reviewer.
 
+## Asking a model about what akashi could not check
+
+akashi decides by comparing strings, so a claim the answer *paraphrased* out of
+the evidence comes back `floating` — true, and not what you wanted to know. You
+wanted to know whether the evidence supports it.
+
+```bash
+pip install "akashi[claude]"
+akashi audit --package pkg.json --response answer.txt --judge
+```
+
+```text
+Judged
+  Not akashi verdicts. A model read these and said what it thought.
+  seg_003  9.9kg  unsupported  [claude-opus-5]
+    the evidence gives 2.4kg for the tent and no other weight.
+```
+
+**A judgement is not a verdict, and akashi will not let the two blur**
+([ADR-0017](docs/adr/0017-a-judge-annotates-an-audit-it-does-not-make-one.md)):
+
+- akashi says `grounded` / `floating` / `contradicted`; a judge says `supported`
+  / `unsupported` / `unclear`. **No word is shared.**
+- They never share a section, and **`report_id` does not move** — the same audit
+  with and without judgements carries one id, and `recheck` re-derives it with
+  no network.
+- Every judgement names the model that gave it, and three sentences join
+  `limits` saying that it is an opinion and is not reproducible.
+- A judge only ever sees what akashi could not settle. It is not shown a
+  grounded particular: akashi already knows the string, the document and the
+  offset, and replacing a fact with an opinion could only make the report worse.
+
+**`pip install akashi` still installs nothing and reaches nothing.** The SDK is
+an extra, the judge is behind `--judge`, and `import akashi` loads no HTTP
+client even where the extra is present — checked in CI on a machine that has it.
+
 ## What it will not tell you
 
 Said before what it will, because the boundary is the product.

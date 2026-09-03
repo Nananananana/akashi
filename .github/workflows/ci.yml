@@ -172,6 +172,23 @@ jobs:
         run: |
           akashi doctor
 
+      # ADR-0017 put an HTTP client behind an extra. This is the check that it
+      # stayed behind it: importing akashi, the CLI, and the adapters package
+      # must not load a network stack on a machine that has the extra -- and
+      # `adapters/__init__` deliberately does not re-export the judge, which is
+      # what makes that true rather than hoped for.
+      - name: Importing akashi reaches no network stack
+        run: |
+          pip install "anthropic>=0.40"
+          python - <<'PY'
+          import sys
+          import akashi, akashi.interfaces.cli.main, akashi.infrastructure.adapters
+
+          for name in ("anthropic", "socket", "ssl", "httpx", "httpcore"):
+              assert name not in sys.modules, f"importing akashi pulled in {name}"
+          print("nothing networked was imported")
+          PY
+
   # The seam against the real redactor (#59). Four ways this job could be green
   # and prove nothing, three of them observed in sibling repositories:
   #

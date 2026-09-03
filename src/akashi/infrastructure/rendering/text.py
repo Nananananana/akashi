@@ -31,6 +31,7 @@ def as_text(report: AuditReport, *, width: int = 78) -> str:
     lines += _not_checked(report)
     lines += _findings(report, width)
     lines += _traced(report)
+    lines += _judged(report)
     lines += _coverage(report)
     lines += _provenance(report)
     lines += _limits(report, width)
@@ -123,6 +124,31 @@ def _particular(one: CheckedParticular) -> str:
     where = ", ".join(location.anchor.describe() for location in one.locations)
     note = " (an interpretation)" if one.in_an_interpretation else ""
     return f"{head}  -> {where}{note}"
+
+
+def _judged(report: AuditReport) -> list[str]:
+    """What a model said, in its own section and its own vocabulary.
+
+    Never inside `Findings` and never beside a verdict. `grounded` and
+    `supported` are different claims -- one is about strings and is the same on
+    every machine, the other is an opinion that can come back differently
+    tomorrow -- and a reader who can see them in one list will read them as one
+    kind of thing.
+
+    The model is on every line rather than once in a heading, because a report
+    read a year from now is read one line at a time.
+    """
+    if not report.judged:
+        return []
+    lines = [
+        "Judged",
+        f"{_INDENT}Not akashi verdicts. A model read these and said what it thought.",
+    ]
+    for one in report.judged:
+        subject = f"  {one.particular}" if one.particular else ""
+        lines.append(f"{_INDENT}{one.segment_id}{subject}  {one.standing.value}  [{one.model}]")
+        lines.append(f"{_INDENT * 2}{one.because}")
+    return [*lines, ""]
 
 
 def _coverage(report: AuditReport) -> list[str]:
