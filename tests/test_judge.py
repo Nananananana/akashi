@@ -221,6 +221,14 @@ def test_importing_akashi_does_not_import_the_sdk() -> None:
     judge. Without that, `import akashi` reaches an HTTP client on any machine
     with the extra installed -- which is what the import-linter contract found.
     """
+    # The SDK has to be *installed* for this to mean anything: with it absent
+    # the assertion below is true of every possible implementation, which is the
+    # shape of check this repository spends its time removing. CI installs
+    # `[dev,claude]` in the job that runs the suite.
+    pytest.importorskip(
+        "anthropic",
+        reason="without the SDK installed this test passes whatever akashi does",
+    )
     program = (
         "import sys, akashi, akashi.interfaces.cli.main, "
         "akashi.infrastructure.adapters; print('anthropic' in sys.modules)"

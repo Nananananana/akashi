@@ -30,7 +30,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev,claude]"
 
       - name: Test
         run: python -m pytest --cov=akashi --cov-report=term-missing
@@ -76,7 +76,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install
-        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev,claude]"
 
       # Every hook, over every file. `.pre-commit-config.yaml` had eleven and
       # CI ran two of them -- the other nine existed only on a developer's
@@ -97,6 +97,11 @@ jobs:
       # Reads `files` from pyproject, which now names src, tests and tools.
       # It said `src/akashi` and checked 53 of 86 files, and the corpus
       # generator and every test were outside it.
+      # `[claude]` and not just `[dev]`: ADR-0017's adapter names the SDK, and a
+      # module that cannot be type-checked where its subject exists is a module
+      # nothing checks. `ignore_missing_imports` was the alternative and is
+      # worse -- it would type-check the one thing here that talks to somebody
+      # else's API against `Any`.
       - name: Types
         run: python -m mypy
 
