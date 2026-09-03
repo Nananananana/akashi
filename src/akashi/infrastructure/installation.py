@@ -28,6 +28,8 @@ from importlib import resources
 from importlib.util import find_spec
 from typing import Any
 
+from akashi.infrastructure.settings import load_settings
+
 __all__ = [
     "Finding",
     "Installation",
@@ -74,6 +76,10 @@ class Installation:
     console_encoding: str
     stdout_errors: str
     contract: Finding
+    #: What a configuration file or the environment set, and where each came
+    #: from. Empty when nobody configured anything, which is a different fact
+    #: from everything being at its default.
+    settings: tuple[str, ...] = ()
     packs: tuple[Finding, ...] = ()
     siblings: tuple[Finding, ...] = ()
     notes: tuple[str, ...] = field(default_factory=tuple)
@@ -101,6 +107,7 @@ def inspect(packs: tuple[Any, ...]) -> Installation:
         console_encoding=_encoding(),
         stdout_errors=str(getattr(sys.stdout, "errors", "") or "unknown"),
         contract=_contract(),
+        settings=load_settings().describe(),
         packs=tuple(
             Finding("pack", f"{pack.code}  {pack.name}  {len(pack.rules)} rules  v{pack.version}")
             for pack in packs

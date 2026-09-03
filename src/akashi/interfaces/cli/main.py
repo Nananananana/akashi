@@ -52,6 +52,7 @@ from akashi.infrastructure.rendering import (
     segments_with_findings,
 )
 from akashi.infrastructure.reports import load_report, load_report_or_statement
+from akashi.infrastructure.settings import load_settings
 from akashi.interfaces.mcp import serve as mcp_serve
 
 __all__ = ["main"]
@@ -341,9 +342,17 @@ def _document(text: str, out: TextIO) -> None:
 
 
 def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
+    # A flag beats a file beats a default, and the file said where it was. Both
+    # of these reach `report_id`, so a run configured one way cannot be mistaken
+    # for a run configured another -- which is the only reason a configuration
+    # file is safe to read at all.
+    settings = load_settings()
+    languages = arguments.language or list(settings.languages)
+    matcher_name = arguments.matcher or settings.matcher
+
     package = load_package(arguments.package)
     answer = _read(arguments.response)
-    chosen = packs(*arguments.language) if arguments.language else DEFAULT
+    chosen = packs(*languages) if languages else DEFAULT
 
     report = audit(
         answer,
@@ -351,7 +360,7 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         chosen,
         restored_by=arguments.restored_by,
         akashi_version=__version__,
-        matcher=matcher_named(arguments.matcher) if arguments.matcher else DEFAULT_MATCHER,
+        matcher=matcher_named(matcher_name) if matcher_name else DEFAULT_MATCHER,
     )
     if arguments.attestation:
         subject = arguments.subject or (
@@ -368,7 +377,7 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         # than the whole audit.
         print(as_text(report), end="", file=out)
 
-    if arguments.fail_on_findings and report.has_findings:
+    if (arguments.fail_on_findings or settings.fail_on_findings) and report.has_findings:
         return FOUND
     return AUDITED
 

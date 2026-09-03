@@ -141,6 +141,27 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **Settings, where the tools around it keep them.** `[tool.akashi]` in
+  `pyproject.toml`, a standalone `akashi.toml`, `AKASHI_*` in the environment,
+  and the command line, in that order of increasing precedence — the convention,
+  followed exactly, because a person configuring a Python project should not
+  have to learn a new place.
+
+  **What is not convention is why it is safe.** Both settings akashi reads reach
+  `report_id`, so a run configured one way cannot be mistaken for a run
+  configured another, and `akashi doctor` prints what was resolved *and which
+  file or variable each part came from*. A file three directories up that
+  quietly changed an audit, with nothing on either report to say why, is the
+  failure this project is about.
+
+  A key akashi does not read is **refused**: a typo in a configuration file is a
+  setting somebody believes is in force. `AKASHI_FAIL_ON_FINDINGS=maybe` is
+  refused rather than read as false, which is how a gate stops gating while the
+  pipeline that set it goes on believing it is armed.
+
+  `MAX_RUN` and `MAX_DEPTH` are deliberately not settings — they are bounds
+  akashi states about its own cost on input somebody else chose.
+
 - **Which strings count as the same string is a choice now, and it has a
   name.** `domain/matching.py` answered the question the whole audit turns on
   and never said which answer it gave. `audited.matcher` names it, `--matcher`

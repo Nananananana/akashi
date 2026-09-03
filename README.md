@@ -100,6 +100,40 @@ worth more than a total check whose confidence cannot be examined.
   happens to exist somewhere in your archive is still floating
   ([ADR-0006](docs/adr/0006-audit-against-what-was-sent.md)).
 
+## Settings
+
+Where the tools around it look, in the order they look:
+
+```text
+--matcher / --language        the command line
+AKASHI_MATCHER, AKASHI_LANGUAGES, AKASHI_FAIL_ON_FINDINGS
+akashi.toml                   [top level]
+pyproject.toml                [tool.akashi]
+                              akashi's own defaults
+```
+
+```toml
+# pyproject.toml
+[tool.akashi]
+matcher = "normalized"        # or "exact"
+languages = ["ja", "en"]
+fail_on_findings = true
+```
+
+**Both of the first two reach `report_id`.** That is what makes a configuration
+file safe to read here: a run configured one way cannot be mistaken for a run
+configured another, and `akashi doctor` prints what was resolved *and which file
+or variable it came from*. A setting three directories up that quietly changed
+an audit, with nothing on either report to say why, is the failure this whole
+project is about.
+
+A key akashi does not read is **refused**, not ignored — a typo in a
+configuration file is a setting somebody believes is in force.
+
+`MAX_RUN` and `MAX_DEPTH` are deliberately not settings. They are bounds akashi
+states about its own cost on input somebody else chose, and a file that could
+raise them could reintroduce what they exist to stop.
+
 ## For an agent rather than a person
 
 The thing that most wants an audit is the assistant that just produced the
