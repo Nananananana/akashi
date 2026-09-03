@@ -140,6 +140,33 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 - **Ordering discipline.** No unordered iteration reaching an output, no partial
   sort keys, no wall-clock in anything but `created_at`. A report produced twice
   must be byte-identical, and a property test asserts it.
+- **A counterexample is pinned as an `@example` in the same commit as the fix,
+  or it did not happen.** Hypothesis keys its stored examples on a digest that
+  includes the *source of the test function*, and `.hypothesis/` is ignored, so
+  a falsifying input that is not pinned exists on one machine until the next
+  edit and then not at all.
+
+  Measured here rather than taken on report — a failing property test, then the
+  first thing anyone investigating types:
+
+  ```text
+  after the failing run                     3 keys
+  + `assert ..., (s,)` on the assertion     5 keys   <- two new, the old ones orphaned
+  + an `@example` decorator                 5 keys   <- unchanged
+  ```
+
+  **Instrumenting a failure in order to look at it is what loses the failure.**
+  No error and no warning. So: capture the falsifying input as a string *before*
+  touching the test body, and add the `@example` — a decorator changes nothing
+  the digest reads, which is why pinning is free and printing is not.
+
+  The `@example` is the regression test; the fix is not. Hand somebody an input,
+  never a database directory: the key travels with the source text, not with the
+  property, so copying `.hypothesis/` between checkouts carries nothing.
+
+  `.hypothesis/` stays in `.gitignore` for that reason — committing it would
+  look like it made counterexamples travel, and it would not.
+
 - **Offsets are load-bearing.** `answer[p.start:p.end] == p.text` and the
   segments tile the answer exactly. Both are property tests, not unit tests. An
   offset that has drifted points a reader at the wrong sentence, which is the

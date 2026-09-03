@@ -141,6 +141,23 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **The family diagram, with an honest dead end (#48).** Counting mentions
+  across the six repositories, the `iriguchi` column was entirely zero: it
+  referenced `mamori` 36 times and nothing referenced it. The library named
+  *entrance* was the one nobody could see, and it is the first thing a prompt
+  touches. akashi's README now draws all six, its own box heavily.
+
+  **The last arrow is drawn as a dead end because it is one.** Nothing in the
+  other five repositories reads `akashi.audit-report/1-draft` -- measured across
+  their `src/` trees, not assumed -- which is the same fact as the contract
+  still saying `-draft` (ADR-0002's freeze condition is a second program that
+  has produced *and consumed* a report).
+
+  Every label was checked against the sibling's code rather than copied from
+  the proposal. The cross-repository review had just found three arrows in its
+  own diagram that named a contract nobody writes or reads, one of them
+  justified by a diagram in another README that carried the same arrow.
+
 - **`akashi mcp`, the agent-facing surface.** JSON-RPC over stdio on the
   standard library -- which is not a preference: ADR-0001 forbids a runtime
   dependency and the import-linter contract forbids `socket`, `http`, `urllib`

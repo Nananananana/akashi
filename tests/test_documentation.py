@@ -328,3 +328,33 @@ def test_no_test_asserts_only_inside_a_loop_over_something_it_discovered() -> No
         "these tests assert only inside a loop over a collection they discovered, so "
         "an empty collection passes silently:\n  " + "\n  ".join(offenders)
     )
+
+
+def test_the_readme_names_every_sibling_it_sits_between() -> None:
+    """#48. Counting mentions across the six repositories, the `iriguchi`
+    column was **entirely zero**: it referenced `mamori` 36 times and `tsumugi`
+    14, and nothing referenced it. The library named "entrance" was the one
+    nobody could see, and it is the first thing a prompt touches.
+
+    This is not the cross-repository drift check #48 rules out -- keeping six
+    copies of a diagram in step is a human job, and a checker for it would be
+    the seventh thing to keep in step. This is one repository's own README, and
+    the only thing it asserts is that a name did not fall out of it again.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    for sibling in ("kiseki", "musubi", "tsumugi", "iriguchi", "mamori"):
+        assert sibling in readme, f"{sibling} is invisible from akashi's README (#48)"
+
+
+def test_the_readme_does_not_claim_a_consumer_akashi_does_not_have() -> None:
+    """The last arrow is a dead end, and the diagram says so. Nothing in the
+    other five repositories reads `akashi.audit-report/1-draft` -- measured
+    across their `src/` trees, not assumed -- and that is the same fact as the
+    contract still saying `-draft`.
+
+    The day somebody does read one, this test is where the diagram gets
+    corrected rather than the claim quietly becoming true by accident.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "(no consumer yet)" in readme
+    assert "akashi.audit-report/1-draft" in readme

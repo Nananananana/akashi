@@ -122,28 +122,76 @@ file-read primitive with an audit report as the channel out.
 
 ## Where it sits
 
+Six libraries, each standing alone. akashi is the last one, and the only one
+that reads what the others produced rather than producing for them.
+
 ```text
-[ kiseki ]   personal context, as facts / measures / interpretations
-     ↓
-[ tsumugi ]  selection ➔ a ContextPackage: what was sent, what was withheld
-     ↓
-[ mamori ]   pseudonymization ➔ out to the model, restoration on the way back
-     ↓  (the answer)
-[ akashi ]   ➔ which particulars are traceable, and which are floating
+   your exports, your folders          your photo library
+              |                                  |
+        [ musubi ]                          [ kiseki ]
+   documents/ + traces/            kiseki-interest-export/1
+              |                                  |
+              +----------------+-----------------+
+                               |
+                         [ tsumugi ]
+                 selection -> what was sent, what was withheld
+                               |
+                    tsumugi.context-package/1
+                               |
+                        [ iriguchi ]
+              decides where this prompt is allowed to go
+              +----------------+-----------------+
+              |                |                 |
+          REFUSED        local model         ESCALATED
+        nothing runs    on this machine           |
+                                            [ mamori ]
+                              pseudonymized on the way out,
+                                 restored on the way back
+                                                  |
+                                        ( external model )
+                                                  |
+     +--------------------------------------------+
+     |                                            |
+ the answer                       tsumugi.context-package/1
+     |                                            |
+     +---------------------+----------------------+
+                           |
+                 ##########################
+                 #        akashi          #   <- you are here
+                 #  which particulars are #
+                 #  in the text that was  #
+                 #  sent, and which are   #
+                 #  in none of it         #
+                 ##########################
+                           |
+                akashi.audit-report/1-draft
+                           |
+                     (no consumer yet)
 ```
 
-Four libraries, each standing alone, none importing another except through an
-optional adapter behind a published contract. akashi reads a
-[ContextPackage](https://github.com/Nananananana/tsumugi/blob/main/docs/context-package.md)
-as JSON and imports `tsumugi` nowhere, so it audits answers from any pipeline
-that can emit one.
+**None of the others is required.** akashi reads a ContextPackage as JSON and
+imports `tsumugi` nowhere, so it audits answers from any pipeline that can emit
+one — the shape of the document is the whole interface. `mamori` is reached
+through an optional adapter that imports nothing, so akashi installs and runs
+without it; a caller who holds a session hands it over.
+
+**The last arrow is a dead end, deliberately drawn as one.** Nothing in the
+other five repositories reads `akashi.audit-report/1-draft` today — measured, not
+assumed. That is also why the contract still says `-draft`: it freezes when a
+second program has **produced and consumed** a report and found something the
+schema could not say, and that has not happened
+([ADR-0002](docs/adr/0002-the-audit-report-is-a-document.md)).
 
 - [`kiseki`](https://github.com/Nananananana/kiseki) — a local-first personal
   context engine
+- [`musubi`](https://github.com/Nananananana/musubi) — local-first ingestion;
+  every character still knows which byte of which original file it came from
 - [`tsumugi`](https://github.com/Nananananana/tsumugi) — local-first context
-  infrastructure
+  infrastructure; selects what bears on the question and says what it left out
+- [`iriguchi`](https://github.com/Nananananana/iriguchi) — a local-first
+  governance router; decides where each prompt may go, before anything leaves
 - [`mamori`](https://github.com/Nananananana/mamori) — a local-first privacy
-  layer
+  layer; detects and pseudonymizes secrets before they reach an external model
 
 ## Documentation
 
