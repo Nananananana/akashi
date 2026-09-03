@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 
 from .evidence import Evidence
 
-__all__ = ["ContextPackage", "Protection"]
+__all__ = ["PLAIN_CONTRACT", "ContextPackage", "Protection"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +51,15 @@ class Protection:
     by: str
     scope: str = ""
     reversible: bool = False
+
+
+#: What a package built from plain strings declares.
+#:
+#: Here rather than beside the builder because the *audit* changes on it: a
+#: package with this contract carries no provenance, and `limits` says so. A
+#: constant the domain reads out of infrastructure would be the domain
+#: depending on a layer above it.
+PLAIN_CONTRACT = "akashi.plain-context/1"
 
 
 @dataclass(frozen=True, slots=True)

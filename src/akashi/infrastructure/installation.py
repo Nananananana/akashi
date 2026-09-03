@@ -26,6 +26,7 @@ import sys
 from dataclasses import dataclass, field
 from importlib import resources
 from importlib.util import find_spec
+from pathlib import Path
 from typing import Any
 
 from akashi.infrastructure.settings import load_settings
@@ -97,7 +98,7 @@ class Installation:
 
 def inspect(packs: tuple[Any, ...]) -> Installation:
     """Look at the running installation. Reads; imports nothing new."""
-    from akashi import __version__
+    from akashi.version import __version__
 
     return Installation(
         akashi_version=__version__,
@@ -164,10 +165,14 @@ def _sibling(name: str) -> Finding:
 
 
 def _location() -> str:
-    import akashi
+    """Where the package is installed, without importing the package.
 
-    paths = list(getattr(akashi, "__path__", []))
-    return paths[0] if paths else "unknown"
+    `import akashi` reaches the public surface, which re-exports the one-call
+    API in `interfaces` -- so infrastructure importing it is infrastructure
+    importing a layer above it. The layer contract found that; `__file__` gives
+    the same answer and names nothing.
+    """
+    return str(Path(__file__).resolve().parent.parent)
 
 
 def _encoding() -> str:

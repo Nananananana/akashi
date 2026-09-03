@@ -29,9 +29,9 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import TextIO
 
-from akashi import __version__
 from akashi.application import audit, recheck
 from akashi.domain.matching import DEFAULT_MATCHER, MATCHERS, matcher_named
+from akashi.domain.package import ContextPackage
 from akashi.errors import AkashiError, ContractError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
@@ -43,6 +43,7 @@ from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.installation import inspect as inspect_installation
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
+from akashi.infrastructure.packages.plain import package_from_contexts, read_sample
 from akashi.infrastructure.rendering import (
     as_diagnosis,
     as_json,
@@ -55,6 +56,7 @@ from akashi.infrastructure.rendering import (
 from akashi.infrastructure.reports import load_report, load_report_or_statement
 from akashi.infrastructure.settings import load_settings
 from akashi.interfaces.mcp import serve as mcp_serve
+from akashi.version import __version__
 
 __all__ = ["main"]
 
@@ -86,14 +88,26 @@ def _parser() -> argparse.ArgumentParser:
             "statement about strings, not about truth."
         ),
     )
-    audit_command.add_argument(
-        "--package", required=True, metavar="PATH", help="the ContextPackage, as JSON"
+    source = audit_command.add_mutually_exclusive_group(required=True)
+    source.add_argument("--package", metavar="PATH", help="the ContextPackage, as JSON")
+    source.add_argument(
+        "--contexts",
+        metavar="PATH",
+        help=(
+            "a JSON list of strings, or a RAGAS/DeepEval sample object, for a caller "
+            "with no ContextPackage. Reads user_input/input/question, "
+            "response/actual_output/answer and retrieved_contexts/retrieval_context/"
+            "contexts. No provenance is invented: offsets index the strings you "
+            "passed and the report says so"
+        ),
     )
     audit_command.add_argument(
         "--response",
-        required=True,
         metavar="PATH",
-        help="the answer to audit; - reads standard input",
+        help=(
+            "the answer to audit; - reads standard input. Not needed when --contexts "
+            "is a sample object that carries the answer"
+        ),
     )
     audit_command.add_argument(
         "--json", action="store_true", help="emit the report as JSON instead of text"
@@ -357,6 +371,33 @@ def _document(text: str, out: TextIO) -> None:
     buffer.flush()
 
 
+def _inputs(arguments: argparse.Namespace) -> tuple[ContextPackage, str]:
+    """The package and the answer, from whichever pair of flags was given.
+
+    `--contexts` is the door for somebody who has what every other library in
+    this space takes -- an answer and a list of retrieved strings -- and no
+    ContextPackage, which is almost everybody. A sample object may carry the
+    answer too, so `--response` is optional beside it and required beside a
+    package.
+    """
+    if arguments.package:
+        return load_package(arguments.package), _read(arguments.response)
+
+    body = json.loads(_read(arguments.contexts))
+    if isinstance(body, list):
+        return package_from_contexts(body), _read(arguments.response)
+    if not isinstance(body, dict):
+        raise ContractError(
+            f"--contexts is a JSON list of strings or a sample object, not {type(body).__name__}"
+        )
+
+    sample_answer, package = read_sample(body)
+    # An explicit --response wins over the one in the file: a caller who names
+    # both meant the one they named, and silently preferring the file would
+    # audit something other than what they asked about.
+    return package, _read(arguments.response) if arguments.response else sample_answer
+
+
 def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
     # A flag beats a file beats a default, and the file said where it was. Both
     # of these reach `report_id`, so a run configured one way cannot be mistaken
@@ -366,8 +407,7 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
     languages = arguments.language or list(settings.languages)
     matcher_name = arguments.matcher or settings.matcher
 
-    package = load_package(arguments.package)
-    answer = _read(arguments.response)
+    package, answer = _inputs(arguments)
     chosen = packs(*languages) if languages else DEFAULT
 
     report = audit(
@@ -627,6 +667,28 @@ def _tolerate_a_narrow_console() -> None:
             reconfigure(errors="replace")
 
 
+def _check_arguments(parser: argparse.ArgumentParser, arguments: argparse.Namespace) -> None:
+    """The one rule argparse cannot state, checked where argparse would.
+
+    `--response` is required beside `--package` and optional beside
+    `--contexts`, because a sample object may carry the answer and a package
+    never does. A missing one is a **wrong command line** and not an unauditable
+    input, so it exits 2 like every other misuse rather than 1 like a refusal.
+    """
+    if getattr(arguments, "command", "") != "audit" or arguments.response:
+        return
+    if arguments.package:
+        parser.error("--package needs --response: the answer to audit")
+    if arguments.contexts:
+        # A list of strings carries no answer; a sample object may.
+        with contextlib.suppress(OSError, ValueError, UnicodeDecodeError):
+            if isinstance(json.loads(_read(arguments.contexts)), list):
+                parser.error(
+                    "--contexts is a list of strings, so the answer has to come from "
+                    "--response. A sample object carrying both is the other way in."
+                )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI. Returns an exit code rather than calling ``sys.exit``.
 
@@ -636,6 +698,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     _tolerate_a_narrow_console()
     parser = _parser()
     arguments = parser.parse_args(argv)
+    _check_arguments(parser, arguments)
 
     try:
         if arguments.command == "eval":

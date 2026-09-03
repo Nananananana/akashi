@@ -4,8 +4,29 @@ Take the answer a model gave you and the context it was given, and separate what
 the answer took from its evidence from what it produced on its own. No model
 runs inside an audit, so the same inputs give the same report forever.
 
-Nothing is built yet. See ``docs/proposals/0001-the-design.md`` for the design
-and ``docs/adr/`` for the decisions behind it.
+The shortest way in, for somebody who has an answer and some strings:
+
+```python
+from akashi import evaluate
+
+result = evaluate(
+    answer="The tent weighs 2.4kg and the gas is 9.9kg.",
+    contexts=["The tent weighs 2.4kg.", "Gas cartridge, 250mg."],
+)
+result.grounded_share   # 0.5
+result.floating         # ('9.9kg',)
+```
+
+`evaluate_sample` takes a RAGAS or DeepEval sample dictionary unchanged.
+
+**`grounded_share` is not a faithfulness score.** Every library in this space
+reports a 0-1 number by that name, computed by asking a model whether the
+context entails each claim. This one is the share of load-bearing strings in the
+answer that occur in the text that was sent -- a different question, and
+comparing the two numbers is comparing nothing. `result.limits` says so on the
+object, and the report says so on the artefact.
+
+See ``docs/adr/`` for the decisions behind it.
 """
 
 from __future__ import annotations
@@ -16,13 +37,16 @@ from .errors import (
     ProtectedResponseError,
     SegmentationError,
 )
-
-__version__ = "0.1.0.dev0"
+from .interfaces.api import Result, evaluate, evaluate_sample
+from .version import __version__
 
 __all__ = [
     "AkashiError",
     "ContractError",
     "ProtectedResponseError",
+    "Result",
     "SegmentationError",
     "__version__",
+    "evaluate",
+    "evaluate_sample",
 ]

@@ -141,6 +141,41 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **The shape everybody else already has.** akashi read
+  `tsumugi.context-package/1` and nothing else, and almost nobody outside this
+  family holds one — which made the barrier to trying akashi the package, not
+  the audit.
+
+  ```python
+  from akashi import evaluate
+
+  result = evaluate(answer="...", contexts=["...", "..."])
+  result.grounded_share  # 0.5
+  result.floating  # ('9.9kg',)
+  ```
+
+  A **RAGAS or DeepEval sample works unchanged**: `user_input` / `input` /
+  `question`, `response` / `actual_output` / `answer`, `retrieved_contexts` /
+  `retrieval_context` / `contexts`. On all three surfaces — the Python API,
+  `akashi audit --contexts sample.json`, and the MCP `audit` tool.
+
+  **No provenance is invented.** A package built from strings declares
+  `akashi.plain-context/1` and not tsumugi's contract, `source_path` stays
+  empty, offsets index the strings that were passed, and `limits` gains a line
+  saying so — because a reader who sees `notes/gear.md[1209:1214]` will go and
+  open that file.
+
+  And `grounded_share` is **not** a faithfulness score: every library in this
+  space reports a 0–1 number by that name computed by asking a model about
+  entailment, and this one is the share of load-bearing strings that occur in
+  the text that was sent. `result.limits` says so on the object.
+
+  The layer test caught two things while this landed: the one-call API belongs
+  beside the CLI and the MCP server rather than in `application` (which may name
+  only the domain and the ports), and `__version__` had to move out of the
+  public surface — `infrastructure` importing `akashi` for it became a cycle
+  once `__init__` re-exported something from `interfaces`.
+
 - **`akashi audit --judge`: a language model answers the part akashi cannot,
   and the artefact keeps the two apart.** ADR-0003 said no model runs at audit
   time, *ever*, and its reasoning still holds — a verdict that moves when nobody

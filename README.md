@@ -20,6 +20,45 @@ model in the path and nothing installed alongside it.
 
 ---
 
+## The shortest way in
+
+You do not need a ContextPackage, a corpus, or any of the rest of the family.
+Three values, the same three every RAG evaluation library takes:
+
+```python
+from akashi import evaluate
+
+result = evaluate(
+    answer="The tent weighs 2.4kg and the gas is 9.9kg.",
+    contexts=["The tent weighs 2.4kg.", "Gas cartridge, 250mg."],
+)
+result.grounded_share  # 0.5
+result.floating  # ('9.9kg',)
+result.unchecked  # what was skipped, and why
+```
+
+A **RAGAS or DeepEval sample works unchanged** — `evaluate_sample(sample)` reads
+`user_input` / `input` / `question`, `response` / `actual_output` / `answer`, and
+`retrieved_contexts` / `retrieval_context` / `contexts`. So does the command
+line and the MCP tool:
+
+```bash
+akashi audit --contexts sample.json
+```
+
+**`grounded_share` is not a faithfulness score.** Every library in this space
+reports a 0–1 number by that name, computed by asking a model whether the
+context entails each claim. This one is *the share of load-bearing strings in
+the answer that occur in the text that was sent* — a different question, and
+comparing the two numbers is comparing nothing. `result.limits` says so on the
+object; the report says so on the artefact.
+
+**No provenance is invented.** A ContextPackage carries a document, a path and
+an offset into a file; a list of strings carries none of that. So the offsets
+index the strings you passed, `source_path` stays empty, and the report gains a
+line saying it — because a reader who sees `notes/gear.md[1209:1214]` will go and
+open that file.
+
 ## The problem
 
 Deciding what to send a model is solved infrastructure. Checking what comes back
