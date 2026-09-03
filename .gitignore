@@ -11,6 +11,11 @@ venv/
 .ruff_cache/
 .import_linter_cache/
 .coverage
+# Not committed, and not an oversight. Hypothesis keys stored examples on a
+# digest over the test function's own source, so an entry is orphaned by the
+# first edit to the test and carries nothing between checkouts. Committing this
+# would look like counterexamples travel when they do not. They travel as
+# `@example` -- see AGENTS.md.
 .hypothesis/
 htmlcov/
 
