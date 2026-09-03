@@ -155,6 +155,22 @@ CHINESE = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.PROPER_NOUN,
+            pattern=r"[甲乙丙丁戊](?:方|公司|侧)",
+            priority=87,
+            note=(
+                "a party designation. A name in a contract, and the one a clause "
+                "is actually about. Structural like every other rule here -- the "
+                "stem is a closed set of five and the suffix a closed set of "
+                "three, so this reads a convention rather than recognising a name. "
+                "No lookaround at all, unlike the Japanese rule, which has a "
+                "particle either side to break on. Chinese runs straight from a "
+                "preposition into the party and from the party into a verb -- "
+                "requiring a break on the right found one of the two in the "
+                "corpus and requiring one on the left found neither"
+            ),
+        ),
+        ExtractionRule(
+            kind=ParticularKind.PROPER_NOUN,
             pattern=_BEFORE_NAME + r"(" + _NOT_FIRST + r"[一-鿿]{1,3})(?=" + _TITLE + r")",
             priority=85,
             group=1,

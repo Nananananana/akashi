@@ -141,6 +141,49 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **Extraction recall 95% → 99%, precision unchanged at 100%.** The
+  hand-marked corpus said akashi missed five particulars and all five were
+  `proper_noun`. Four were the same thing: `甲社` / `乙社` / `甲方` / `乙方` — a
+  contract party designation, which is what a clause is actually about.
+
+  ```text
+  recall over everything marked   91 of 96 -> 95 of 96
+  precision                       100%     -> 100%
+  spans exact rather than near    91 of 91 -> 95 of 95
+  unbearing segments (marked)     30%      -> 28%
+  ```
+
+  A rule, not a lookup: the stem is a closed set of five and the suffix a closed
+  set of three or four, so it reads a convention the way every other rule here
+  does. Precision holding across both corpora is the check that it is — a rule
+  that found four more names by finding things that are not names would trade a
+  silent miss for a loud lie.
+
+  **These four were in the measured set**, so the score is partly in-sample and
+  the rule is general; both halves are true, and `--held-out` reports the same
+  99%.
+
+- **What an external NER model would buy, measured before reaching for one.**
+  One of the five misses — `Borden Systems`, a company name with no legal form,
+  which no structural rule reaches. And **nothing at all** on the 30% of
+  segments akashi finds nothing in, because those segments are negations,
+  summaries and hedges with no name, figure or date in them:
+
+  ```text
+  No follow-up was arranged.
+  Liability under this agreement is not capped.
+  In short, either side can bring the arrangement to an end.
+  ```
+
+  Also worth recording before somebody reaches for one: **GLiNER's v1 models are
+  CC-BY-NC-4.0** and only v2.1 and GLiNER2 are Apache-2.0; spaCy's code and small
+  models are MIT with OntoNotes provenance behind the English one.
+
+  The caveat this cannot settle: the corpus is generated and marked by the
+  people who wrote the extractor (ADR-0010), so it may under-represent the text
+  a model would help with. Same shape as the corpus not being able to tell two
+  matchers apart.
+
 - **The shape everybody else already has.** akashi read
   `tsumugi.context-package/1` and nothing else, and almost nobody outside this
   family holds one — which made the barrier to trying akashi the package, not

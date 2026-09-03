@@ -220,6 +220,18 @@ JAPANESE = LanguagePack(
             priority=86,
         ),
         ExtractionRule(
+            kind=ParticularKind.PROPER_NOUN,
+            pattern=r"(?<![一-鿿])[甲乙丙丁戊](?:社|方|側)(?![一-鿿])",
+            priority=87,
+            note=(
+                "甲社 / 乙方: a party designation, which is a name in a contract "
+                "and is the one a clause is actually about. Structural like every "
+                "other rule here -- the stem is a closed set of five and the "
+                "suffix is a closed set of three, so this reads a convention "
+                "rather than recognising a name"
+            ),
+        ),
+        ExtractionRule(
             kind=ParticularKind.NUMBER,
             pattern=r"[〇一二三四五六七八九]{3,}",
             priority=20,

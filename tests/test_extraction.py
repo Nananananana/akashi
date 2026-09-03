@@ -535,3 +535,60 @@ def test_a_long_run_costs_time_that_grows_with_its_length_and_not_its_square() -
         f"doubling the input multiplied the cost by {large / small:.1f}; "
         f"quadratic is 4 and linear is 2. Has an unbounded repetition come back?"
     )
+
+
+# --- a party designation is a name -------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("甲社は乙社に対し支払う。", ["甲社", "乙社"]),
+        ("甲方应向乙方支付。", ["甲方", "乙方"]),
+        ("丙社も同様とする。", ["丙社"]),
+        # The stem alone is a word, not a party. `甲乙` is "the two of them" and
+        # `一般` holds no party at all -- precision is the half that would fail
+        # quietly, because a false name grounds against nothing and reads as a
+        # fabrication in the answer.
+        ("甲乙双方の合意による。", []),
+        ("一般的な条件は次のとおり。", []),
+        ("这是个方法。", []),
+    ],
+)
+def test_a_contract_party_is_extracted_as_a_name(text: str, expected: list[str]) -> None:
+    """`甲社` / `乙方` is what a clause is about, and akashi read past it.
+
+    Four of the five particulars the hand-marked corpus said akashi missed were
+    these, and the fifth is `Borden Systems` -- a company name with no legal
+    form, which no structural rule reaches (see `docs/measurements.md`).
+
+    Structural like every other rule here: the stem is a closed set of five and
+    the suffix a closed set of three or four. This reads a convention, not a
+    name.
+    """
+    from akashi.domain.extraction import extract_from_answer
+    from akashi.domain.segment import segment_answer
+    from akashi.infrastructure.languages import DEFAULT
+
+    found = [
+        one.text
+        for one in extract_from_answer(segment_answer(text, DEFAULT), DEFAULT)
+        if one.kind.value == "proper_noun"
+    ]
+    assert found == expected
+
+
+def test_the_chinese_rule_has_no_lookaround_and_the_japanese_one_does() -> None:
+    """Not an inconsistency. Japanese has a particle either side to break on;
+    Chinese runs straight from a preposition into the party and from the party
+    into a verb. Requiring a break on the right found one of the two in the
+    corpus, and requiring one on the left found neither.
+    """
+    from akashi.infrastructure.languages import DEFAULT
+
+    def party_rule(code: str) -> str:
+        pack = next(one for one in DEFAULT if one.code == code)
+        return next(rule.pattern for rule in pack.rules if "甲乙丙丁戊" in rule.pattern)
+
+    assert "(?<!" in party_rule("ja")
+    assert "(?<!" not in party_rule("zh")

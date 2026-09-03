@@ -95,7 +95,8 @@ class Breach:
 
 #: Set on 2026-08-30 and re-measured the same day, twice: once when the
 #: structural name rules shipped (extraction recall over everything marked went
-#: 91% -> 95%, unbearing 35% -> 30%) and once when ``contradicted`` did
+#: 91% -> 95%, unbearing 35% -> 30%), again when the party-designation rules did
+#: (95% -> 99%, unbearing 30% -> 28%), and once when ``contradicted`` did
 #: (verdict correctness 35% -> 59%, source localisation 0% -> 36%).
 #:
 #: Every bound below is where it was. ``verdict correctness`` is the clearest
@@ -171,8 +172,8 @@ FLOORS: tuple[Floor, ...] = (
     ),
     Floor(
         metric="extraction recall on claimed kinds",
-        measured=0.95,
-        measured_on="2026-08-30",
+        measured=0.99,
+        measured_on="2026-09-03",
         at_least=0.85,
         why=(
             "whether akashi finds what it says it finds. A particular not extracted is "

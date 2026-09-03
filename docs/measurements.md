@@ -476,6 +476,79 @@ what is missing is a case that shows it. `tests/test_matcher_choice.py` asserts
 the two agree, so the gap stops being invisible: **when the corpus grows a case
 that re-spaces a quantity, that test fails and should be deleted.**
 
+## The five particulars akashi missed, and what closed four of them
+
+The hand-marked corpus said extraction recall was **91 of 96**, and the five
+misses were all `proper_noun`:
+
+```text
+en-contract-01: missed proper_noun 'Borden Systems'
+ja-contract-01: missed proper_noun '甲社'
+ja-contract-01: missed proper_noun '乙社'
+zh-contract-01: missed proper_noun '甲方'
+zh-contract-01: missed proper_noun '乙方'
+```
+
+**Four of the five are a convention, not a name.** `甲` / `乙` / `丙` as a
+contract party is as fixed as *Party A* — a closed set of five stems and a
+closed set of suffixes — so it is a structural rule like every other one here,
+and not a lookup of the four strings that were missed.
+
+| | before | after |
+| --- | --- | --- |
+| recall over everything marked | 91 of 96 — 91% | **95 of 96 — 99%** |
+| recall over the claimed kinds | 91 of 96 — 95% | **95 of 96 — 99%** |
+| spans exact rather than near | 91 of 91 | 95 of 95 |
+| **precision** | 100% | **100%** |
+| unbearing segments (marked) | 30% | **28%** |
+| planted-corpus false positives | 0 of 42 | **0 of 42** |
+
+Precision holding at 100% across both corpora is the check that matters: a rule
+that found four more names by finding things that are not names would trade a
+silent miss for a loud lie, and a false name grounds against nothing and reads
+as a fabrication in the answer.
+
+**These four were in the measured set.** The rule is general and the score is
+partly in-sample, and both halves of that sentence are true. `--held-out` reports
+the same 99%.
+
+**The fifth is what a library would be for.** `Borden Systems` is a company name
+with no legal form beside it, and no structural rule reaches it —
+`docs/adr/` and the report's own `limits` have said so since v0.4: *akashi reads
+structure, not names.*
+
+## What an external NER model would and would not buy
+
+Measured before reaching for one, because the answer decides whether the
+dependency is worth its licence and its weight.
+
+**On extraction:** one of the five misses above. The other four were a rule.
+
+**On the 30% of segments akashi finds nothing in:** nothing. Those segments are
+
+```text
+No follow-up was arranged.
+Liability under this agreement is not capped.
+In short, either side can bring the arrangement to an end.
+It is worth noting that the exposure is bounded rather than open.
+```
+
+Negations, summaries and hedges with no name, no figure and no date in them. An
+entity recogniser finds nothing there either, because there is nothing there —
+which is what `docs/proposals/0002` already reported as *about a third of a
+realistic answer is prose akashi has nothing to check in*.
+
+**And the licences are not uniform.** GLiNER's v1 models are **CC-BY-NC-4.0** —
+non-commercial — and only v2.1 and GLiNER2 are Apache-2.0. spaCy's code and its
+small models are MIT, with OntoNotes provenance behind the English one.
+
+**The caveat this cannot settle.** The corpus is generated and hand-marked by
+the people who wrote the extractor (ADR-0010), so it may under-represent exactly
+the text a model would help with. What is measured here is that on *this*
+corpus the payoff is one particular; whether that holds on somebody else's is
+the open question, and it is the same shape as the corpus not being able to tell
+two matchers apart.
+
 ## The floors
 
 Set on 2026-08-30 against the run above, in
