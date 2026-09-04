@@ -328,12 +328,25 @@ def test_no_test_asserts_only_inside_a_loop_over_something_akashi_computed() -> 
             }
             if not names & called:
                 continue
+            # A name bound to a literal is still a literal. `mamori` needed the
+            # same widening for its module constants, and the very next test
+            # written here -- a list of fragments assigned to `bearing` -- was
+            # flagged by the narrower rule.
+            literals = {
+                target.id
+                for node in [*ast.walk(function), *ast.walk(tree)]
+                if isinstance(node, ast.Assign)
+                and isinstance(node.value, (ast.Tuple, ast.List, ast.Set, ast.Constant, ast.Dict))
+                for target in node.targets
+                if isinstance(target, ast.Name)
+            }
             loops = [
                 node
                 for node in ast.walk(function)
                 if isinstance(node, ast.For)
                 and any(isinstance(inner, ast.Assert) for inner in ast.walk(node))
                 and not isinstance(node.iter, (ast.Tuple, ast.List, ast.Set, ast.Constant))
+                and not (isinstance(node.iter, ast.Name) and node.iter.id in literals)
             ]
             if not loops:
                 continue

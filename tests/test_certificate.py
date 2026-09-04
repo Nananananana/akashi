@@ -67,6 +67,22 @@ def strip(html: str) -> Stripper:
     return parser
 
 
+def _is_a_page(html: str) -> bool:
+    """Whether there is a certificate here at all.
+
+    Every assertion about what a certificate does *not* contain is true of a
+    page that contains nothing, so each of them says this first. Found by
+    poisoning `certificate()` to return an empty string and watching two tests
+    stay green.
+    """
+    return (
+        html.startswith("<!DOCTYPE html>")
+        and "<h2>Traced</h2>" in html
+        and ANSWER in html
+        and len(html) > 2000
+    )
+
+
 # --- what a signer is holding ------------------------------------------------
 
 
@@ -167,7 +183,14 @@ def test_it_does_not_claim_the_answer_is_true() -> None:
 
 
 def test_there_is_no_script_anywhere() -> None:
+    """An empty page has no script in it either.
+
+    This and the one below were written as absence alone, and both passed with
+    `certificate()` returning `""`. Absence is only a claim about a page that
+    exists, so the page is checked first.
+    """
     html = certificate(archived(report()))
+    assert _is_a_page(html)
     assert "<script" not in html.lower()
     assert "javascript:" not in html.lower()
     assert "onload" not in html.lower()
@@ -180,6 +203,7 @@ def test_nothing_is_fetched_when_the_page_is_opened() -> None:
     the CDN was gone. For a document meant to outlive the machine that made it,
     both are disqualifying."""
     html = certificate(archived(report()))
+    assert _is_a_page(html)
     assert not re.search(r"https?://", html)
     assert "@import" not in html
     assert "@font-face" not in html

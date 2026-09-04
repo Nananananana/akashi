@@ -132,13 +132,21 @@ def test_the_report_says_the_evidence_was_plain_strings() -> None:
 
 
 def test_a_package_read_from_a_file_does_not_gain_that_limit() -> None:
-    """The line is about this evidence, not about akashi."""
+    """The line is about this evidence, not about akashi.
+
+    A report with no limits at all does not carry this one either, and that is
+    what this asserted before -- it passed with `limits` forced to `()`. So the
+    other limits are checked first: their presence is what makes the absence of
+    this one mean something.
+    """
     from akashi.application import audit
+    from akashi.domain.coverage import STANDING_LIMITS
     from akashi.infrastructure.languages import DEFAULT
     from akashi.infrastructure.packages import load_package
 
     package = load_package(Path(__file__).parent / "packages" / "gear-ja.json")
     body = audit("テントは 2.4kg。", package, DEFAULT).to_dict()
+    assert len(body["limits"]) == len(STANDING_LIMITS)
     assert not any("plain strings" in line for line in body["limits"])
 
 
