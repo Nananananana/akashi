@@ -106,14 +106,22 @@ def test_no_anchor_names_a_file() -> None:
 
 def test_the_offsets_index_the_strings_that_were_passed() -> None:
     """Which is the only honest thing they can index, and the reason the limit
-    below exists rather than a note in a README."""
+    below exists rather than a note in a README.
+
+    The population is counted first. Three nested loops over something akashi
+    computed pass on an empty result, and an answer that grounds nothing is a
+    perfectly ordinary thing for a change to produce.
+    """
     result = evaluate(answer=ANSWER, contexts=CONTEXTS)
+    checked = 0
     for segment in result.report.assessment.segments:
         for one in segment.particulars:
             for location in one.locations:
                 span = location.anchor.span
                 index = int(location.anchor.document_id.split()[-1]) - 1
                 assert CONTEXTS[index][span.start : span.end] == one.particular.text
+                checked += 1
+    assert checked, "nothing grounded, so no offset was compared with anything"
 
 
 def test_the_report_says_the_evidence_was_plain_strings() -> None:

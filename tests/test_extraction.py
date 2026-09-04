@@ -151,8 +151,16 @@ def test_a_number_is_not_found_inside_a_longer_one() -> None:
 
 
 def test_particulars_do_not_overlap_and_are_in_order() -> None:
+    """`pairwise` over nothing yields nothing, so this passed with extraction
+    returning `()` -- and the answer below is written to hold three particulars
+    precisely so that the invariant has something to be true of. The population
+    is asserted before it is iterated."""
     particulars = extract_from_answer(
         segment_answer("On 2026-08-30 the 2.4kg tent cost $45,000.", DEFAULT), DEFAULT
+    )
+    assert len(particulars) >= 3, (
+        f"this answer holds a date, a quantity and an amount; extraction found "
+        f"{len(particulars)}, so there is no pair for the invariant to hold between"
     )
     for earlier, later in itertools.pairwise(particulars):
         assert earlier.span.end <= later.span.start
