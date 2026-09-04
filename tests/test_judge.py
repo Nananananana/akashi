@@ -26,7 +26,7 @@ from typing import Any, ClassVar
 import pytest
 
 from akashi.application import audit
-from akashi.application.judging import MAX_CLAIMS, claims_for, judge_report
+from akashi.application.judging import MAX_CLAIMS, claims_and_total, claims_for, judge_report
 from akashi.domain.package import ContextPackage
 from akashi.domain.report import AuditReport
 from akashi.domain.verdict import Verdict
@@ -408,3 +408,92 @@ def test_a_long_unbearing_answer_still_stops_at_the_bound() -> None:
     report = audit(answer, package(), DEFAULT)
     assert len(report.assessment.segments) > MAX_CLAIMS
     assert len(claims_for(report)) == MAX_CLAIMS
+
+
+# --- the question strings cannot answer (#83) --------------------------------
+
+
+def test_a_grounded_particular_is_still_not_sent_by_default() -> None:
+    """The original rule, unchanged. akashi knows where that string is, and
+    replacing a fact with an opinion is not an improvement."""
+    asked = claims_for(audit(ANSWER, package(), DEFAULT))
+    assert all(not claim.found_in for claim in asked)
+    assert "2.4kg" not in [claim.particular for claim in asked]
+
+
+def test_asking_about_grounded_values_reaches_the_case_akashi_scores_1_0() -> None:
+    """#83. `The tent weighs 2.4kg.` against evidence saying the STOVE weighs
+    2.4kg grounds, share 1.0, and until now produced no claim at all -- akashi
+    had a judge that could catch it and never showed it the case."""
+    from akashi import evaluate
+
+    report = evaluate(
+        answer="The tent weighs 2.4kg.",
+        contexts=["The stove weighs 2.4kg.", "The tent weighs 3.1kg."],
+    ).report
+    assert report.assessment.grounded_share == 1.0
+    assert claims_for(report) == (), "the defect is that this is empty"
+
+    [claim] = claims_for(report, grounded=True)
+    assert claim.particular == "2.4kg"
+    assert claim.found_in == "itm_01"
+    assert claim.text == "The tent weighs 2.4kg."
+
+
+def test_the_claim_says_the_string_was_found_so_the_judge_does_not_recheck_it() -> None:
+    """A judge asked *is 2.4kg in the evidence* would answer yes and akashi
+    would have paid for a fact it already had. The question is which sentence."""
+    from akashi import evaluate
+    from akashi.infrastructure.adapters.claude_judge import _SYSTEM, _prompt
+
+    report = evaluate(answer="The tent weighs 2.4kg.", contexts=["The stove weighs 2.4kg."]).report
+    rendered = _prompt(claims_for(report, grounded=True), ["The stove weighs 2.4kg."])
+    assert "found verbatim in: itm_01" in rendered
+    assert "three shapes" in _SYSTEM
+    assert "do not re-check it" in _SYSTEM
+    assert "about the same thing" in _SYSTEM
+
+
+def test_the_bound_counts_grounded_claims_too() -> None:
+    """`MAX_CLAIMS` bounds the report, and this is a third way to reach it --
+    on most reports the largest population there is."""
+    from akashi import evaluate
+
+    answer = " ".join(f"Item {n} weighs {n}.5kg." for n in range(1, 90))
+    contexts = [" ".join(f"Item {n} weighs {n}.5kg." for n in range(1, 90))]
+    report = evaluate(answer=answer, contexts=contexts).report
+    sent, total = claims_and_total(report, grounded=True)
+    assert total > MAX_CLAIMS, "this answer does not reach the bound"
+    assert len(sent) == MAX_CLAIMS
+
+
+def test_the_shortfall_is_reported_when_grounded_claims_fill_the_bound() -> None:
+    """The receipt already exists; it has to count this population as well, or
+    a reader sees 64 judgements and believes the judge looked at everything."""
+    from akashi import evaluate
+    from akashi.domain.bounds import from_unsent_claims
+
+    answer = " ".join(f"Item {n} weighs {n}.5kg." for n in range(1, 90))
+    report = evaluate(answer=answer, contexts=[answer]).report
+    sent, total = claims_and_total(report, grounded=True)
+    [bound] = from_unsent_claims(len(sent), total, MAX_CLAIMS)
+    assert str(total) in bound.because
+    assert bound.name == "MAX_CLAIMS"
+
+
+def test_the_command_line_offers_it_and_says_what_it_is_not() -> None:
+    """A flag that changes what a model is asked about, on a report somebody
+    signs, has to say on the command line that a judgement is not a verdict."""
+    import contextlib
+    import io
+
+    from akashi.interfaces.cli.main import main
+
+    captured = io.StringIO()
+    with contextlib.redirect_stdout(captured), pytest.raises(SystemExit) as exited:
+        main(["audit", "--help"])
+    assert exited.value.code == 0
+    text = " ".join(captured.getvalue().split())
+    assert "--judge-grounded" in text
+    assert "not a verdict" in text
+    assert "#83" in text

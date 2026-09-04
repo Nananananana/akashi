@@ -59,9 +59,19 @@ class Claim:
 
     segment_id: str
     text: str
-    #: The particular that floated, when the claim is about one rather than
-    #: about the whole sentence. Empty for a segment-level claim.
+    #: The particular in question, when the claim is about one rather than about
+    #: the whole sentence. Empty for a segment-level claim.
     particular: str = ""
+    #: Where ``particular`` was found in the evidence, when it was found at all.
+    #:
+    #: Set only on a claim about a **grounded** value, and it changes the
+    #: question completely. For a floating particular the premise is *this
+    #: wording is nowhere in the evidence*; for a grounded one the premise is
+    #: *this exact wording is right here* -- and the question is whether the
+    #: sentence it came from is about the same thing the answer's sentence is
+    #: about. That is #83, and it is the one thing akashi cannot decide by
+    #: comparing strings, because the strings match.
+    found_in: str = ""
 
 
 @dataclass(frozen=True, slots=True)

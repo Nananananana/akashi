@@ -178,6 +178,18 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     audit_command.add_argument(
+        "--judge-grounded",
+        action="store_true",
+        help=(
+            "also ask the judge about values that DID resolve. akashi grounds a value "
+            "wherever the string occurs and never asks whether that sentence is about "
+            "the same thing (#83): `The tent weighs 2.4kg` scores 1.0 against evidence "
+            "saying the STOVE weighs 2.4kg. Off by default because it is a request per "
+            "grounded particular. A judgement is still not a verdict -- `unsupported` "
+            "here does not un-ground anything, it annotates it"
+        ),
+    )
+    audit_command.add_argument(
         "--fail-on-findings",
         action="store_true",
         help=f"exit {FOUND} when anything floats, for a pipeline that gates on it",
@@ -431,10 +443,12 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         from akashi.domain.bounds import from_unsent_claims
 
         chosen_judge = _judge(arguments.judge)
-        sent, total = claims_and_total(report)
+        sent, total = claims_and_total(report, grounded=arguments.judge_grounded)
         report = dataclasses.replace(
             report,
-            judged=judge_report(report, chosen_judge, package.evidence),
+            judged=judge_report(
+                report, chosen_judge, package.evidence, grounded=arguments.judge_grounded
+            ),
             # A judge that was shown 64 of 200 claims produces a report whose
             # `judged` section looks complete. The shortfall is a fact about
             # this audit and goes where every other one does.

@@ -48,7 +48,7 @@ __all__ = ["claims_and_total", "claims_for", "judge_report"]
 MAX_CLAIMS = 64
 
 
-def claims_for(report: AuditReport) -> tuple[Claim, ...]:
+def claims_for(report: AuditReport, *, grounded: bool = False) -> tuple[Claim, ...]:
     """What akashi could not settle, in report order.
 
     A floating particular becomes a claim about that particular *inside its
@@ -63,6 +63,25 @@ def claims_for(report: AuditReport) -> tuple[Claim, ...]:
     hand the judge the subset the extractor happened to reach, which is the
     opposite of the independence it is here for.
 
+    **A grounded particular is not sent, unless ``grounded=True`` is asked for.**
+    The default is the original rule and the reason still holds: akashi knows
+    where that string is, in which document, at which offset, and replacing a
+    fact with an opinion could only make the report worse.
+
+    What #83 showed is that the reason is *incomplete*. Knowing where a string
+    is does not tell you whether the sentence it landed in is about the same
+    thing the answer's sentence is about. ``The tent weighs 2.4kg.`` grounds
+    against ``The stove weighs 2.4kg.`` and akashi reports 1.0. The strings
+    match, which is exactly why comparing strings cannot find it.
+
+    So there is one question about a grounded value that akashi cannot answer,
+    and ``grounded=True`` is how it gets asked. Off by default because it is a
+    request per grounded particular -- the largest population on most reports --
+    and because a judgement is still never a verdict (ADR-0017): a model saying
+    `unsupported` about a grounded value does not un-ground it, it annotates it.
+
+    `docs/measurements.md` records why this is not a deterministic rule instead.
+
     A `contradicted` particular is **not** sent. akashi has already named the
     value the source gives and the offset it sits at, which is a stronger and
     checkable statement; asking a model to weigh in could only add an opinion
@@ -73,10 +92,12 @@ def claims_for(report: AuditReport) -> tuple[Claim, ...]:
     the answer an audit annotation would be the restoration claim ADR-0013
     exists to refuse.
     """
-    return _claims(report)[0]
+    return _claims(report, grounded)[0]
 
 
-def claims_and_total(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
+def claims_and_total(
+    report: AuditReport, *, grounded: bool = False
+) -> tuple[tuple[Claim, ...], int]:
     """The claims that will be sent, and how many there were to send.
 
     The second number is what `MAX_CLAIMS` was hiding. 200 floating particulars
@@ -88,10 +109,10 @@ def claims_and_total(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
     shortfall needs it, and every other caller would otherwise unpack a pair and
     throw half of it away.
     """
-    return _claims(report)
+    return _claims(report, grounded)
 
 
-def _claims(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
+def _claims(report: AuditReport, grounded: bool) -> tuple[tuple[Claim, ...], int]:
     """Both numbers in one pass.
 
     Counting continues after the bound is reached rather than returning early:
@@ -101,6 +122,20 @@ def _claims(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
     found: list[Claim] = []
     total = 0
     for segment in report.assessment.segments:
+        if grounded:
+            for one in segment.particulars:
+                if one.standing is not Standing.GROUNDED or not one.locations:
+                    continue
+                total += 1
+                if len(found) < MAX_CLAIMS:
+                    found.append(
+                        Claim(
+                            segment_id=segment.segment.segment_id,
+                            text=segment.segment.text,
+                            particular=one.particular.text,
+                            found_in=one.locations[0].item_id,
+                        )
+                    )
         if segment.verdict is Verdict.UNBEARING:
             total += 1
             if len(found) < MAX_CLAIMS:
@@ -123,7 +158,9 @@ def _claims(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
     return tuple(found), total
 
 
-def judge_report(report: AuditReport, judge: Judge, evidence: Evidence) -> tuple[Judgement, ...]:
+def judge_report(
+    report: AuditReport, judge: Judge, evidence: Evidence, *, grounded: bool = False
+) -> tuple[Judgement, ...]:
     """Every judgement for ``report``, or nothing when there is nothing to ask.
 
     ``evidence`` is passed rather than taken from the report, because a report
@@ -137,7 +174,7 @@ def judge_report(report: AuditReport, judge: Judge, evidence: Evidence) -> tuple
     akashi's own matching, which is the thing the judge is there to be
     independent of.
     """
-    claims, _ = claims_and_total(report)
+    claims, _ = claims_and_total(report, grounded=grounded)
     if not claims:
         return ()
 
