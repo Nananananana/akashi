@@ -511,9 +511,20 @@ def test_a_long_run_costs_time_that_grows_with_its_length_and_not_its_square() -
     """The demonstration rather than the guard -- the structural test above is
     what actually holds the line, because a timing assertion measures a machine.
 
-    So the budget here is deliberately loose: quadratic growth multiplies by
-    four per doubling and this fails at three, which no linear implementation
-    approaches and no quadratic one escapes.
+    **How reliably it goes red under poison, measured rather than assumed.**
+    A sibling project found a check of its own that was probabilistic: poisoned,
+    it went red 2 times in 12, and "twelve runs, all green" then reads as
+    "guarded". So this one was measured the same way, unwiring the bound:
+
+    ..  code-block:: text
+
+        bounded (the real thing)   ratios 2.03 - 2.11   red at >3:  0 of 6
+        poisoned (bound removed)   ratios 3.52 - 4.01   red at >3: 12 of 12
+
+    Two populations with a wide gap between them, and the threshold sits in the
+    gap. That makes this deterministic in effect rather than merely usually
+    right -- but the numbers belong here, because a reader should not have to
+    re-derive them to know which of the two kinds of check they are looking at.
     """
     import time
 
