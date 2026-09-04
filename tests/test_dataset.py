@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 
 from akashi import Results, evaluate_samples
+from akashi.errors import ContractError
 
 #: One grounded particular. Share 1.0.
 ONE = {"question": "q", "answer": "The tent weighs 2.4kg.", "contexts": ["The tent weighs 2.4kg."]}
@@ -164,3 +165,52 @@ def test_results_is_exported() -> None:
         ).grounded_share
         is None
     )
+
+
+# --- the shapes a dataset actually arrives in --------------------------------
+
+
+class FakeFrame:
+    """A DataFrame's two relevant behaviours: it has columns, and iterating it
+    gives their names rather than the rows."""
+
+    def __init__(self, rows: list[dict[str, object]]) -> None:
+        self._rows = rows
+        self.columns = list(rows[0]) if rows else []
+
+    def __iter__(self):  # type: ignore[no-untyped-def]
+        return iter(self.columns)
+
+    def to_dict(self, orient: str) -> list[dict[str, object]]:
+        assert orient == "records"
+        return self._rows
+
+
+def test_a_dataframe_is_read_as_rows_and_not_as_column_names() -> None:
+    """The quiet wrong answer this exists to stop. Iterating a DataFrame gives
+    'question', 'answer', 'contexts' -- three strings, all refused, and an empty
+    `Results` carrying three refusals that look like the caller's data was bad.
+    """
+    frame = FakeFrame([dict(ONE), dict(FOUR)])
+    assert list(iter(frame)) == ["question", "answer", "contexts"]
+
+    results = evaluate_samples(frame)
+    assert len(results) == 2
+    assert results.refused == ()
+    assert [one.grounded_share for one in results] == [1.0, 0.25]
+
+
+def test_one_mapping_is_refused_rather_than_read_as_its_keys() -> None:
+    with pytest.raises(ContractError, match="would audit its keys"):
+        evaluate_samples(ONE)  # type: ignore[arg-type]
+
+
+def test_one_string_is_refused_rather_than_read_as_its_characters() -> None:
+    with pytest.raises(ContractError, match="list of its characters"):
+        evaluate_samples("an answer")  # type: ignore[arg-type]
+
+
+def test_a_plain_iterable_of_dicts_still_goes_straight_through() -> None:
+    """Adding a door does not close one; a HuggingFace Dataset is this shape."""
+    results = evaluate_samples(iter([ONE, FOUR]))
+    assert len(results) == 2

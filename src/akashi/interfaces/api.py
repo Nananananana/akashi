@@ -40,7 +40,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from akashi.application.audit import audit
 from akashi.domain.matching import DEFAULT_MATCHER, Matcher
@@ -240,19 +240,57 @@ class Results:
         ]
 
 
-def evaluate_samples(samples: Iterable[Mapping[str, Any]], **options: Any) -> Results:
+def evaluate_samples(samples: Any, **options: Any) -> Results:
     """Audit a dataset of RAGAS, DeepEval or plain samples.
 
-    The loop every caller was writing, with the two decisions they should not
-    have to make alone: a row akashi refuses is **kept as a refusal** rather than
-    raised or dropped, and the aggregate counts particulars rather than
-    averaging rows (`Results`).
+    Takes anything that yields mappings -- a list of dicts, a generator, a
+    HuggingFace ``Dataset``, a ``pandas.DataFrame`` -- and a DataFrame is why
+    this does not simply iterate. Iterating a DataFrame yields its **column
+    names**, so `evaluate_samples(df)` would have audited three strings instead
+    of five hundred rows, refused all three, and returned an empty `Results`
+    with three refusals in it. A wrong answer arriving quietly is the shape of
+    failure this project exists to remove, so it is handled here rather than
+    left in a note.
+
+    The loop every caller was writing otherwise, with the two decisions they
+    should not have to make alone: a row akashi refuses is **kept as a refusal**
+    rather than raised or dropped, and the aggregate counts particulars rather
+    than averaging rows (`Results`).
     """
     done: list[Result] = []
     refused: list[Refused] = []
-    for index, sample in enumerate(samples):
+    for index, sample in enumerate(_rows(samples)):
         try:
             done.append(evaluate_sample(sample, **options))
         except (ContractError, ProtectedResponseError) as error:
             refused.append(Refused(index=index, reason=str(error)))
     return Results(tuple(done), tuple(refused))
+
+
+def _rows(samples: Any) -> Iterable[Mapping[str, Any]]:
+    """Rows, from any of the shapes a dataset arrives in.
+
+    ``to_dict("records")`` is the pandas and polars spelling for "give me the
+    rows"; duck-typing it rather than importing pandas keeps this working for
+    anything that speaks the same method, and keeps akashi's dependency count
+    at zero.
+    """
+    to_dict = getattr(samples, "to_dict", None)
+    if callable(to_dict) and hasattr(samples, "columns"):
+        rows = to_dict("records")
+        if not isinstance(rows, list):  # pragma: no cover - defensive
+            raise ContractError(
+                f"{type(samples).__name__}.to_dict('records') did not give a list of rows"
+            )
+        return rows
+    if isinstance(samples, Mapping):
+        raise ContractError(
+            "evaluate_samples takes many samples and one mapping was given. Iterating it "
+            "would audit its keys. Pass [sample], or call evaluate_sample(sample)."
+        )
+    if isinstance(samples, str):
+        raise ContractError(
+            "evaluate_samples takes many samples and one string was given, which would be "
+            "read as a list of its characters."
+        )
+    return cast("Iterable[Mapping[str, Any]]", samples)
