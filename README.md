@@ -139,8 +139,14 @@ import pandas as pd
 pd.DataFrame(results.rows())  # akashi does not depend on pandas
 ```
 
-Two decisions it makes so a caller does not have to make them wrong:
+`rows` can be a list of dicts, a generator, a HuggingFace `Dataset`, or a
+`pandas.DataFrame`. Three decisions it makes so a caller does not have to make
+them wrong:
 
+- **A DataFrame is read as rows, not as its column names** — which is what
+  iterating one actually gives you. Passing a 500-row frame would otherwise have
+  audited three strings, refused all three, and returned an empty result whose
+  refusals read as though your data was bad.
 - **The share counts particulars, not rows.** A mean of per-row shares weights a
   one-particular answer the same as a forty-particular one, and has to decide
   what a row with nothing checkable contributes — and every answer to that is
