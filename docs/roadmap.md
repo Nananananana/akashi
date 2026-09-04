@@ -73,6 +73,29 @@ what it is protecting, and the code that eventually hits it does not. Anything
 added here that caps, truncates or samples has to produce a receipt in the same
 commit.
 
+### 1.4 When the evidence disagrees with itself, nobody is told — #88
+
+akashi grounds a particular against whichever evidence item contains it. If the
+retrieved set holds two documents that disagree, the answer grounds against one
+and the report says `grounded`, share 1.0.
+
+akashi is the only thing in the pipeline positioned to see this: it has already
+extracted every particular from every source, with offsets, deterministically,
+and since #87 that index is grouped by `(kind, digits)` so the scan is cheap.
+
+Blocked on the same measurement as 1.1, and for the same reason: the obvious
+rule is the drift rule already priced at 47%.
+
+### 1.5 The default matcher's tolerance is measured by nothing
+
+`normalized` lets a particular's internal spacing vary and the corpus cannot
+tell it from `exact` — 102 grounded / 52 floating under both, across all 30
+cases. 45 spaced quantities appear in evidence and no answer re-spaces one.
+
+The tolerance is probably right for CJK and the argument for it is in
+`domain/matching.py`; what is missing is a case in the corpus where the two
+answers differ. ADR-0018 point 5.
+
 ## 2. Where akashi is harder to adopt than it needs to be
 
 ### 2.1 One sample at a time — done
@@ -116,6 +139,21 @@ extraction misses on the corpus and none of the 30% unbearing, because those
 segments carry no name, figure or date to find. GLiNER v1 is CC-BY-NC-4.0 and
 unusable commercially; v2.1 is Apache-2.0. Worth an optional engine on the same
 pattern as the judge, not a default (#67).
+
+## 3.5 Rejected from the original specification
+
+`akashi_specification.md` is the design this was started from. ADR-0018
+reconciles it with what shipped; three of its proposals are deliberately not
+built:
+
+- **an adapter that reads tsumugi's SQLite directly.** A private schema is not
+  a contract. akashi reads the published `tsumugi.context-package/1` and imports
+  tsumugi nowhere, enforced by an import contract and a nightly drift job.
+- **`confidence_score: float` on every claim.** On an exact comparison that is
+  1.0 or 0.0, and a float where a boolean lives is how a threshold arrives.
+- **`verified` / `dangling_unsupported` / `partially_supported`.** Three words
+  merge what the shipped six keep apart: *found nothing to check*, *did not
+  look*, and *could not look* are different facts about an audit.
 
 ## 4. Adopted rather than written
 
