@@ -156,7 +156,7 @@ def test_the_report_names_the_package_it_audited_against(package: ContextPackage
     report = audit(ANSWER, package, DEFAULT)
     assert report.audited.package_id == package.package_id
     assert report.audited.package_id == (
-        "sha256:111ba10a2a3ae513363ed5b795438e3b4247f2fa29eb56136ea60c7608bc4ee6"
+        "sha256:98cefec2db8a9ef55e72b0c1d065d1da22e917793885774647ddfc9d4d659c57"
     )
 
 
@@ -192,7 +192,7 @@ def test_the_seam_works_through_the_command_line(
     assert code == AUDITED
     body = json.loads(capsys.readouterr().out)
     assert body["audited"]["package_id"] == (
-        "sha256:111ba10a2a3ae513363ed5b795438e3b4247f2fa29eb56136ea60c7608bc4ee6"
+        "sha256:98cefec2db8a9ef55e72b0c1d065d1da22e917793885774647ddfc9d4d659c57"
     )
     assert any(segment["verdict"] == Verdict.FLOATING.value for segment in body["segments"])
 
@@ -268,3 +268,38 @@ def test_the_report_carries_it_as_data_too() -> None:
     raw["invented"] = "whatever"
     body = audit(ANSWER, read_package(raw), DEFAULT).to_dict()
     assert body["provenance"]["unrecognised"] == ["invented"]
+
+
+def test_an_unknown_selection_signal_does_not_stop_the_audit() -> None:
+    """What the 2026-09-04 refresh actually changed, pinned so the next one is
+    a comparison rather than a fresh investigation.
+
+    tsumugi began emitting ``confirmed_share:0.88`` in ``items[].selection
+    .signals``. That is a new **value** inside a field the contract already
+    names, not a new field, so `_unrecognised` does not report it -- it walks
+    field names and says so in its own docstring, and going deeper would need
+    akashi to hold a second copy of the whole schema.
+
+    akashi reads neither, and that is the point: the audit is over
+    ``items[].text`` and the anchors. A producer's account of *why it retrieved*
+    an item is not evidence about the answer, and akashi relaying somebody
+    else's confidence beside its own offsets is how a reader comes to think the
+    0.88 was checked by something here.
+
+    So the seam survived a producer change without a code change. The record of
+    which change that was is the thing worth keeping.
+    """
+    package = load_package(FIXTURE)
+    signals = [
+        signal
+        for item in json.loads(FIXTURE.read_text(encoding="utf-8"))["items"]
+        for signal in item.get("selection", {}).get("signals", ())
+    ]
+    assert any(signal.startswith("confirmed_share:") for signal in signals), (
+        "upstream no longer carries the signal this test is about"
+    )
+    assert package.unrecognised == ()
+
+    report = audit("テントの重量は2.4kg。", package, DEFAULT)
+    assert report.assessment.segments
+    assert report.provenance.unrecognised == ()
