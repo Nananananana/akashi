@@ -76,14 +76,40 @@ question, and which ones it does not answer at all — not an alias.
 
 ## 3. Deliberately not doing
 
-**An NLI model in the default path.** It would make akashi a slower, less
-accurate copy of tools that already exist, and would cost the one thing it has
-that they do not: a report whose every claim is an offset.
+**An NLI model in the *default* path.** Not because entailment is wrong -- the
+previous version of this file said akashi would not ship one at all, and that
+was too strict. It is available now as `--judge nli` (`akashi[nli]`,
+HHEM-2.1-Open, Apache-2.0, ~600MB, runs on a CPU and needs no network after the
+download), because refusing it left akashi weaker than the tools people already
+have at the question they ask most.
+
+What stays out of the default is the *dependency*, not the capability. `pip
+install akashi` still brings nothing and opens no socket, and a verdict is still
+computed by comparing strings. A judgement is an annotation with a named model
+on it (ADR-0017) and it does not move `report_id`.
 
 **A `faithfulness` alias.** See 2.3.
 
-**Extraction by a hosted NER model by default.** Measured: it closes 1 of the 5
+**Extraction by an NER model by default.** Measured: it closes 1 of the 5
 extraction misses on the corpus and none of the 30% unbearing, because those
 segments carry no name, figure or date to find. GLiNER v1 is CC-BY-NC-4.0 and
-unusable commercially; v2.1 is Apache-2.0. Worth an optional engine, not a
-default (#67).
+unusable commercially; v2.1 is Apache-2.0. Worth an optional engine on the same
+pattern as the judge, not a default (#67).
+
+## 4. Adopted rather than written
+
+The rule is: **the domain depends on nothing but the standard library, and
+everything outside it may depend on whatever is good and commercially
+licensed.** akashi is not a place to reimplement other people's work.
+
+| what | where | licence |
+| --- | --- | --- |
+| HHEM-2.1-Open (entailment) | `adapters/nli_judge.py`, `akashi[nli]` | Apache-2.0 |
+| transformers / torch | same | Apache-2.0 / BSD-3 |
+| Anthropic SDK | `adapters/claude_judge.py`, `akashi[claude]` | MIT |
+| DeBERTa-v3 zeroshot-v2.0-**c** (alternative NLI) | selectable by name | MIT, commercially-licensed training data |
+
+Every one of them sits behind a port the domain defines and an extra a caller
+opts into. That `NliJudge` needed **no change to the port, to `claims_for`, or
+to anything that decides a verdict** is the test of whether the seam was drawn
+in the right place.

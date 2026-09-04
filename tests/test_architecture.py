@@ -55,6 +55,25 @@ ALLOWED: dict[str, frozenset[str]] = {
             "version",
         }
     ),
+    # `akashi.testing` is a second public surface, and sits at the top level for
+    # the same reason `assert_grounded` is not a method on `Result`: a person
+    # putting akashi in their test suite should import one obvious name. It
+    # composes `evaluate` and raises; it decides no verdict and computes no
+    # share, which is why it may reach `interfaces` and why it is listed
+    # separately rather than folded into some layer that may not.
+    "testing": frozenset(
+        {
+            "domain",
+            "ports",
+            "application",
+            "infrastructure",
+            "evaluation",
+            "config",
+            "errors",
+            "version",
+            "interfaces",
+        }
+    ),
     # The package's own ``__init__`` is the public surface. It re-exports and
     # decides nothing -- including from ``interfaces``, where the one-call
     # `evaluate()` lives. That function chooses the language packs and builds a

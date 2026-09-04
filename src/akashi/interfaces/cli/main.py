@@ -56,6 +56,7 @@ from akashi.infrastructure.rendering import (
 from akashi.infrastructure.reports import load_report, load_report_or_statement
 from akashi.infrastructure.settings import load_settings
 from akashi.interfaces.mcp import serve as mcp_serve
+from akashi.ports.judge import Judge
 from akashi.version import __version__
 
 __all__ = ["main"]
@@ -167,9 +168,10 @@ def _parser() -> argparse.ArgumentParser:
         nargs="?",
         const="",
         help=(
-            "ask a language model about the claims akashi could not settle, and record "
-            "what it said. Needs `pip install 'akashi[claude]'` and an API key, and it "
-            "is the one thing in akashi that reaches the network. A judgement is NOT a "
+            "ask a model about the claims akashi could not settle, and record what it "
+            "said. `nli` runs a local entailment model (`pip install 'akashi[nli]'`, "
+            "no network after the download); anything else is a Claude model name "
+            "(`pip install 'akashi[claude]'` and an API key). A judgement is NOT a "
             "verdict: it lands in its own section under the name of the model that gave "
             "it, it is not reproducible, and it does not change report_id (ADR-0017). "
             "Defaults to claude-opus-5"
@@ -426,9 +428,8 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         # HTTP client on a machine that happens to have the extra installed,
         # and a module-level import would make it do exactly that.
         from akashi.application.judging import judge_report
-        from akashi.infrastructure.adapters.claude_judge import DEFAULT_MODEL, ClaudeJudge
 
-        chosen_judge = ClaudeJudge(model=arguments.judge or DEFAULT_MODEL)
+        chosen_judge = _judge(arguments.judge)
         report = dataclasses.replace(
             report, judged=judge_report(report, chosen_judge, package.evidence)
         )
@@ -491,6 +492,27 @@ def _mcp(_arguments: argparse.Namespace, _out: TextIO) -> int:
     directions itself.
     """
     return mcp_serve()
+
+
+def _judge(named: str) -> Judge:
+    """The judge the caller asked for, imported only once one was asked for.
+
+    `nli` is the local entailment model; anything else is a Claude model name.
+    Both fill the same port, which is why this is a two-line dispatch rather
+    than a second code path through the audit -- and why a third judge is a
+    module and an entry here, not a change to anything that decides.
+
+    The imports stay inside the branches. `import akashi` must reach neither an
+    HTTP client nor torch on a machine that happens to have an extra installed,
+    and a module-level import would make it do exactly that.
+    """
+    if named == "nli":
+        from akashi.infrastructure.adapters.nli_judge import NliJudge
+
+        return NliJudge()
+    from akashi.infrastructure.adapters.claude_judge import DEFAULT_MODEL, ClaudeJudge
+
+    return ClaudeJudge(model=named or DEFAULT_MODEL)
 
 
 def _doctor(_arguments: argparse.Namespace, out: TextIO) -> int:

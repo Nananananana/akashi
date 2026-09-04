@@ -339,4 +339,18 @@ JUDGEMENT_LIMITS: tuple[str, ...] = (
 
 
 def _judgement_limits(judged: tuple[Any, ...]) -> tuple[str, ...]:
-    return JUDGEMENT_LIMITS if judged else ()
+    """The standing three, plus whatever each judge said about its own range.
+
+    A judge that states a scope -- "English only", say -- has said something
+    about every judgement on this report, and the report is the thing that
+    travels. Distinct scopes, in the order they first appear, so two judgements
+    from one model do not say it twice.
+    """
+    if not judged:
+        return ()
+    scopes: list[str] = []
+    for one in judged:
+        said = getattr(one, "scope", "")
+        if said and said not in scopes:
+            scopes.append(said)
+    return (*JUDGEMENT_LIMITS, *scopes)
