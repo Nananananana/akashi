@@ -863,3 +863,48 @@ wrong twice before it was right.
 3. **Look at what was left behind.** A leftover separated by a space or a comma
    is a different word; one glued directly on changed the token. This is the
    rule that ships.
+
+### Six more batches, and what the first fix left behind
+
+72 drafts in nine batches, three languages, same model. The rate against the
+extractor as each fix landed:
+
+| | well-formed | akashi could not extract | |
+| --- | --- | --- | --- |
+| before any fix (first 3 batches) | 18 | 9 | **50.0%** |
+| after the `/` and superscript fix | 54 | 10 | **18.5%** |
+| after the CJK denominator and trade units | 51 | 7 | **13.7%** |
+
+**The second round found that the first fix was half a fix.** `320 km/h` was
+repaired and `320 千米/小时` was still cut at the slash, because `_UNIT_TAIL`
+took a Latin denominator only. So was `50mg/日` — a Japanese document writing a
+Latin unit over a local one, which the shared SI rule matches before either
+language pack gets a turn. A test written for the Japanese katakana units then
+found the same omission a third time, in the rule beside the one that was fixed.
+
+That is the argument for running more than one batch: **a repair is written
+against the examples that prompted it**, and the examples that prompted it are
+the ones the first batch happened to contain.
+
+`psi`, `rpm`, `kWh`, `Nm`, `bar`, `kPa`, `dB`, `kcal`, `hp` and the rest were
+missing outright. The unit list was written by the person who wrote the corpus,
+so the corpus contained no unit the list was missing.
+
+The well-formed count *falls* between rows two and three because the tool
+learned to tell two failures apart. `每次25毫克，每日三次` is a clause in a field
+that asked for a value; akashi took `25毫克` out of it, which is the quantity in
+it. Counting that against akashi was flattering the drafts and slandering the
+extractor. Which side the leftover sits on decides it: glued on the **right** is
+akashi cutting a unit short, glued on the **left** is a draft that is a phrase.
+
+**The seven that remain, and none of them is a wider unit:**
+
+| | |
+| --- | --- |
+| `40' x 8'6"`, `25' x 50'`, `12フィート6インチ` | feet and inches — a new kind |
+| `5.5%vol` | a word after a percent sign |
+| `M号`, `纯棉` | a size and a material — akashi has no kind for either |
+
+Recorded rather than guessed at. The corpus evaluation is unchanged by every
+fix above: 42/42 fabrication recall, 0/42 false positives, 30/30
+reproducibility.

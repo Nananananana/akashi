@@ -672,3 +672,55 @@ def test_a_unit_followed_by_a_word_is_still_refused() -> None:
     to survive the tail being bolted on in front of it."""
     found = extract_from_answer(segment_answer("Read 320 kmx here.", DEFAULT), DEFAULT)
     assert [one.text for one in found] == ["320"]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("Inflate to 120psi cold.", "120psi"),
+        ("Idle at 800rpm steady.", "800rpm"),
+        ("Output 15kWh daily.", "15kWh"),
+        ("Torque 40Nm applied.", "40Nm"),
+    ],
+)
+def test_a_trade_unit_the_corpus_never_wrote(sentence: str, expected: str) -> None:
+    """The unit list was written by the person who wrote the corpus, so the
+    corpus contained no unit the list was missing. Drafted vocabulary asked for
+    tyre pressure and got `120psi`, which came out as a bare `120`."""
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("用量は50mg/日です。", "50mg/日"),
+        ("最高速度は320 千米/小时です。", "320 千米/小时"),
+        ("投与量は5ミリグラム/日でした。", "5ミリグラム/日"),
+    ],
+)
+def test_a_denominator_may_be_in_the_documents_own_script(sentence: str, expected: str) -> None:
+    """The first repair for this took Latin denominators only, so `320 km/h`
+    was fixed while `320 千米/小时` was still cut at the slash -- a fix that was
+    half a fix, in exactly the half the corpus could not show.
+
+    Found by running a second batch of drafted vocabulary after shipping the
+    first repair, which is the argument for running more than one batch.
+    """
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+def test_a_denominator_is_a_unit_and_not_a_phrase() -> None:
+    """Bounded to three characters. Without a bound `10km/東京都渋谷区` would
+    become one particular, and a report citing it would quote a place as a
+    unit."""
+    found = extract_from_answer(
+        segment_answer("距離は10km/東京都渋谷区までです。", DEFAULT), DEFAULT
+    )
+    assert "10km/東京都渋谷区" not in [one.text for one in found]
+
+
+def test_a_unit_followed_by_a_space_and_a_place_is_untouched() -> None:
+    found = extract_from_answer(segment_answer("距離は10km 東京まで。", DEFAULT), DEFAULT)
+    assert "10km" in [one.text for one in found]

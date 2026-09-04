@@ -1,0 +1,134 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-container-dimensions",
+      "language": "ja",
+      "subject": "コンテナ",
+      "attribute": "サイズ",
+      "value": "12フィート6インチ x 8フィート x 8フィート6インチ",
+      "sentence": "このコンテナのサイズは12フィート6インチ x 8フィート x 8フィート6インチです。",
+      "neighbour": "ドライバー",
+      "superseded_value": "12フィート x 8フィート x 8フィート",
+      "heading": "コンテナのサイズ",
+      "paraphrase": "このコンテナの長さと幅、高さは何ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['12', '6', '8', '8', '6'] from the value '12フィート6インチ x 8フィート x 8フィート6インチ'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "pharmacy-pill-dosage",
+      "language": "ja",
+      "subject": "錠剤",
+      "attribute": "投与量",
+      "value": "25mg x 100錠",
+      "sentence": "この錠剤の投与量は25mg x 100錠です。",
+      "neighbour": "注射薬",
+      "superseded_value": "20mg x 100錠",
+      "heading": "薬品情報",
+      "paraphrase": "この錠剤の含まれる薬の量と錠数は何ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "allotment-garden-bed-height",
+      "language": "ja",
+      "subject": "花壇",
+      "attribute": "高さ",
+      "value": "45cm",
+      "sentence": "この花壇の高さは45cmです。",
+      "neighbour": "プランター",
+      "superseded_value": "40cm",
+      "heading": "花壇情報",
+      "paraphrase": "この花壇の上部から地面までの長さはどれくらいですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "motorsport-race-lap-times",
+      "language": "ja",
+      "subject": "レース",
+      "attribute": "ラップタイム",
+      "value": "1分45秒",
+      "sentence": "このレースのラップタイムは1分45秒です。",
+      "neighbour": "パドック",
+      "superseded_value": "1分50秒",
+      "heading": "レース結果",
+      "paraphrase": "このレースでの1周あたりの時間は何分何秒ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "tailoring-clothing-size",
+      "subject": "ジャケット",
+      "attribute": "サイズ",
+      "value": "XL",
+      "sentence": "このジャケットのサイズはXLです。",
+      "neighbour": "パンツ",
+      "superseded_value": "L",
+      "heading": "衣類サイズ",
+      "paraphrase": "このジャケットのサイズは何号ですか？",
+      "language": "ja",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute 'サイズ'"
+      ]
+    },
+    {
+      "key": "brewing-beer-alcohol-content",
+      "language": "ja",
+      "subject": "ビール",
+      "attribute": "アルコール含有量",
+      "value": "5.2%",
+      "sentence": "このビールのアルコール含有量は5.2%です。",
+      "neighbour": "発泡酒",
+      "superseded_value": "4.8%",
+      "heading": "ビールの詳細",
+      "paraphrase": "このビールのアルコール度数は何パーセントですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "surveying-land-area",
+      "language": "ja",
+      "subject": "土地",
+      "attribute": "面積",
+      "value": "1200m²",
+      "sentence": "この土地の面積は1200m²です。",
+      "neighbour": "建物",
+      "superseded_value": "1000m²",
+      "heading": "土地情報",
+      "paraphrase": "この土地の広さは何平方メートルですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "aviation-maintenance-aircraft-weight",
+      "subject": "旅客機",
+      "attribute": "重量",
+      "value": "120トン",
+      "sentence": "この旅客機の重量は120トンです。",
+      "neighbour": "旅客",
+      "superseded_value": "115トン",
+      "heading": "機体情報",
+      "paraphrase": "この旅客機の総重量は何トンですか？",
+      "language": "ja",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute '重量'"
+      ]
+    }
+  ]
+}

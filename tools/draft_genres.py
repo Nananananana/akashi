@@ -197,6 +197,20 @@ def unextractable(genre: dict[str, Any]) -> str:
     if covering and _decomposes(covering, genre["value"]):
         return ""
     if covering:
+        # Which side the leftover is on says whose problem it is, and the
+        # arithmetic is dishonest without the split. A leftover glued on the
+        # RIGHT is akashi cutting a unit short -- `5.5%` out of `5.5%vol`. One
+        # glued on the LEFT is the model having put a whole clause in a field
+        # asked for a value -- `25毫克` out of `每次25毫克，每日三次`, where
+        # akashi took the quantity correctly and the draft is what is wrong.
+        at = genre["value"].index(covering[0])
+        left_glued = not _detached(genre["value"][:at][-1:])
+        right = genre["value"][at + len(covering[0]) :]
+        if left_glued and _detached(right[:1]):
+            return (
+                f"DRAFT: the value {genre['value']!r} is a clause, not a value; akashi "
+                f"took {covering} out of it, which is the quantity in it"
+            )
         return (
             f"extracted {covering} from the value {genre['value']!r}; what is left of it "
             f"is attached to what came out, so the value changed rather than narrowed"
@@ -309,6 +323,11 @@ def main() -> int:
             "drafter": arguments.model,
         }
         why = unextractable(genre)
+        if why.startswith("DRAFT: "):
+            counts["malformed"] += 1
+            _say(f"# MALFORMED {genre['key']}: {why[7:]}")
+            drafts.append(record | {"verdict": "malformed", "why": [why[7:]]})
+            continue
         if why:
             counts["missed"] += 1
             _say(f"# akashi MISSED {genre['key']}: {why}")
