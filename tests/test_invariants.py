@@ -368,3 +368,54 @@ def test_every_fragment_that_should_bear_something_does() -> None:
         assert fragment in _FRAGMENTS, f"{fragment!r} left the strategy; update this list"
         found = extract_from_answer(segment_answer(fragment, DEFAULT), DEFAULT)
         assert found, f"{fragment!r} is in the strategy and akashi extracts nothing from it"
+
+
+def test_the_properties_explore_the_list_the_companion_checks() -> None:
+    """The tie between the two companions above and the twelve properties below.
+
+    Poisoned to find this: point `ANSWERS` and `SOURCES` at prose that bears
+    nothing, and **all fourteen pass** -- the properties go vacuous again and
+    both companions stay green, because they check `_FRAGMENTS` and a fixed
+    answer and the strategies no longer use either.
+
+    So a companion that guards twelve tests needs guarding itself, which is
+    `mamori`'s point: the wider a check's cover, the worse it is when the check
+    is the thing that breaks. This is the narrowest thing that closes it -- the
+    strategies must draw from the list the companions vouch for, asserted on the
+    source rather than on a run, because a strategy pointed elsewhere is a
+    *change*, not a random outcome.
+    """
+    import ast
+    import pathlib
+
+    source = pathlib.Path(__file__).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    drawn: dict[str, set[str]] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        if not ({"ANSWERS", "SOURCES"} & set(names)):
+            continue
+        pools = {
+            argument.id
+            for call in ast.walk(node.value)
+            if isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Attribute)
+            and call.func.attr == "sampled_from"
+            for argument in call.args
+            if isinstance(argument, ast.Name)
+        }
+        for name in names:
+            drawn[name] = pools
+
+    assert set(drawn) == {"ANSWERS", "SOURCES"}, (
+        f"expected both strategies to be assigned here; found {sorted(drawn)}"
+    )
+    for name, pools in drawn.items():
+        assert pools == {"_FRAGMENTS"}, (
+            f"{name} draws from {sorted(pools) or 'something this cannot read'}, and the "
+            f"companions above vouch for _FRAGMENTS. A strategy pointed at another list "
+            f"leaves twelve properties exploring text nobody checked for particulars."
+        )
