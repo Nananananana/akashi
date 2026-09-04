@@ -48,12 +48,17 @@ _SYSTEM: Final = (
     "and everything it could settle that way is already settled. So 'it is not "
     "written there' is never an answer -- it is the premise.\n"
     "\n"
-    "Claims reach you in two shapes:\n"
+    "Claims reach you in three shapes:\n"
     "  with (about: X)  X is a figure, name or date that does not appear verbatim "
     "in the evidence. Judge the sentence, using X as the part in question.\n"
     "  without it       the first half found nothing in the sentence it could "
     "compare at all -- a negation, a relation, a summary. Judge the whole "
     "sentence.\n"
+    "  with (about: X, found verbatim in: N)  X appears word for word in evidence "
+    "item N, and that is established -- do not re-check it. Judge whether the "
+    "sentence in item N is about the same thing this sentence is about. "
+    "'The stove weighs 2.4kg' does not support 'the tent weighs 2.4kg', however "
+    "exactly the figure matches.\n"
     "\n"
     "For each claim, answer:\n"
     "  supported    the evidence entails it, in other words or after obvious reading\n"
@@ -168,7 +173,12 @@ def _prompt(claims: Sequence[Claim], evidence: Sequence[str]) -> str:
     parts += [f"<item index={index}>\n{text}\n</item>" for index, text in enumerate(evidence, 1)]
     parts += ["</evidence>", "", "<claims>"]
     for index, claim in enumerate(claims, 1):
-        subject = f" (about: {claim.particular})" if claim.particular else ""
+        if claim.found_in:
+            subject = f" (about: {claim.particular}, found verbatim in: {claim.found_in})"
+        elif claim.particular:
+            subject = f" (about: {claim.particular})"
+        else:
+            subject = ""
         parts.append(f"{index}.{subject} {claim.text}")
     parts += ["</claims>", "", f"Answer all {len(claims)} claims, in order."]
     return "\n".join(parts)

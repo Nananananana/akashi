@@ -745,3 +745,55 @@ test asserting the receipt does **not** fire at the bound: the scan counted the
 full stop closing a sentence as part of the number, so a run of exactly 256
 digits measured as 257 and produced a receipt for a figure akashi had read
 correctly. A run must end on a digit.
+
+## Whether a deterministic rule can see a swapped subject (#83)
+
+The corpus already plants the defect. `entity_swap` (18 cases) is *a particular
+replaced by one of the same kind from a different item -- it still resolves, so
+akashi passes it*, and `cross_document_stitch` (9) is *subject from one item,
+predicate from another, both verbatim*. Both are marked `expect_detected: false`,
+which is the corpus declaring #83 in advance.
+
+**A first attempt filtered the population on `expect_detected` and measured 108
+grounded particulars of which 0 were planted.** That filter selected against
+exactly the thing being measured. Corrected, the population is 27.
+
+The candidate signal: character bigram overlap between the answer's sentence and
+the evidence sentence the value was found in, with the value itself removed from
+both sides. Characters rather than words because a word boundary in Japanese is
+a model's opinion and this must not depend on one.
+
+| overlap | faithful | swapped |
+| --- | --- | --- |
+| exactly 0 | 2 | **5** |
+| 0.00 – 0.10 | 3 | 0 |
+| 0.10 – 0.25 | 8 | 2 |
+| 0.25 – 0.50 | 22 | 8 |
+| 0.50 – 1.00 | 46 | 12 |
+
+Zero overlap looks like a finding: 5 swapped against 2 faithful, 71% precision.
+It is not one.
+
+| | faithful | swapped | faithful at 0 | swapped at 0 |
+| --- | --- | --- | --- | --- |
+| en | 22 | 9 | **0** | **0** |
+| ja | 32 | 9 | 1 | 3 |
+| zh | 27 | 9 | 1 | 2 |
+
+**The rule never fires in English at all**, on a population where swaps are
+evenly spread across the three languages (9/9/9). English sentences share
+function-word bigrams — `th`, `he`, ` t` — whatever the subject, so the overlap
+cannot reach zero; Japanese and Chinese have no such floor. The measure is
+reading the script, not the subject.
+
+The medians agree: 0.609 faithful against 0.500 swapped. There is no threshold
+anywhere on that scale worth having.
+
+**So no deterministic rule ships for #83.** What ships instead is
+`--judge-grounded`: akashi already had a judge that could answer this and
+structurally never showed it the case, because `claims_for` skipped every
+grounded particular. The reason it skipped them — *akashi already knows where
+that string is* — is true and incomplete. Knowing where a string is does not say
+whether the sentence it landed in is about the same thing.
+
+`tools/measure_subject_agreement.py` reproduces every number above.
