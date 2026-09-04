@@ -908,3 +908,51 @@ akashi cutting a unit short, glued on the **left** is a draft that is a phrase.
 Recorded rather than guessed at. The corpus evaluation is unchanged by every
 fix above: 42/42 fabrication recall, 0/42 false positives, 30/30
 reproducibility.
+
+## Whether a deterministic rule can see two sources disagreeing (#88)
+
+The candidate: **same kind, same shape, different digits, in a different item**.
+`3.1kg` and `2.8kg` both reduce to `#kg`, so a document giving one where another
+gives the other looks like a disagreement.
+
+Over the corpus, 108 grounded particulars, 6 protected cases skipped:
+
+| | |
+| --- | --- |
+| grounded particulars with at least one rival | **16 of 108 — 14.8%** |
+| rival pairs in total | 32 |
+| cases with any rival | 11 of 24 |
+
+**Every one of them is a false positive.** Not most — all of the sixteen:
+
+| value | rival | what they actually are |
+| --- | --- | --- |
+| `30 days` | `45 days`, `60 days` | notice period, payment terms, renewal period |
+| `68` | `128`, `82` | diastolic, systolic, pulse |
+| `第12条` | `第30条` | two different articles |
+
+A contract holds several time periods; a clinical note holds several
+measurements; a statute holds several article numbers. **A document that
+contains many values of one shape is not a document disagreeing with itself, it
+is a document.** Shape is a property of the notation, not of the subject.
+
+Twelve of the 32 pairs sit on a value the case marks as planted, and that is an
+artefact of matching plant text by string rather than evidence of the rule
+working: the plant is a digit drift, and the rival relationship is not what was
+planted.
+
+**So no deterministic rule ships for #88 either, and it is the same wall as
+#83.** Both need to know what a sentence is *about*, and
+`tools/measure_subject_agreement.py` already showed the deterministic route to
+that reads the script rather than the subject.
+
+**What does reach it is already shipped.** `--judge-grounded` (#89) turns a
+grounded particular into a claim, and a judge handed the whole evidence — both
+documents — is being asked exactly the right question:
+
+```
+(about: 3.1kg, found verbatim in: itm_01)  The tent weighs 3.1kg.
+evidence: [The tent weighs 3.1kg., Tent, revised spec: 2.8kg.]
+```
+
+`tools/measure_source_conflict.py` reproduces every number above.
