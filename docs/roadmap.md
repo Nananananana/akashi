@@ -53,19 +53,40 @@ now forwards them to a judge when there is one; **without `--judge` they remain
 a silent third of the answer**, counted honestly as `unbearing` and checked by
 nobody.
 
+### 1.4 Bounds are reported now, and that was the audit worth doing
+
+akashi has four bounds and **three of them changed the answer silently** until
+they were audited. `MAX_RUN` was the one that mattered: a 301-digit number was
+not partly seen, it was not seen at all, and `evaluate()` returned *"nothing to
+check"* for a sentence that plainly contained one. Nothing raised. Nothing was
+slow. The cliff is between 257 and 300 digits, which is a shape a release meets
+on day one — an identifier, a hash, a base64 blob, a serial number.
+
+Fixed (`domain/bounds.py`): every bound that bites produces a line in `limits`
+and an entry in `bounds[]`, which is in the published schema. The bounds
+themselves did not move and are still not settable — a caller who could raise
+`MAX_RUN` could restore the quadratic blow-up it exists to prevent.
+
+**The general form of the finding is worth more than the three fixes.** A
+constant is safe to add and unsafe to leave: the code that introduces it knows
+what it is protecting, and the code that eventually hits it does not. Anything
+added here that caps, truncates or samples has to produce a receipt in the same
+commit.
+
 ## 2. Where akashi is harder to adopt than it needs to be
 
-### 2.1 One sample at a time
+### 2.1 One sample at a time — done
 
-`evaluate()` and `evaluate_sample()` take a single answer. Every rival takes a
-dataset and returns a table. A person with 500 rows currently writes the loop,
-the aggregation and the error handling themselves.
+**Done.** `evaluate_samples()` takes a list, a generator, a HuggingFace
+`Dataset` or a `pandas.DataFrame`. The share counts particulars rather than
+rows; a refused row is kept as a refusal; `describe()` will not hand over a bare
+number.
 
-### 2.2 No pytest integration
+### 2.2 No pytest integration — done
 
-DeepEval's `assert_test` is most of why people adopt it: the evaluation lives in
-CI beside the unit tests. akashi has `fail_on_findings` on the CLI and nothing
-for a test file.
+**Done.** `akashi.testing.assert_grounded`. The failure names every floating
+particular, what was skipped, and the limits. `allow_floating` waives one, and a
+waiver for something that stopped floating fails too.
 
 ### 2.3 The word everyone searches for is `faithfulness`
 
