@@ -347,3 +347,64 @@ def test_the_report_schema_requires_the_model_on_every_judgement() -> None:
     ]
     report, _ = annotated()
     jsonschema.validate(report.to_dict(), schema)
+
+
+# --- the sentences akashi is blindest to (#84) -------------------------------
+
+
+def test_a_sentence_akashi_found_nothing_in_is_still_asked_about() -> None:
+    """The hole this closes: `claims_for` walked particulars, so a segment
+    bearing none produced no claim at all.
+
+    About 30% of segments bear nothing (`docs/measurements.md`), and they are
+    not the easy ones -- they are the negations and the relations, the sentences
+    akashi cannot compare at all. Forwarding only the floating particulars hands
+    the judge the subset the extractor happened to reach, which is the opposite
+    of the independence it is here for.
+    """
+    report = audit("それは天候によります。", package(), DEFAULT)
+    unbearing = [one for one in report.assessment.segments if one.verdict is Verdict.UNBEARING]
+    assert unbearing, "this answer bore something, so it does not exercise the rule"
+
+    claims = claims_for(report)
+    assert [claim.segment_id for claim in claims] == [one.segment.segment_id for one in unbearing]
+    assert claims[0].text == "それは天候によります。"
+    assert claims[0].particular == "", "a sentence-level claim names no particular"
+
+
+def test_the_two_shapes_of_claim_arrive_together_and_stay_apart() -> None:
+    """One answer, one sentence bearing a floating figure and one bearing
+    nothing. Both reach the judge and a reader can still tell which is which."""
+    report = audit("ガスは 9.9kg。それは天候によります。", package(), DEFAULT)
+    claims = claims_for(report)
+    assert [claim.particular for claim in claims] == ["9.9kg", ""]
+
+
+def test_an_unverifiable_segment_is_still_not_sent() -> None:
+    """akashi could not look (ADR-0008). Handing the text over anyway and filing
+    the reply as an annotation to the audit is the restoration claim ADR-0013
+    refuses -- and it is the easiest thing to break while widening
+    `claims_for`, because `unverifiable` carries no particulars either.
+    """
+    from akashi.domain.coverage import assess
+    from akashi.domain.verdict import CheckedSegment
+
+    base = audit("それは天候によります。", package(), DEFAULT)
+    masked = CheckedSegment(
+        segment=base.assessment.segments[0].segment,
+        verdict=Verdict.UNVERIFIABLE,
+        because="a placeholder survived restoration",
+    )
+    assert not masked.particulars, "an unverifiable segment that bore something is not this case"
+    report = dataclasses.replace(base, assessment=assess([masked]))
+    assert claims_for(report) == ()
+
+
+def test_a_long_unbearing_answer_still_stops_at_the_bound() -> None:
+    """`MAX_CLAIMS` bounds the report, and the new path is a second way to reach
+    it. Without the check inside the branch, an answer of two hundred unbearing
+    sentences would be two hundred requests."""
+    answer = "".join(f"それは事情によります{'。'}" for _ in range(MAX_CLAIMS + 20))
+    report = audit(answer, package(), DEFAULT)
+    assert len(report.assessment.segments) > MAX_CLAIMS
+    assert len(claims_for(report)) == MAX_CLAIMS

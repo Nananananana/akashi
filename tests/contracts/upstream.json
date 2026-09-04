@@ -17,9 +17,9 @@
       "repo": "Nananananana/tsumugi",
       "path": "fixtures/seam/context-package.json",
       "branch": "main",
-      "commit": "859bff5a7616a0e29775675fad6f22f632b1c609",
-      "sha256": "2e2b499439f14360a48778f376bc062435bf3bc52723376ef4b3f50a808b6b2a",
-      "retrieved": "2026-08-30",
+      "commit": "5b1622ea647987cb0105024feaf715359dbf428b",
+      "sha256": "b0d8984bc14559e71a6e846b7a71e7d84d1e0aea1791c56c1ef00f7c1f764606",
+      "retrieved": "2026-09-04",
       "licence": "Apache-2.0",
       "why": "A real ContextPackage, emitted by the reference producer for a fixed corpus and a fixed question. The schema says what the shape may be; this says what tsumugi actually emits. Test material only."
     }

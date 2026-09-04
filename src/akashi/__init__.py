@@ -37,16 +37,26 @@ from .errors import (
     ProtectedResponseError,
     SegmentationError,
 )
-from .interfaces.api import Result, evaluate, evaluate_sample
+from .interfaces.api import (
+    Refused,
+    Result,
+    Results,
+    evaluate,
+    evaluate_sample,
+    evaluate_samples,
+)
 from .version import __version__
 
 __all__ = [
     "AkashiError",
     "ContractError",
     "ProtectedResponseError",
+    "Refused",
     "Result",
+    "Results",
     "SegmentationError",
     "__version__",
     "evaluate",
     "evaluate_sample",
+    "evaluate_samples",
 ]

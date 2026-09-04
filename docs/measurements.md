@@ -675,3 +675,41 @@ The other: the first structural name rules put a proper noun on `筐体仕様` �
 contract documents akashi is aimed at. Precision fell to 99% and `様` was
 dropped. That costs `佐藤様`, a real case, and the trade is the right way round:
 **a precision-first extractor that is not precise is worth nothing at all.**
+
+## What the grounded share does on the three failures rivals are built for
+
+Five answers, each isolating one thing, run through `evaluate()` on the default
+matcher. The evidence is chosen so that only the named failure is present.
+
+| case | answer | evidence | akashi |
+| --- | --- | --- | --- |
+| subject swapped | `The tent weighs 2.4kg.` | `The stove weighs 2.4kg.` + `The tent weighs 3.1kg.` | **1.0** |
+| date on the wrong event | `...signed on 2024-03-01.` | `...terminated on 2024-03-01.` | **1.0** |
+| negated predicate | `The warranty does not cover water damage.` | `The warranty covers fire only.` | none |
+| inverted relation | `Alice reports to Bob.` | `Bob reports to Alice.` | none |
+| honest paraphrase | `The tent weighs 2.4 kilograms.` | `Tent mass: 2.4kg.` | **0.0** |
+
+**Two fabrications score 1.0 and one correct answer scores 0.0.** On these five
+the number is not merely a weaker signal than an entailment model's -- it points
+the wrong way on three of them and is absent on the other two.
+
+None of this contradicts what `limits` already says. It is the size of it that
+was never measured: *"a statement about strings, not about truth"* is true, and
+a reader who sees 1.0 on row 1 will not conclude that the tent might weigh
+3.1kg. The line describes the mechanism; it does not price the consequence.
+
+Rows 1 and 2 are #83 -- a `Particular` is a value with no subject, so `find_all`
+never asks whether the sentence the value turned up in is about the same thing
+the answer's sentence is about. Every rival decomposes into a claim carrying a
+subject and a predicate, which is the part akashi drops.
+
+Rows 3 and 4 bear nothing at all, and until #84 they were also the rows the
+judge never saw: `claims_for` walked particulars, so a segment with none
+produced no claim. The escape hatch built for *"akashi cannot check this"*
+covered only the sentences where akashi found something and failed to place it.
+Row 5 is what the judge was always for.
+
+**What this does not license.** Not a similarity threshold. The contradiction
+rule was already priced here at 47% on drifted digits against 12/12 on intact
+ones, and rows 1 and 2 are drifts. #83 proposes reporting the rival value as a
+fact with offsets and leaving the verdict alone.

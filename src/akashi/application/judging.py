@@ -13,6 +13,12 @@ which is the whole design:
 string is, in which document, at which offset. Handing it to a model would
 replace a fact with an opinion and could only make the report worse.
 
+**A judge does see a sentence akashi found nothing in.** That is the other half
+of the same rule and it was missing until #84: `claims_for` walked particulars,
+so a segment bearing none produced no claim, and the sentences akashi cannot
+read at all -- ``Alice reports to Bob.``, ``The warranty does not cover water
+damage.`` -- were the ones it never mentioned.
+
 **A judge never produces a verdict.** Its answers land in `judged[]` under the
 name of the model that gave them, in a vocabulary that shares no word with
 akashi's own. `grounded` and `supported` are different claims and a reader must
@@ -27,7 +33,7 @@ from __future__ import annotations
 
 from akashi.domain.evidence import Evidence
 from akashi.domain.report import AuditReport
-from akashi.domain.verdict import Standing
+from akashi.domain.verdict import Standing, Verdict
 from akashi.ports.judge import Claim, Judge, Judgement
 
 __all__ = ["claims_for", "judge_report"]
@@ -49,13 +55,31 @@ def claims_for(report: AuditReport) -> tuple[Claim, ...]:
     sentence*: the sentence is what a reader of the evidence would have to
     agree with, and a bare `2.4kg` entails nothing on its own.
 
+    A segment that akashi **looked at and found nothing checkable in** becomes a
+    claim too, with no particular attached: the sentence is the claim. About 30%
+    of segments are this (`docs/measurements.md`) -- negations, relations,
+    summaries, every sentence carrying no name, figure or date -- and they are
+    the sentences akashi is blindest to. Forwarding only the floating ones would
+    hand the judge the subset the extractor happened to reach, which is the
+    opposite of the independence it is here for.
+
     A `contradicted` particular is **not** sent. akashi has already named the
     value the source gives and the offset it sits at, which is a stronger and
     checkable statement; asking a model to weigh in could only add an opinion
     beside a fact.
+
+    Neither is an `unchecked` or `unverifiable` segment. akashi did not look, or
+    could not (ADR-0008); handing over text akashi refused to read and calling
+    the answer an audit annotation would be the restoration claim ADR-0013
+    exists to refuse.
     """
     found: list[Claim] = []
     for segment in report.assessment.segments:
+        if segment.verdict is Verdict.UNBEARING:
+            found.append(Claim(segment_id=segment.segment.segment_id, text=segment.segment.text))
+            if len(found) >= MAX_CLAIMS:
+                return tuple(found)
+            continue
         for one in segment.particulars:
             if one.standing is not Standing.FLOATING or one.contradiction is not None:
                 continue
