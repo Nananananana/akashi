@@ -92,16 +92,25 @@ def test_a_grounded_particular_is_never_sent() -> None:
 
 def test_a_contradicted_particular_is_never_sent() -> None:
     """akashi has already named the value the source gives and the offset it
-    sits at, which is a stronger and checkable statement than an opinion."""
-    report = audit("テントは 2.6kg です。", package(), DEFAULT)
+    sits at, which is a stronger and checkable statement than an opinion.
+
+    The answer here is chosen so that akashi *does* contradict: `2.4g` keeps the
+    source's digits exactly and changes the unit beside them, which is the
+    narrow case ADR-0015 ships. Written first with an answer that produced no
+    contradiction and a `pytest.skip` when it did not -- so the test ran, went
+    green, and checked nothing, every time.
+    """
+    report = audit("テントは 2.4g です。", package(), DEFAULT)
     contradicted = [
         one
         for segment in report.assessment.segments
         for one in segment.particulars
         if one.contradiction is not None
     ]
-    if not contradicted:
-        pytest.skip("this answer produced no contradiction; the case is elsewhere")
+    assert contradicted, "the answer stopped producing a contradiction; pick another"
+    assert contradicted[0].contradiction is not None
+    assert contradicted[0].contradiction.found == "2.4kg"
+
     named = {claim.particular for claim in claims_for(report)}
     assert contradicted[0].particular.text not in named
 

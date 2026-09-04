@@ -116,7 +116,13 @@ empty_parameter_set_mark = "fail_at_collect"
 # so must its test suite: a check that cannot run on a developer's machine, or
 # inside the networks that most need this tool, is a check that gets disabled.
 # The one job that runs them asks for them by name.
-addopts = "-q -m 'not network and not siblings'"
+# No `-q` here, deliberately. A caller who adds one of their own gets `-qq`,
+# which drops the summary line -- and a run piped into anything loses pytest's
+# exit code as well, so "nothing ran" and "everything passed" become the same
+# bytes. Measured: a collection error gives `grep -c '^FAILED'` = 0 and a real
+# exit code of 2. Removing the trap is cheaper than remembering it.
+# Found by `mamori`, which hit the same shape from the `-k` side.
+addopts = "-m 'not network and not siblings'"
 markers = [
     "network: reaches a host outside this machine. Deselected by default; run with -m network",
     # Needs a sibling library installed. Deselected by default because the
