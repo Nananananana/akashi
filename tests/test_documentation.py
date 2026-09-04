@@ -464,7 +464,7 @@ def test_the_readme_latency_claim_is_still_true() -> None:
     extraction defect (#c276ef6) is what a slow path actually looks like here.
 
     Bounds are set well above the measurement on purpose (floors, not targets):
-    0.35ms and 56ms measured on the machine this was written on, asserted at
+    0.33ms and 23ms measured on the machine this was written on, asserted at
     5ms and 400ms so that a slower CI box is not a red build, but an order of
     magnitude is.
     """
@@ -479,7 +479,7 @@ def test_the_readme_latency_claim_is_still_true() -> None:
     for _ in range(50):
         evaluate(answer=answer, contexts=contexts)
     small = (time.perf_counter() - start) / 50 * 1000
-    assert small < 5.0, f"the README says 0.35 ms for this; it took {small:.2f} ms"
+    assert small < 5.0, f"the README says 0.33 ms for this; it took {small:.2f} ms"
 
     long_answer = "。".join(["テントの重量は2.4kgで、参加者は12人です"] * 100) + "。"
     many = ["テントの重量は2.4kgです。"] * 20
@@ -488,7 +488,7 @@ def test_the_readme_latency_claim_is_still_true() -> None:
     for _ in range(5):
         evaluate(answer=long_answer, contexts=many)
     large = (time.perf_counter() - start) / 5 * 1000
-    assert large < 400.0, f"the README says 56 ms for this; it took {large:.0f} ms"
+    assert large < 400.0, f"the README table says 23 ms at 40 contexts; it took {large:.0f} ms"
 
 
 def test_the_demo_runs_and_still_shows_what_it_claims_to() -> None:
