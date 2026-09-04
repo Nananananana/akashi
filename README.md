@@ -30,6 +30,17 @@ not the promise.
 That audit takes **0.35 ms**. A hundred-sentence answer against twenty
 retrieved chunks takes **56 ms**, on one CPU core, with nothing warmed up.
 
+## See it
+
+```bash
+git clone https://github.com/Nananananana/akashi && cd akashi
+pip install -e .
+python examples/demo.py
+```
+
+Six sections, no network, no model, no key. Section 2 is akashi printing the
+two cases it gets **wrong**.
+
 ## Why another one
 
 Every other tool in this space asks a language model whether the context

@@ -489,3 +489,32 @@ def test_the_readme_latency_claim_is_still_true() -> None:
         evaluate(answer=long_answer, contexts=many)
     large = (time.perf_counter() - start) / 5 * 1000
     assert large < 400.0, f"the README says 56 ms for this; it took {large:.0f} ms"
+
+
+def test_the_demo_runs_and_still_shows_what_it_claims_to() -> None:
+    """A demo is the first thing anybody runs and the first thing to rot.
+
+    The numbers are asserted, not just the exit code: a demo whose section 2
+    stopped printing 1.00 on a fabrication would be a demo that had quietly
+    become an advertisement.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    demo = Path(__file__).resolve().parent.parent / "examples" / "demo.py"
+    assert demo.exists()
+
+    run = subprocess.run(  # noqa: S603 - the interpreter running this, on a path from __file__
+        [sys.executable, str(demo)], capture_output=True, text=True, encoding="utf-8"
+    )
+    assert run.returncode == 0, run.stderr
+    out = run.stdout
+
+    assert "share 0.50" in out, "the ordinary case no longer shows a half-grounded answer"
+    assert "share 1.00" in out, "section 2 no longer demonstrates the wrong-subject defect"
+    assert "share 0.00" in out, "section 2 no longer demonstrates the paraphrase cost"
+    assert "MAX_RUN=256" in out, "the bound receipt is no longer shown"
+    assert "0.400 over 5 particulars in 2 of 3 rows; 1 refused" in out
+    assert "was refused, not dropped" in out
+    assert "below at_least=0.900" in out
