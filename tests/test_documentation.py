@@ -456,3 +456,65 @@ def test_the_readme_does_not_claim_a_consumer_akashi_does_not_have() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "(no consumer yet)" in readme
     assert "akashi.audit-report/1-draft" in readme
+
+
+def test_the_readme_latency_claim_is_still_true() -> None:
+    """The README quotes two timings. A claim about speed on the front page is
+    the easiest thing in a repository to leave behind, and the quadratic
+    extraction defect (#c276ef6) is what a slow path actually looks like here.
+
+    Bounds are set well above the measurement on purpose (floors, not targets):
+    0.35ms and 56ms measured on the machine this was written on, asserted at
+    5ms and 400ms so that a slower CI box is not a red build, but an order of
+    magnitude is.
+    """
+    import time
+
+    from akashi import evaluate
+
+    answer = "The tent weighs 2.4kg and the gas is 9.9kg."
+    contexts = ["The tent weighs 2.4kg.", "Gas cartridge, 250mg."]
+    evaluate(answer=answer, contexts=contexts)
+    start = time.perf_counter()
+    for _ in range(50):
+        evaluate(answer=answer, contexts=contexts)
+    small = (time.perf_counter() - start) / 50 * 1000
+    assert small < 5.0, f"the README says 0.35 ms for this; it took {small:.2f} ms"
+
+    long_answer = "。".join(["テントの重量は2.4kgで、参加者は12人です"] * 100) + "。"
+    many = ["テントの重量は2.4kgです。"] * 20
+    evaluate(answer=long_answer, contexts=many)
+    start = time.perf_counter()
+    for _ in range(5):
+        evaluate(answer=long_answer, contexts=many)
+    large = (time.perf_counter() - start) / 5 * 1000
+    assert large < 400.0, f"the README says 56 ms for this; it took {large:.0f} ms"
+
+
+def test_the_demo_runs_and_still_shows_what_it_claims_to() -> None:
+    """A demo is the first thing anybody runs and the first thing to rot.
+
+    The numbers are asserted, not just the exit code: a demo whose section 2
+    stopped printing 1.00 on a fabrication would be a demo that had quietly
+    become an advertisement.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    demo = Path(__file__).resolve().parent.parent / "examples" / "demo.py"
+    assert demo.exists()
+
+    run = subprocess.run(  # noqa: S603 - the interpreter running this, on a path from __file__
+        [sys.executable, str(demo)], capture_output=True, text=True, encoding="utf-8"
+    )
+    assert run.returncode == 0, run.stderr
+    out = run.stdout
+
+    assert "share 0.50" in out, "the ordinary case no longer shows a half-grounded answer"
+    assert "share 1.00" in out, "section 2 no longer demonstrates the wrong-subject defect"
+    assert "share 0.00" in out, "section 2 no longer demonstrates the paraphrase cost"
+    assert "MAX_RUN=256" in out, "the bound receipt is no longer shown"
+    assert "0.400 over 5 particulars in 2 of 3 rows; 1 refused" in out
+    assert "was refused, not dropped" in out
+    assert "below at_least=0.900" in out

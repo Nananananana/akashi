@@ -1,22 +1,112 @@
 # akashi（証）
 
-**Local-first response auditing for generative AI.** Take the answer a model gave
-you and the context it was given, and separate what the answer took from its
-evidence from what it produced on its own — deterministically, offline, with no
-model in the path and nothing installed alongside it.
+**Find what a RAG answer took from its sources, and what it made up — offline,
+in milliseconds, with every finding a byte offset you can open.**
 
-> **Status: v0.1 through v0.4, and v0.5 in progress.** `akashi audit` works;
-> `akashi recheck` re-derives a report from the inputs it names; `akashi
-> explain` prints one finding in full from the report alone; `akashi
-> certificate` renders a report as one self-contained HTML file for somebody
-> who will sign it; `akashi eval` measures against a labelled corpus and nine
-> hand-marked realistic answers, gated on floors; `akashi doctor` says what is
-> installed and what this console will do to prose and to a document; `akashi
-> mcp` speaks MCP over stdio, for the assistant that produced the answer rather
-> than a person at a terminal. Nothing is released and the API is not stable.
-> [`docs/measurements.md`](docs/measurements.md) is what it currently scores;
-> [`docs/proposals/0002-what-building-it-taught.md`](docs/proposals/0002-what-building-it-taught.md)
-> is the rest of the roadmap.
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](pyproject.toml)
+[![Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen.svg)](#install)
+[![CI](https://github.com/Nananananana/akashi/actions/workflows/ci.yml/badge.svg)](https://github.com/Nananananana/akashi/actions/workflows/ci.yml)
+[![Typed](https://img.shields.io/badge/mypy-strict-blue.svg)](pyproject.toml)
+
+```python
+from akashi import evaluate
+
+result = evaluate(
+    answer="The tent weighs 2.4kg and the gas is 9.9kg.",
+    contexts=["The tent weighs 2.4kg.", "Gas cartridge, 250mg."],
+)
+
+result.grounded  # ('2.4kg',)   in the text you passed
+result.floating  # ('9.9kg',)   in none of it
+result.grounded_share  # 0.5
+result.unchecked  # what was skipped, and why
+```
+
+No API key. No model download. No network. `pip install akashi` brings **zero
+dependencies** and opens **zero sockets** — a CI job checks the built artefact,
+not the promise.
+
+That audit takes **0.35 ms**. A hundred-sentence answer against twenty
+retrieved chunks takes **56 ms**, on one CPU core, with nothing warmed up.
+
+## See it
+
+```bash
+git clone https://github.com/Nananananana/akashi && cd akashi
+pip install -e .
+python examples/demo.py
+```
+
+Six sections, no network, no model, no key. Section 2 is akashi printing the
+two cases it gets **wrong**.
+
+## Why another one
+
+Every other tool in this space asks a language model whether the context
+entails each claim. That answers a question akashi cannot, and it costs three
+things akashi keeps:
+
+| | akashi | RAGAS / DeepEval / RefChecker |
+| --- | --- | --- |
+| **Reproducible** | same input, same report, forever | a new model version is a new answer |
+| **Where** | byte offsets into the exact text you passed | a score |
+| **Cost** | milliseconds, no network | a model call per claim |
+| **What it misses** | paraphrase (see below) | nothing structural — that is their strength |
+
+**So use both.** `--judge` bolts one of theirs onto one of these, and the two
+answers stay in separate sections under separate words, because `grounded` and
+`supported` are different claims:
+
+```bash
+pip install 'akashi[nli]'      # local entailment, Apache-2.0, no network after the download
+akashi audit --contexts sample.json --judge nli
+```
+
+## Read this before you quote the number
+
+`grounded_share` is **not a faithfulness score**, and `docs/measurements.md`
+prices the difference rather than hedging about it:
+
+| answer | evidence | akashi |
+| --- | --- | --- |
+| `The tent weighs 2.4kg.` | `The stove weighs 2.4kg.` + `The tent weighs 3.1kg.` | **1.0** ([#83](https://github.com/Nananananana/akashi/issues/83)) |
+| `Alice reports to Bob.` | `Bob reports to Alice.` | nothing to check |
+| `The tent weighs 2.4 kilograms.` | `Tent mass: 2.4kg.` | **0.0** |
+
+akashi compares strings. A value grounded against the wrong subject scores
+perfect, and a correct paraphrase scores zero. That is on every report in
+`limits`, it is why `--judge` exists, and it is
+[docs/roadmap.md](docs/roadmap.md) item 1.1 rather than a footnote.
+
+## Install
+
+| | brings | needs a network | for |
+| --- | --- | --- | --- |
+| `pip install akashi` | nothing | no | the audit |
+| `pip install 'akashi[nli]'` | transformers, torch, a 600MB model | once | local entailment (`--judge nli`) |
+| `pip install 'akashi[claude]'` | the Anthropic SDK | every call | `--judge claude-opus-5` |
+
+## In your test suite
+
+```python
+from akashi.testing import assert_grounded
+
+
+def test_the_summary_quotes_its_sources():
+    assert_grounded(answer=summarise(doc), contexts=[doc], at_least=0.9)
+```
+
+The failure names every floating particular, what was skipped and why, and the
+limits the number was produced under — a red CI job should not be a bare
+`assert 0.72 >= 0.9`. `allow_floating=[...]` waives an expected one, and a
+waiver for something that **stopped** floating fails too: a suite full of stale
+waivers is a suite that has stopped checking.
+
+> **Status: v0.1 through v0.4, and v0.5 in progress.** Nothing is released and
+> the API is not stable. [`docs/measurements.md`](docs/measurements.md) is what
+> it currently scores; [`docs/roadmap.md`](docs/roadmap.md) is what is next and
+> what is deliberately not being done.
 
 ---
 
@@ -60,8 +150,14 @@ import pandas as pd
 pd.DataFrame(results.rows())  # akashi does not depend on pandas
 ```
 
-Two decisions it makes so a caller does not have to make them wrong:
+`rows` can be a list of dicts, a generator, a HuggingFace `Dataset`, or a
+`pandas.DataFrame`. Three decisions it makes so a caller does not have to make
+them wrong:
 
+- **A DataFrame is read as rows, not as its column names** — which is what
+  iterating one actually gives you. Passing a 500-row frame would otherwise have
+  audited three strings, refused all three, and returned an empty result whose
+  refusals read as though your data was bad.
 - **The share counts particulars, not rows.** A mean of per-row shares weights a
   one-particular answer the same as a forty-particular one, and has to decide
   what a row with nothing checkable contributes — and every answer to that is

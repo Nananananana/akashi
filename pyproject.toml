@@ -39,6 +39,13 @@ dependencies = []
 # `--judge` on top, and why every judgement it produces is labelled with the
 # model that gave it and kept out of `report_id` (ADR-0017).
 claude = ["anthropic>=0.40"]
+
+# The same `Judge` port, filled locally instead. Apache-2.0 all the way down:
+# transformers is Apache-2.0 and so is the default model (HHEM-2.1-Open, 110M
+# parameters, under 600MB, CPU-viable). Nothing is downloaded until `--judge
+# nli` is passed, and after the first run it needs no network at all -- which is
+# the reason to have both doors rather than one.
+nli = ["transformers>=4.40", "torch>=2.0"]
 dev = [
     "pytest>=8",
     "pytest-cov",
@@ -154,6 +161,22 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S105", "S106", "S108"]
+
+# The one library akashi type-checks against `Any`, and the trade is recorded
+# rather than assumed. `anthropic` is installed in the lint job instead, because
+# it is small; `transformers` and `torch` are about two gigabytes, which is a
+# minutes-long download on every lint run to check two lines.
+#
+# Two lines is the whole surface, and the adapter is shaped that way on purpose:
+# `_load` names `from_pretrained` and `.predict` and nothing else touches the
+# library. Everything that decides anything -- the thresholds, the band, the
+# pairing, the bound -- takes a plain callable and is checked normally, and
+# `tests/test_nli_judge.py` exercises all of it against a stub. What is
+# unchecked here is the constructor call, and the seam test that runs the real
+# model is marked `network` and skipped by default.
+[[tool.mypy.overrides]]
+module = ["transformers", "transformers.*"]
+ignore_missing_imports = true
 
 [tool.mypy]
 python_version = "3.12"

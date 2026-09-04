@@ -713,3 +713,35 @@ Row 5 is what the judge was always for.
 rule was already priced here at 47% on drifted digits against 12/12 on intact
 ones, and rows 1 and 2 are drifts. #83 proposes reporting the rival value as a
 fact with offsets and leaving the verdict alone.
+
+## What four bounds did without saying so
+
+Three of akashi's four bounds changed the answer and reported nothing. Measured
+on the code as it stood, before `domain/bounds.py`:
+
+| bound | input | what happened | what the report said |
+| --- | --- | --- | --- |
+| `LOCATION_LIMIT` (32) | a particular occurring 40 times in one document | 32 places reported | nothing |
+| `MAX_CLAIMS` (64) | an answer with 200 floating particulars | 64 claims sent, 64 judgements | nothing |
+| `MAX_RUN` (256) | a 301-digit number | **the number vanished** | nothing |
+
+The third is the one that matters. `evaluate()` returned `grounded_share=None`
+-- *akashi looked and there was nothing to check* -- for a sentence that plainly
+contained a number. Nothing raised, nothing was slow, and the report was wrong
+and looked fine. The cliff is between 257 and 300 digits, which is a shape a
+release will meet: an identifier, a hash, a base64 blob, a serial number.
+
+`MAX_DEPTH` was the fourth and was already correct: it refuses the document by
+name rather than truncating it.
+
+**The bounds themselves were not changed and are not settable.** A caller who
+could raise `MAX_RUN` could restore the quadratic blow-up it exists to prevent,
+on input akashi is built to receive from strangers. What a caller gets instead
+is a receipt: every bound that bit produces a line in `limits` and an entry in
+`bounds[]`, naming itself, its value, and what it left out.
+
+Writing the detector for `MAX_RUN` produced a defect of its own, found by the
+test asserting the receipt does **not** fire at the bound: the scan counted the
+full stop closing a sentence as part of the number, so a run of exactly 256
+digits measured as 257 and produced a receipt for a figure akashi had read
+correctly. A run must end on a digit.

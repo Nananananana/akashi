@@ -72,7 +72,7 @@ forbidden_modules =
 #
 # What this forbids is everything that decides anything: no verdict is computed
 # in a module that can see a model.
-name = Only the judge adapter may name the Anthropic SDK
+name = Only a judge adapter may name a model library
 type = forbidden
 source_modules =
     akashi.domain
@@ -87,6 +87,8 @@ source_modules =
     akashi.infrastructure.adapters.mamori
 forbidden_modules =
     anthropic
+    transformers
+    torch
 
 # ADR-0007: akashi reads a ContextPackage as a document, against a published
 # schema, and imports tsumugi nowhere -- not even in an adapter. The seam tests

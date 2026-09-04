@@ -5,17 +5,18 @@
   "description": "One answer, audited against the ContextPackage that produced it. A report says which load-bearing strings of the answer are in the text that was sent, and where. It says nothing about whether the answer is true.",
   "type": "object",
   "required": [
-    "contract",
-    "report_id",
-    "audited",
-    "unchecked",
-    "coverage",
-    "limits",
-    "counts",
-    "segments",
-    "provenance",
     "answer",
-    "judged"
+    "audited",
+    "bounds",
+    "contract",
+    "counts",
+    "coverage",
+    "judged",
+    "limits",
+    "provenance",
+    "report_id",
+    "segments",
+    "unchecked"
   ],
   "additionalProperties": false,
   "properties": {
@@ -306,6 +307,33 @@
     "answer": {
       "description": "The text that was audited, verbatim. A report is complete on its own: every span in it indexes this string, so a reader needs nothing else to follow a finding.",
       "type": "string"
+    },
+    "bounds": {
+      "type": "array",
+      "description": "Every bound that changed this audit, structured. Empty on an audit where no limit was reached, which is the ordinary case. Each entry also appears as a line in `limits`; this is the same fact in a shape a consumer can test without matching on prose.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "limit",
+          "because"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The constant, by its name in the source."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Its value during this audit."
+          },
+          "because": {
+            "type": "string",
+            "description": "What it left out, in a sentence."
+          }
+        }
+      }
     }
   },
   "$defs": {

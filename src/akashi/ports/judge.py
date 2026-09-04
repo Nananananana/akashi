@@ -78,6 +78,15 @@ class Judgement:
     because: str
     model: str
     particular: str = ""
+    #: What the judge says about where its answer applies, in its own words.
+    #:
+    #: A model card that says "English only" is a fact about every number the
+    #: model produced, and akashi reads Japanese and Chinese. Empty means akashi
+    #: has no note about this judge -- which is different from the judge claiming
+    #: to be universal, and neither is asserted. `AuditReport` turns the distinct
+    #: scopes on a report into limit lines, so the caveat travels on the artefact
+    #: rather than living in a README the report will be read without.
+    scope: str = ""
 
     def __post_init__(self) -> None:
         if not self.model:

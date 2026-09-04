@@ -25,6 +25,7 @@ import hashlib
 from dataclasses import dataclass, field
 from typing import Any
 
+from .bounds import Bound
 from .coverage import Assessment
 from .verdict import CheckedParticular, CheckedSegment
 
@@ -163,6 +164,15 @@ class AuditReport:
     #: they share no vocabulary.
     judged: tuple[Any, ...] = ()
 
+    #: Every bound that actually bit during this audit (`domain/bounds.py`).
+    #:
+    #: Derived from the same inputs the verdicts are, so `recheck` reproduces
+    #: them and they are deliberately **not** in `report_id`: a bound is a
+    #: consequence of the input, not a second input. Each one becomes a line in
+    #: `limits`, because a limit that changed the answer is exactly what
+    #: `limits` is for and a reader should not have to look in two places.
+    bounds: tuple[Bound, ...] = ()
+
     @property
     def report_id(self) -> str:
         """What this report is, by its inputs. See :func:`report_id`."""
@@ -220,7 +230,19 @@ class AuditReport:
                 "checked": coverage.checked,
                 "kinds_not_extracted": list(coverage.kinds_not_extracted),
             },
-            "limits": [*self.assessment.limits, *_judgement_limits(self.judged)],
+            "limits": [
+                *self.assessment.limits,
+                *(bound.as_line() for bound in self.bounds),
+                *_judgement_limits(self.judged),
+            ],
+            # The same facts as the `limits` lines above them, structured.
+            # A person reads the sentence; a consumer deciding whether to trust
+            # a share needs to test for truncation without matching on prose,
+            # and prose is the thing most likely to be reworded.
+            "bounds": [
+                {"name": bound.name, "limit": bound.limit, "because": bound.because}
+                for bound in self.bounds
+            ],
             "counts": {
                 "segments": self.assessment.counts(),
                 "particulars": self.assessment.particular_counts(),
@@ -339,4 +361,18 @@ JUDGEMENT_LIMITS: tuple[str, ...] = (
 
 
 def _judgement_limits(judged: tuple[Any, ...]) -> tuple[str, ...]:
-    return JUDGEMENT_LIMITS if judged else ()
+    """The standing three, plus whatever each judge said about its own range.
+
+    A judge that states a scope -- "English only", say -- has said something
+    about every judgement on this report, and the report is the thing that
+    travels. Distinct scopes, in the order they first appear, so two judgements
+    from one model do not say it twice.
+    """
+    if not judged:
+        return ()
+    scopes: list[str] = []
+    for one in judged:
+        said = getattr(one, "scope", "")
+        if said and said not in scopes:
+            scopes.append(said)
+    return (*JUDGEMENT_LIMITS, *scopes)

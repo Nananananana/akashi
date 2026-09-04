@@ -60,7 +60,7 @@ _RUNS = re.compile(r"[0-9][0-9.,]*|[^0-9\s]+")
 #: How many places one particular is reported in. A very short particular
 #: genuinely occurs everywhere, and reporting all of them carries no more
 #: information than reporting that it is common.
-_LIMIT = 32
+LOCATION_LIMIT = 32
 
 
 def _class_of(character: str) -> str:
@@ -231,7 +231,7 @@ def find_all(form: str, haystack: SearchForm) -> tuple[Span, ...]:
 
     found: list[Span] = []
     at = 0
-    while len(found) < _LIMIT:
+    while len(found) < LOCATION_LIMIT:
         match = pattern.search(haystack.text, at)
         if match is None:
             break
@@ -322,7 +322,7 @@ class _Exact:
             return ()
         found: list[Span] = []
         at = 0
-        while len(found) < _LIMIT:
+        while len(found) < LOCATION_LIMIT:
             index = haystack.text.find(needle, at)
             if index < 0:
                 break
