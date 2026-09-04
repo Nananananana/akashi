@@ -328,6 +328,23 @@ def _particular_dict(one: CheckedParticular) -> dict[str, Any]:
             for location in one.locations
         ]
         body["in_an_interpretation"] = one.in_an_interpretation
+    if one.nearby:
+        # Under a name that cannot be read as a finding. `contradiction` says
+        # *the source gives this instead*; this says only *these are the values
+        # of the same kind the evidence carries near here*, in scope order, with
+        # no similarity and no confidence attached. A reader told a figure is in
+        # none of the text should not have to re-read the text akashi read.
+        body["nearby_in_evidence"] = [
+            {
+                "text": entry.text,
+                "item_id": entry.item_id,
+                "document_id": entry.anchor.document_id,
+                "source_path": entry.anchor.source_path,
+                "section": entry.anchor.section,
+                "span": [entry.anchor.span.start, entry.anchor.span.end],
+            }
+            for entry in one.nearby
+        ]
     if one.contradiction is not None:
         found = one.contradiction
         body["contradiction"] = {

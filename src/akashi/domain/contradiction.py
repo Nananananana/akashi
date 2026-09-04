@@ -260,6 +260,60 @@ class SourceIndex:
                 )
         return None
 
+    def nearby(
+        self,
+        floating: Particular,
+        grounded: Sequence[Location],
+        evidence: Evidence,
+        most: int = 5,
+    ) -> tuple[SourceParticular, ...]:
+        """Everything of the same kind the evidence does say, nearest scope first.
+
+        **This is not a finding and makes no claim about the floating value.**
+        `explain` names a source only when the digits are identical, which the
+        corpus priced at 12/12; anything looser was 47% and is not shipped as a
+        verdict. What is shipped instead is the list itself, unranked by any
+        similarity and unlabelled by any confidence: *you said 2.4kg, and the
+        quantities the evidence actually carries here are these, at these
+        offsets.*
+
+        The reason this exists is that `floating` alone is a dead end. A reader
+        told only that a figure is in none of the text still has to go and read
+        all of it, and akashi has already read all of it. Handing over the
+        candidates it looked at is the difference between a refusal and an
+        answer -- and it costs no confidence, because there is no threshold
+        here to be wrong about.
+
+        Scope is the ordering and the only one: the sentences the rest of this
+        segment resolved into, then those whole items, then everything sent. A
+        similarity score would put akashi's guess at the top of a list a reader
+        is about to trust, which is exactly what `explain` refuses to do.
+        """
+        if not self.entries or most <= 0:
+            return ()
+        sentences = self._sentences_of(grounded, evidence)
+        items = {item_id for item_id, _ in sentences}
+        found: list[SourceParticular] = []
+        scopes: tuple[Callable[[SourceParticular], bool], ...] = (
+            lambda entry: (entry.item_id, entry.sentence) in sentences,
+            lambda entry: entry.item_id in items,
+            lambda entry: True,
+        )
+        for within in scopes:
+            for entry in self.entries:
+                if entry.kind is not floating.kind or entry in found:
+                    continue
+                # The particular itself is not a neighbour of itself. It floated,
+                # so no *location* matched -- but the same string can sit in the
+                # evidence inside a longer token, and offering it back as "what
+                # the evidence says instead" would be a lie by omission.
+                if entry.text == floating.text or not within(entry):
+                    continue
+                found.append(entry)
+                if len(found) >= most:
+                    return tuple(found)
+        return tuple(found)
+
     def _sentences_of(
         self, grounded: Sequence[Location], evidence: Evidence
     ) -> set[tuple[str, Span]]:

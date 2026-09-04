@@ -34,7 +34,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 
-from .contradiction import Contradiction, SourceIndex
+from .contradiction import Contradiction, SourceIndex, SourceParticular
 from .evidence import Evidence, Location
 from .matching import DEFAULT_MATCHER, Matcher
 from .particular import Particular
@@ -122,8 +122,23 @@ class CheckedParticular:
     #: floating particular, and only when the rule in ``contradiction.py``
     #: found exactly one candidate.
     contradiction: Contradiction | None = None
+    #: What the evidence *does* say of this kind, nearest scope first, when the
+    #: particular floated and akashi could not name a source for it.
+    #:
+    #: Not a finding and not a ranking. `floating` on its own is a dead end --
+    #: it tells a reader the figure is in none of the text and leaves them to go
+    #: and read all of it, which akashi has already done. These are the
+    #: candidates it looked at, with their offsets, carrying no claim that any
+    #: of them is related. See `SourceIndex.nearby`.
+    nearby: tuple[SourceParticular, ...] = ()
 
     def __post_init__(self) -> None:
+        if self.nearby and self.locations:
+            raise ValueError(
+                f"{self.particular.text!r} is grounded and also carries neighbours. "
+                f"What the evidence says instead is only a question for a particular "
+                f"that is not in it."
+            )
         if self.contradiction is not None and self.locations:
             raise ValueError(
                 f"{self.particular.text!r} is grounded and also carries a contradiction. "
@@ -291,6 +306,11 @@ def _explained(
     if sources is None:
         return one
     found = sources.explain(one.particular, anchored, evidence)
-    if found is None:
-        return one
-    return CheckedParticular(particular=one.particular, contradiction=found)
+    if found is not None:
+        return CheckedParticular(particular=one.particular, contradiction=found)
+    # No source can be named, which is the common case and used to be the end of
+    # it. What the evidence does carry of this kind is still worth handing over.
+    return CheckedParticular(
+        particular=one.particular,
+        nearby=sources.nearby(one.particular, anchored, evidence),
+    )

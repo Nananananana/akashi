@@ -253,6 +253,20 @@ def _findings(report: dict[str, Any]) -> list[str]:
                 )
             elif one.get("standing") == "floating":
                 said = "is in none of the text that was sent"
+                # And what the text does say of this kind, near here. A reader
+                # handed only the refusal has to go and read the evidence again;
+                # akashi already read it. Worded so it cannot be taken for a
+                # correction -- there is no similarity behind this list.
+                near = [_dict(entry) for entry in _list(one.get("nearby_in_evidence"))]
+                if near:
+                    said += (
+                        '<br><span class="where">the evidence carries, near here: '
+                        + " &middot; ".join(
+                            f"<b>{escape(str(entry.get('text', '')))}</b> at {_location(entry)}"
+                            for entry in near
+                        )
+                        + " &mdash; listed, not proposed</span>"
+                    )
             else:
                 said = " &middot; ".join(
                     _location(_dict(location)) for location in _list(one.get("locations"))
