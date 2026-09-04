@@ -38,6 +38,15 @@ def as_text(installation: Installation) -> str:
         lines.extend(f"{_INDENT}{pack.detail}" for pack in installation.packs)
         lines.append("")
 
+    lines.append("Settings somebody chose")
+    if installation.settings:
+        lines.extend(f"{_INDENT}{line}" for line in installation.settings)
+        lines.append(f"{_INDENT}Both of these reach report_id, so a run configured this way")
+        lines.append(f"{_INDENT}cannot be mistaken for a run configured another.")
+    else:
+        lines.append(f"{_INDENT}none; no akashi.toml, no [tool.akashi], no AKASHI_* variable")
+    lines.append("")
+
     lines.append("This console")
     lines.append(
         f"{_INDENT}stdout {installation.console_encoding}, errors={installation.stdout_errors}"

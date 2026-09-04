@@ -31,18 +31,49 @@ ALLOWED: dict[str, frozenset[str]] = {
     # ``errors``, which keeps this set genuinely empty.
     "domain": frozenset(),
     "errors": frozenset(),
-    "ports": frozenset({"domain", "errors"}),
-    "infrastructure": frozenset({"domain", "ports", "errors"}),
-    "application": frozenset({"domain", "ports", "errors"}),
-    "evaluation": frozenset({"domain", "ports", "application", "infrastructure", "errors"}),
-    "config": frozenset({"domain", "ports", "application", "infrastructure", "errors"}),
+    # The version, alone in a module so that reading it does not import the
+    # public surface -- which re-exports the one-call API and therefore reaches
+    # infrastructure. `infrastructure` importing `akashi` for the version was a
+    # cycle, and the layer contract is what found it.
+    "version": frozenset(),
+    "ports": frozenset({"domain", "errors", "version"}),
+    "infrastructure": frozenset({"domain", "ports", "errors", "version"}),
+    "application": frozenset({"domain", "ports", "errors", "version"}),
+    "evaluation": frozenset(
+        {"domain", "ports", "application", "infrastructure", "errors", "version"}
+    ),
+    "config": frozenset({"domain", "ports", "application", "infrastructure", "errors", "version"}),
     "interfaces": frozenset(
-        {"domain", "ports", "application", "infrastructure", "evaluation", "config", "errors"}
+        {
+            "domain",
+            "ports",
+            "application",
+            "infrastructure",
+            "evaluation",
+            "config",
+            "errors",
+            "version",
+        }
     ),
     # The package's own ``__init__`` is the public surface. It re-exports and
-    # decides nothing.
+    # decides nothing -- including from ``interfaces``, where the one-call
+    # `evaluate()` lives. That function chooses the language packs and builds a
+    # package from strings, which is what the CLI and the MCP server do, so it
+    # belongs beside them and not in ``application`` (which may name only the
+    # domain and the ports). This list is what caught the first attempt at
+    # putting it there.
     "public": frozenset(
-        {"domain", "ports", "application", "infrastructure", "evaluation", "config", "errors"}
+        {
+            "domain",
+            "ports",
+            "application",
+            "infrastructure",
+            "evaluation",
+            "config",
+            "errors",
+            "version",
+            "interfaces",
+        }
     ),
 }
 

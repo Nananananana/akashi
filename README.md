@@ -20,6 +20,45 @@ model in the path and nothing installed alongside it.
 
 ---
 
+## The shortest way in
+
+You do not need a ContextPackage, a corpus, or any of the rest of the family.
+Three values, the same three every RAG evaluation library takes:
+
+```python
+from akashi import evaluate
+
+result = evaluate(
+    answer="The tent weighs 2.4kg and the gas is 9.9kg.",
+    contexts=["The tent weighs 2.4kg.", "Gas cartridge, 250mg."],
+)
+result.grounded_share  # 0.5
+result.floating  # ('9.9kg',)
+result.unchecked  # what was skipped, and why
+```
+
+A **RAGAS or DeepEval sample works unchanged** — `evaluate_sample(sample)` reads
+`user_input` / `input` / `question`, `response` / `actual_output` / `answer`, and
+`retrieved_contexts` / `retrieval_context` / `contexts`. So does the command
+line and the MCP tool:
+
+```bash
+akashi audit --contexts sample.json
+```
+
+**`grounded_share` is not a faithfulness score.** Every library in this space
+reports a 0–1 number by that name, computed by asking a model whether the
+context entails each claim. This one is *the share of load-bearing strings in
+the answer that occur in the text that was sent* — a different question, and
+comparing the two numbers is comparing nothing. `result.limits` says so on the
+object; the report says so on the artefact.
+
+**No provenance is invented.** A ContextPackage carries a document, a path and
+an offset into a file; a list of strings carries none of that. So the offsets
+index the strings you passed, `source_path` stays empty, and the report gains a
+line saying it — because a reader who sees `notes/gear.md[1209:1214]` will go and
+open that file.
+
 ## The problem
 
 Deciding what to send a model is solved infrastructure. Checking what comes back
@@ -66,6 +105,42 @@ It leads with what was **not** checked and ends with what the report does not
 establish. That is a deliberate reversal of what every dashboard in this
 category does, and it is why the page can be handed to a reviewer.
 
+## Asking a model about what akashi could not check
+
+akashi decides by comparing strings, so a claim the answer *paraphrased* out of
+the evidence comes back `floating` — true, and not what you wanted to know. You
+wanted to know whether the evidence supports it.
+
+```bash
+pip install "akashi[claude]"
+akashi audit --package pkg.json --response answer.txt --judge
+```
+
+```text
+Judged
+  Not akashi verdicts. A model read these and said what it thought.
+  seg_003  9.9kg  unsupported  [claude-opus-5]
+    the evidence gives 2.4kg for the tent and no other weight.
+```
+
+**A judgement is not a verdict, and akashi will not let the two blur**
+([ADR-0017](docs/adr/0017-a-judge-annotates-an-audit-it-does-not-make-one.md)):
+
+- akashi says `grounded` / `floating` / `contradicted`; a judge says `supported`
+  / `unsupported` / `unclear`. **No word is shared.**
+- They never share a section, and **`report_id` does not move** — the same audit
+  with and without judgements carries one id, and `recheck` re-derives it with
+  no network.
+- Every judgement names the model that gave it, and three sentences join
+  `limits` saying that it is an opinion and is not reproducible.
+- A judge only ever sees what akashi could not settle. It is not shown a
+  grounded particular: akashi already knows the string, the document and the
+  offset, and replacing a fact with an opinion could only make the report worse.
+
+**`pip install akashi` still installs nothing and reaches nothing.** The SDK is
+an extra, the judge is behind `--judge`, and `import akashi` loads no HTTP
+client even where the extra is present — checked in CI on a machine that has it.
+
 ## What it will not tell you
 
 Said before what it will, because the boundary is the product.
@@ -99,6 +174,40 @@ worth more than a total check whose confidence cannot be examined.
 - **The world is what was sent**, not the corpus. A figure the model guessed that
   happens to exist somewhere in your archive is still floating
   ([ADR-0006](docs/adr/0006-audit-against-what-was-sent.md)).
+
+## Settings
+
+Where the tools around it look, in the order they look:
+
+```text
+--matcher / --language        the command line
+AKASHI_MATCHER, AKASHI_LANGUAGES, AKASHI_FAIL_ON_FINDINGS
+akashi.toml                   [top level]
+pyproject.toml                [tool.akashi]
+                              akashi's own defaults
+```
+
+```toml
+# pyproject.toml
+[tool.akashi]
+matcher = "normalized"        # or "exact"
+languages = ["ja", "en"]
+fail_on_findings = true
+```
+
+**Both of the first two reach `report_id`.** That is what makes a configuration
+file safe to read here: a run configured one way cannot be mistaken for a run
+configured another, and `akashi doctor` prints what was resolved *and which file
+or variable it came from*. A setting three directories up that quietly changed
+an audit, with nothing on either report to say why, is the failure this whole
+project is about.
+
+A key akashi does not read is **refused**, not ignored — a typo in a
+configuration file is a setting somebody believes is in force.
+
+`MAX_RUN` and `MAX_DEPTH` are deliberately not settings. They are bounds akashi
+states about its own cost on input somebody else chose, and a file that could
+raise them could reintroduce what they exist to stop.
 
 ## For an agent rather than a person
 

@@ -140,6 +140,26 @@ Taken from `kiseki`, `mamori` and `tsumugi`, which paid for them.
 - **Ordering discipline.** No unordered iteration reaching an output, no partial
   sort keys, no wall-clock in anything but `created_at`. A report produced twice
   must be byte-identical, and a property test asserts it.
+- **Read pytest's exit code, not its output.** A pipe returns the exit code of
+  its last command, so `pytest ... | grep -c '^FAILED'` reports **0** for a run
+  that never happened. Measured here:
+
+  ```text
+  a collection error   grep -c '^FAILED' = 0     raw exit = 2
+  zero tests selected  the summary is there      raw exit = 5, and 0 through a pipe
+  ```
+
+  `addopts` carries no `-q` for the same reason: a caller who adds one gets
+  `-qq`, which drops the summary line, and then *nothing ran* and *everything
+  passed* are the same bytes. Found by `mamori` from the `-k` side.
+
+- **A `pytest.skip` in a test you wrote is a test that does not run.** Not the
+  parametrized kind -- a `skip` on a whole case, taken because the fixture did
+  not produce what the case needed. It goes green forever and checks nothing.
+  Build the input that produces the case, and `assert` the setup instead of
+  skipping past it. `pytest -rs` prints every skip reason and every one of them
+  should be a structural fact, not an accident of the data.
+
 - **A counterexample is pinned as an `@example` in the same commit as the fix,
   or it did not happen.** Hypothesis keys its stored examples on a digest that
   includes the *source of the test function*, and `.hypothesis/` is ignored, so

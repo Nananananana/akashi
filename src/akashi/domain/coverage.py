@@ -190,9 +190,24 @@ class Assessment:
         return counts[Standing.GROUNDED.value] / checked
 
 
+#: Added when the evidence was handed over as plain strings rather than read
+#: from a ContextPackage.
+#:
+#: A reader who sees `notes/gear.md[1209:1214]` on a report goes and opens that
+#: file. A reader who sees `context 2[41:46]` does not, and must not be led to.
+#: The artefact travels and the documentation does not (ADR-0005), so this is on
+#: the artefact rather than in a README about the compatibility layer.
+PLAIN_CONTEXT_LIMITS: tuple[str, ...] = (
+    "The evidence was supplied as plain strings, so every offset here indexes "
+    "the string that was passed in, at the position given -- not a document. "
+    "akashi was not told where any of it came from and does not say.",
+)
+
+
 def assess(
     segments: Sequence[CheckedSegment],
     kinds_not_extracted: Sequence[ParticularKind] = (),
+    limits: Sequence[str] = STANDING_LIMITS,
 ) -> Assessment:
     """Gather checked segments into an assessment, with its own account.
 
@@ -228,6 +243,7 @@ def assess(
     particulars = sum(len(segment.particulars) for segment in segments)
 
     return Assessment(
+        limits=tuple(limits),
         segments=tuple(segments),
         skipped=tuple(sorted(skipped, key=lambda entry: (entry.span, entry.rule.value))),
         coverage=Coverage(

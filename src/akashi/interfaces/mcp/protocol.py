@@ -33,6 +33,8 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import IO, Any, Final
 
+from akashi.infrastructure.documents import MAX_DEPTH, depth_of
+
 __all__ = [
     "INTERNAL_ERROR",
     "INVALID_PARAMS",
@@ -157,9 +159,17 @@ def read_requests(stream: IO[str]) -> Iterator[Request | RpcError]:
         line = line.strip()
         if not line:
             continue
+        if depth_of(line, limit=MAX_DEPTH) > MAX_DEPTH:
+            # Counted rather than caught. `json.loads` recurses, and a deeply
+            # nested line raised `RecursionError` -- which is not a
+            # `JSONDecodeError`, so it left this generator, left the loop, and
+            # **killed the server**. One malformed message ended the session,
+            # which is the one thing this loop is written not to let happen.
+            yield RpcError(PARSE_ERROR, f"nested more than {MAX_DEPTH} deep")
+            continue
         try:
             message = json.loads(line)
-        except json.JSONDecodeError as error:
+        except (json.JSONDecodeError, RecursionError) as error:
             yield RpcError(PARSE_ERROR, f"not JSON: {error}")
             continue
         if not isinstance(message, dict):

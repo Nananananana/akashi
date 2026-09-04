@@ -28,7 +28,26 @@ exhaustive = false
 # no networked adapter to carve out an exception for -- there is nothing akashi
 # needs from anywhere else.
 [importlinter:contract:no-network]
-name = Nothing in akashi touches the network
+# **This checks what akashi imports, not what akashi's dependencies do**, and
+# the difference did not exist until now. Measured rather than assumed:
+#
+#     a module here writing `import socket`      BROKEN
+#     a module here writing `import anthropic`   KEPT      (anthropic opens sockets)
+#
+# import-linter does not traverse into an external package, so while akashi had
+# zero dependencies this contract and the sentence "nothing in akashi touches
+# the network" were the same statement. ADR-0017 installs an SDK behind an
+# extra, and they stopped being the same statement that day.
+#
+# What still guarantees the base install is offline is that it **has no
+# dependencies at all**, checked on the built artefact by the CI job named "the
+# dependency count is zero" rather than by this file. What guarantees the
+# `claude` extra stays one door is `only-the-judge-reaches-out` below.
+#
+# No `ignore_imports` for the judge adapter: it named a module this contract
+# cannot see anyway, and an exception that protects nothing is worse than none
+# -- it implies a check that is not happening.
+name = No module in akashi imports a networking module
 type = forbidden
 source_modules =
     akashi
@@ -38,6 +57,36 @@ forbidden_modules =
     http
     urllib
     asyncio
+
+[importlinter:contract:only-the-judge-reaches-out]
+# The SDK is named in one module, and `akashi.infrastructure.adapters` does not
+# re-export it -- so `import akashi` reaches no HTTP client even on a machine
+# with the extra installed. The contract is what found that it did.
+#
+# `akashi.interfaces` is not on this list, and that is not a hole. The CLI is
+# the composition root: its own docstring says it is the only module that knows
+# the language packs exist, and knowing which adapters exist is the same job.
+# Somebody has to wire a judge in, it has to be the layer that owns the
+# command line, and the import there is inside the `--judge` branch so that the
+# cost is paid by a caller who asked for it.
+#
+# What this forbids is everything that decides anything: no verdict is computed
+# in a module that can see a model.
+name = Only the judge adapter may name the Anthropic SDK
+type = forbidden
+source_modules =
+    akashi.domain
+    akashi.ports
+    akashi.application
+    akashi.evaluation
+    akashi.infrastructure.packages
+    akashi.infrastructure.rendering
+    akashi.infrastructure.reports
+    akashi.infrastructure.settings
+    akashi.infrastructure.installation
+    akashi.infrastructure.adapters.mamori
+forbidden_modules =
+    anthropic
 
 # ADR-0007: akashi reads a ContextPackage as a document, against a published
 # schema, and imports tsumugi nowhere -- not even in an adapter. The seam tests

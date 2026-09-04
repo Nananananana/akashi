@@ -14,6 +14,10 @@ falsify ADR-0004.
 from __future__ import annotations
 
 import itertools
+import re
+from collections.abc import Iterator
+from pathlib import Path
+from typing import Any
 
 import pytest
 from hypothesis import given
@@ -147,8 +151,16 @@ def test_a_number_is_not_found_inside_a_longer_one() -> None:
 
 
 def test_particulars_do_not_overlap_and_are_in_order() -> None:
+    """`pairwise` over nothing yields nothing, so this passed with extraction
+    returning `()` -- and the answer below is written to hold three particulars
+    precisely so that the invariant has something to be true of. The population
+    is asserted before it is iterated."""
     particulars = extract_from_answer(
         segment_answer("On 2026-08-30 the 2.4kg tent cost $45,000.", DEFAULT), DEFAULT
+    )
+    assert len(particulars) >= 3, (
+        f"this answer holds a date, a quantity and an amount; extraction found "
+        f"{len(particulars)}, so there is no pair for the invariant to hold between"
     )
     for earlier, later in itertools.pairwise(particulars):
         assert earlier.span.end <= later.span.start
@@ -370,3 +382,232 @@ def test_a_narrower_pack_set_never_finds_more(answer: str) -> None:
     everything = extract_from_answer(segmentation, DEFAULT)
     japanese_only = extract_from_answer(segmentation, (COMMON, JAPANESE))
     assert len(japanese_only) <= len(everything) + len(segmentation.segments)
+
+
+# --- the cost of an audit is bounded, and the input is untrusted -------------
+#
+# akashi audits text a model produced, and `akashi mcp` lets the model choose
+# the arguments. So the length of an answer is an attacker-controlled number,
+# and the shape 32 of the 40 shipped rules have -- a long numeric run followed
+# by a unit that is not there -- made extraction quadratic in it.
+#
+#     16,000 characters of ordinary prose    0.09 s
+#     16,000 characters of digits           38.09 s     x4.0 per doubling
+#
+# `_bounded` caps every repetition at `MAX_RUN`. These are the checks that make
+# that safe to do and keep it done.
+
+
+def test_no_shipped_rule_compiles_to_an_unbounded_repeat() -> None:
+    """The structural guard, and the one that cannot be flaky.
+
+    A timing test says the cost is acceptable on this machine today. This says
+    the shape that produced the cost is not there at all -- including in a rule
+    added later, and including shapes `_bounded` was not written for, because
+    it reads the compiled pattern with `re`'s own parser rather than the
+    pattern text.
+    """
+    import re._constants as constants  # type: ignore[import-not-found]
+    import re._parser as parser  # type: ignore[import-not-found]
+
+    from akashi.domain.extraction import _compiled, rules_of
+    from akashi.infrastructure.languages import DEFAULT
+
+    def repeats(tree: Any) -> Iterator[Any]:
+        for operation, argument in tree:
+            if operation in (
+                constants.MAX_REPEAT,
+                constants.MIN_REPEAT,
+                constants.POSSESSIVE_REPEAT,
+            ):
+                yield argument[1]
+                yield from repeats(argument[2])
+            elif operation is constants.SUBPATTERN:
+                yield from repeats(argument[3])
+            elif operation is constants.BRANCH:
+                for branch in argument[1]:
+                    yield from repeats(branch)
+            elif operation in (constants.ASSERT, constants.ASSERT_NOT):
+                yield from repeats(argument[1])
+
+    unbounded: list[str] = []
+    for rule in rules_of(DEFAULT):
+        # `_compiled` and not `_bounded`: the question is what extraction runs,
+        # not what a helper would return if something called it. Written the
+        # other way round first, and removing the bound from `_compiled` left
+        # this test green -- it was checking the ingredient, not the dish.
+        used = _compiled(rule.pattern).pattern
+        if any(most is constants.MAXREPEAT for most in repeats(parser.parse(used))):
+            unbounded.append(f"{rule.kind.value}: {rule.pattern[:60]}")
+
+    assert not unbounded, (
+        "an unbounded repetition makes extraction quadratic in the length of a "
+        "segment, and the segment is text somebody else wrote:\n  " + "\n  ".join(unbounded)
+    )
+
+
+def test_the_bound_changes_nothing_the_corpus_extracts() -> None:
+    """A rewritten rule is not the rule as written, so this is the check that
+    makes rewriting them safe: every particular, in the same order, at the same
+    offsets, from every case and every evidence item in the corpus.
+
+    The longest particular in that corpus is 21 characters and `MAX_RUN` is
+    256, so there is an order of magnitude between the bound and anything real
+    -- which is what this asserts, rather than that 256 happens to work.
+    """
+    from akashi.domain import extraction
+    from akashi.domain.segment import segment_answer
+    from akashi.evaluation import load_cases
+    from akashi.infrastructure.languages import DEFAULT
+
+    cases = load_cases(Path(__file__).parent / "cases")
+    assert cases, "no corpus, so this test would compare nothing to nothing"
+
+    def fingerprint(*, bound: bool) -> list[tuple[object, ...]]:
+        extraction._compiled.cache_clear()
+        original = extraction._bounded
+        if not bound:
+            extraction._bounded = lambda pattern, limit=0: pattern
+        try:
+            found: list[tuple[object, ...]] = []
+            for case in cases:
+                for text in (case.response, *(item.text for item in case.package.evidence.items)):
+                    for one in extraction.extract_from_answer(
+                        segment_answer(text, DEFAULT), DEFAULT
+                    ):
+                        found.append((one.kind.value, one.span.start, one.span.end, one.text))
+            return found
+        finally:
+            extraction._bounded = original
+            extraction._compiled.cache_clear()
+
+    unbounded = fingerprint(bound=False)
+    bounded = fingerprint(bound=True)
+    assert len(bounded) > 300, "the corpus stopped producing particulars; this proves nothing"
+    assert bounded == unbounded
+
+
+@pytest.mark.parametrize(
+    ("pattern", "expected"),
+    [
+        (r"\d[\d,.]*\d", r"\d[\d,.]{0,256}\d"),
+        (r"[a-z]+", r"[a-z]{1,256}"),
+        (r"a*?b", r"a{0,256}?b"),
+        (r"a*+b", r"a{0,256}+b"),
+        (r"\d{2,}", r"\d{2,256}"),
+        (r"\d{2,4}", r"\d{2,4}"),
+        (r"[*+]x", r"[*+]x"),
+        (r"\*literal", r"\*literal"),
+        (r"[]]*", r"[]]{0,256}"),
+        (r"[^]]+", r"[^]]{1,256}"),
+        (r"[\]]*", r"[\]]{0,256}"),
+        (r"a?b", r"a?b"),
+    ],
+)
+def test_the_rewriter_reads_a_pattern_the_way_re_does(pattern: str, expected: str) -> None:
+    r"""The two places this has to be exactly right are inside a character class
+    and after a backslash, which are the two places reading is hardest. `[*+]`
+    holds quantifier characters as literals; `\*` is an escaped star; `[]]`
+    and `[^]]` hold a literal `]` before the class closes."""
+    from akashi.domain.extraction import _bounded
+
+    assert _bounded(pattern) == expected
+    re.compile(_bounded(pattern))
+
+
+def test_a_long_run_costs_time_that_grows_with_its_length_and_not_its_square() -> None:
+    """The demonstration rather than the guard -- the structural test above is
+    what actually holds the line, because a timing assertion measures a machine.
+
+    **How reliably it goes red under poison, measured rather than assumed.**
+    A sibling project found a check of its own that was probabilistic: poisoned,
+    it went red 2 times in 12, and "twelve runs, all green" then reads as
+    "guarded". So this one was measured the same way, unwiring the bound:
+
+    ..  code-block:: text
+
+        bounded (the real thing)   ratios 2.03 - 2.11   red at >3:  0 of 6
+        poisoned (bound removed)   ratios 3.52 - 4.01   red at >3: 12 of 12
+
+    Two populations with a wide gap between them, and the threshold sits in the
+    gap. That makes this deterministic in effect rather than merely usually
+    right -- but the numbers belong here, because a reader should not have to
+    re-derive them to know which of the two kinds of check they are looking at.
+    """
+    import time
+
+    from akashi.domain.extraction import extract_from_answer
+    from akashi.domain.segment import segment_answer
+    from akashi.infrastructure.languages import DEFAULT
+
+    def cost(size: int) -> float:
+        text = "1" * size
+        segmentation = segment_answer(text, DEFAULT)
+        start = time.perf_counter()
+        extract_from_answer(segmentation, DEFAULT)
+        return time.perf_counter() - start
+
+    cost(2000)  # warm the pattern cache, so the first call does not pay for it
+    small = cost(4000)
+    large = cost(8000)
+    assert large < small * 3, (
+        f"doubling the input multiplied the cost by {large / small:.1f}; "
+        f"quadratic is 4 and linear is 2. Has an unbounded repetition come back?"
+    )
+
+
+# --- a party designation is a name -------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("甲社は乙社に対し支払う。", ["甲社", "乙社"]),
+        ("甲方应向乙方支付。", ["甲方", "乙方"]),
+        ("丙社も同様とする。", ["丙社"]),
+        # The stem alone is a word, not a party. `甲乙` is "the two of them" and
+        # `一般` holds no party at all -- precision is the half that would fail
+        # quietly, because a false name grounds against nothing and reads as a
+        # fabrication in the answer.
+        ("甲乙双方の合意による。", []),
+        ("一般的な条件は次のとおり。", []),
+        ("这是个方法。", []),
+    ],
+)
+def test_a_contract_party_is_extracted_as_a_name(text: str, expected: list[str]) -> None:
+    """`甲社` / `乙方` is what a clause is about, and akashi read past it.
+
+    Four of the five particulars the hand-marked corpus said akashi missed were
+    these, and the fifth is `Borden Systems` -- a company name with no legal
+    form, which no structural rule reaches (see `docs/measurements.md`).
+
+    Structural like every other rule here: the stem is a closed set of five and
+    the suffix a closed set of three or four. This reads a convention, not a
+    name.
+    """
+    from akashi.domain.extraction import extract_from_answer
+    from akashi.domain.segment import segment_answer
+    from akashi.infrastructure.languages import DEFAULT
+
+    found = [
+        one.text
+        for one in extract_from_answer(segment_answer(text, DEFAULT), DEFAULT)
+        if one.kind.value == "proper_noun"
+    ]
+    assert found == expected
+
+
+def test_the_chinese_rule_has_no_lookaround_and_the_japanese_one_does() -> None:
+    """Not an inconsistency. Japanese has a particle either side to break on;
+    Chinese runs straight from a preposition into the party and from the party
+    into a verb. Requiring a break on the right found one of the two in the
+    corpus, and requiring one on the left found neither.
+    """
+    from akashi.infrastructure.languages import DEFAULT
+
+    def party_rule(code: str) -> str:
+        pack = next(one for one in DEFAULT if one.code == code)
+        return next(rule.pattern for rule in pack.rules if "甲乙丙丁戊" in rule.pattern)
+
+    assert "(?<!" in party_rule("ja")
+    assert "(?<!" not in party_rule("zh")

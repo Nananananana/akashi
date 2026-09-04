@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from akashi.domain.language import LanguagePack
+from akashi.domain.matching import DEFAULT_MATCHER, matcher_named
 from akashi.domain.package import ContextPackage
 from akashi.domain.report import content_hash
 from akashi.errors import ContractError
@@ -139,6 +140,20 @@ def recheck(
             f"hashes to {content_hash(answer)}. One of the two is the wrong file."
         )
 
+    # Re-derived with the matcher the report *names*, not with whatever this
+    # process defaults to. Which strings count as the same string changes every
+    # count, so re-deriving an `exact` report under `normalized` would report a
+    # difference that is about this run rather than about that report.
+    named_matcher = str(audited.get("matcher", "")) or DEFAULT_MATCHER.name
+    try:
+        chosen = matcher_named(named_matcher)
+    except ValueError as error:
+        raise ContractError(
+            f"the report was made with a matcher called {named_matcher!r}, which this "
+            f"akashi does not have. Re-deriving it with a different one would compare "
+            f"two answers to two different questions."
+        ) from error
+
     fresh = audit(
         answer,
         package,
@@ -146,6 +161,7 @@ def recheck(
         restorer=restorer,
         restored_by=restored_by,
         akashi_version=akashi_version,
+        matcher=chosen,
     ).to_dict()
 
     archived_version = str(audited.get("akashi_version", ""))

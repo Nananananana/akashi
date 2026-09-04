@@ -242,6 +242,18 @@ def test_nothing_grounds_against_an_empty_package(answer: str) -> None:
 # keeps the accumulated database -- while the first instinctive edit to print
 # the input would have orphaned it silently.
 @example(source="2026-08-30，2.4kg")
+# Two more, captured as strings before anything was edited and pinned with the
+# fixes. Both are the same shape as the first and neither was reachable from it:
+# a comma between digits that reads as a thousands separator and is not.
+#
+#   `2026-08-30，300g`   the `30` before the comma is a *day*, so `30,300` is not
+#                        a number. `_is_number_tail` reads what is in front of
+#                        the run before deciding it is one.
+#   `45,000，300g`       the number's own separator is half-width and the pause is
+#                        full-width; NFKC folded both to `,` and with it the
+#                        distinction the author made. `_same_width` keeps it.
+@example(source="2026-08-30，300g")
+@example(source="45,000，300g")
 @SLOW
 def test_every_particular_of_the_sources_grounds_in_the_sources(source: str) -> None:
     """The round trip. Everything akashi can extract from the text that was
@@ -293,3 +305,117 @@ def test_the_order_of_the_evidence_changes_where_things_are_found_and_not_whethe
         ]
 
     assert standings(forwards) == standings(backwards)
+
+
+# --- the companion: what the strategy has to produce for any of this to mean ---
+#
+# Every property in this file is an implication over the particulars a generated
+# answer bears, and every one of them is **vacuously true of an answer bearing
+# none**. Measured: with `extract_from_segment` returning `()`, all twelve pass.
+#
+# The fix is not to assert the population inside a property. A property must
+# hold on inputs that legitimately produce nothing, and a check inside it would
+# fail on exactly the inputs it is satisfied by. So the strategy's own promise
+# is checked once, separately, on fixed input -- and when `_FRAGMENTS` stops
+# carrying anything akashi extracts, this one test says so instead of twelve
+# properties going quiet.
+#
+# The distinction is `mamori`'s: whether being empty is a fact about *that
+# input* or a fact about *this run*.
+
+
+def test_the_fragments_produce_what_the_properties_are_about() -> None:
+    """Not a property. A fixed answer, built from the fragments the strategies
+    sample, that must bear particulars, ground some of them, and float others.
+
+    Each of the three is a different half of this file going quiet:
+
+    * no particulars — every offset and containment invariant is vacuous
+    * nothing grounded — the location invariants have nothing to locate
+    * nothing floating — the standing invariants only ever see one value
+    """
+    answer = "テントは2.4kg、参加者は12人。The tent weighs 2.6kg"
+    evidence = evidence_of("テントは2.4kg、参加者は12人。", "The tent weighs 2.4kg")
+
+    segmentation, assessment = run(answer, evidence)
+    assert len(segmentation.segments) >= 2, "the segmenter stopped splitting these fragments"
+
+    particulars = [one for segment in assessment.segments for one in segment.particulars]
+    assert len(particulars) >= 3, (
+        f"the fragments bear {len(particulars)} particulars; every invariant here is "
+        f"an implication over them and is vacuously true when there are none"
+    )
+
+    grounded = [one for one in particulars if one.locations]
+    floating = [one for one in particulars if not one.locations]
+    assert grounded, "nothing resolved, so the location invariants have nothing to locate"
+    assert floating, "nothing floated, so the standing invariants only ever see one value"
+
+
+def test_every_fragment_that_should_bear_something_does() -> None:
+    """The fragments are a list somebody edits, and a fragment that stopped
+    being extractable would narrow what the properties explore without changing
+    a single test name.
+
+    Only the ones that carry a figure, a count or a date are named here. The
+    prose fragments are there to be prose and bear nothing on purpose.
+    """
+    from akashi.domain.extraction import extract_from_answer
+    from akashi.domain.segment import segment_answer
+
+    bearing = ["2.4kg", "2.6kg", "300g", "２.４kg", "12人", "三千人"]
+    for fragment in bearing:
+        assert fragment in _FRAGMENTS, f"{fragment!r} left the strategy; update this list"
+        found = extract_from_answer(segment_answer(fragment, DEFAULT), DEFAULT)
+        assert found, f"{fragment!r} is in the strategy and akashi extracts nothing from it"
+
+
+def test_the_properties_explore_the_list_the_companion_checks() -> None:
+    """The tie between the two companions above and the twelve properties below.
+
+    Poisoned to find this: point `ANSWERS` and `SOURCES` at prose that bears
+    nothing, and **all fourteen pass** -- the properties go vacuous again and
+    both companions stay green, because they check `_FRAGMENTS` and a fixed
+    answer and the strategies no longer use either.
+
+    So a companion that guards twelve tests needs guarding itself, which is
+    `mamori`'s point: the wider a check's cover, the worse it is when the check
+    is the thing that breaks. This is the narrowest thing that closes it -- the
+    strategies must draw from the list the companions vouch for, asserted on the
+    source rather than on a run, because a strategy pointed elsewhere is a
+    *change*, not a random outcome.
+    """
+    import ast
+    import pathlib
+
+    source = pathlib.Path(__file__).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    drawn: dict[str, set[str]] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        names = [t.id for t in node.targets if isinstance(t, ast.Name)]
+        if not ({"ANSWERS", "SOURCES"} & set(names)):
+            continue
+        pools = {
+            argument.id
+            for call in ast.walk(node.value)
+            if isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Attribute)
+            and call.func.attr == "sampled_from"
+            for argument in call.args
+            if isinstance(argument, ast.Name)
+        }
+        for name in names:
+            drawn[name] = pools
+
+    assert set(drawn) == {"ANSWERS", "SOURCES"}, (
+        f"expected both strategies to be assigned here; found {sorted(drawn)}"
+    )
+    for name, pools in drawn.items():
+        assert pools == {"_FRAGMENTS"}, (
+            f"{name} draws from {sorted(pools) or 'something this cannot read'}, and the "
+            f"companions above vouch for _FRAGMENTS. A strategy pointed at another list "
+            f"leaves twelve properties exploring text nobody checked for particulars."
+        )

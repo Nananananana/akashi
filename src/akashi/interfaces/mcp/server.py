@@ -30,14 +30,16 @@ from __future__ import annotations
 import json
 from typing import IO, Any, Final
 
-from akashi import __version__
 from akashi.application import audit as run_audit
 from akashi.application.recheck import recheck as run_recheck
+from akashi.domain.matching import DEFAULT_MATCHER, Matcher, matcher_named
 from akashi.errors import AkashiError
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import read_package
+from akashi.infrastructure.packages.plain import package_from_contexts
 from akashi.infrastructure.rendering import as_text, explain_segment
 from akashi.infrastructure.reports import read_report
+from akashi.version import __version__
 
 from .protocol import (
     INTERNAL_ERROR,
@@ -110,6 +112,16 @@ TOOLS: Final[list[dict[str, Any]]] = [
             "properties": {
                 "answer": {"type": "string", "description": "The answer to audit."},
                 "package": _PACKAGE_SCHEMA,
+                "contexts": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        "The retrieved passages, as plain strings, for a caller with no "
+                        "ContextPackage -- the shape every RAG evaluation library uses. "
+                        "Give this or 'package'. No provenance is invented: offsets "
+                        "index the strings you passed, and the report says so."
+                    ),
+                },
                 "languages": {
                     "type": "array",
                     "items": {"type": "string"},
@@ -127,8 +139,19 @@ TOOLS: Final[list[dict[str, Any]]] = [
                         "so."
                     ),
                 },
+                "matcher": {
+                    "type": "string",
+                    "description": (
+                        "Which strings count as the same string: 'normalized' (the "
+                        "default, and what every published measurement used) folds the "
+                        "text and lets a particular's internal spacing vary; 'exact' "
+                        "applies the same boundary rules with no spacing tolerance. The "
+                        "name is on the report and in its id, because it changes every "
+                        "count."
+                    ),
+                },
             },
-            "required": ["answer", "package"],
+            "required": ["answer"],
             "additionalProperties": False,
         },
     },
@@ -289,10 +312,11 @@ class McpServer:
     def _audit(self, tool: Request) -> tuple[str, dict[str, Any]]:
         report = run_audit(
             tool.text("answer"),
-            read_package(tool.mapping("package")),
+            self._package(tool),
             self._packs(tool),
             restored_by=tool.text("restored_by", required=False),
             akashi_version=__version__,
+            matcher=self._matcher(tool),
         )
         return as_text(report), report.to_dict()
 
@@ -322,6 +346,34 @@ class McpServer:
             tool.text("segment_id"),
             particular=tool.text("particular", required=False) or None,
         )
+
+    def _package(self, tool: Request) -> Any:
+        """A ContextPackage, or one built from the strings a caller has.
+
+        Almost nobody outside this family holds a ContextPackage, and asking
+        them to build one before they can try akashi is the barrier rather than
+        the audit.
+        """
+        contexts = tool.params.get("contexts")
+        if contexts is not None:
+            if not isinstance(contexts, list) or not all(isinstance(x, str) for x in contexts):
+                raise RpcError(INVALID_PARAMS, "'contexts' is a list of strings")
+            try:
+                return package_from_contexts(contexts, tool.text("question", required=False))
+            except AkashiError as refusal:
+                raise RpcError(INVALID_PARAMS, str(refusal)) from refusal
+        if "package" not in tool.params:
+            raise RpcError(INVALID_PARAMS, "give either 'package' or 'contexts'")
+        return read_package(tool.mapping("package"))
+
+    def _matcher(self, tool: Request) -> Matcher:
+        name = tool.text("matcher", required=False)
+        if not name:
+            return DEFAULT_MATCHER
+        try:
+            return matcher_named(name)
+        except ValueError as error:
+            raise RpcError(INVALID_PARAMS, str(error)) from error
 
     def _packs(self, tool: Request) -> tuple[Any, ...]:
         codes = tool.params.get("languages")

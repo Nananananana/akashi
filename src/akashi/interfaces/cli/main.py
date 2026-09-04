@@ -22,14 +22,16 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
 import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 from typing import TextIO
 
-from akashi import __version__
 from akashi.application import audit, recheck
+from akashi.domain.matching import DEFAULT_MATCHER, MATCHERS, matcher_named
+from akashi.domain.package import ContextPackage
 from akashi.errors import AkashiError, ContractError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
@@ -41,6 +43,7 @@ from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.installation import inspect as inspect_installation
 from akashi.infrastructure.languages import DEFAULT, packs
 from akashi.infrastructure.packages import load_package
+from akashi.infrastructure.packages.plain import package_from_contexts, read_sample
 from akashi.infrastructure.rendering import (
     as_diagnosis,
     as_json,
@@ -51,7 +54,9 @@ from akashi.infrastructure.rendering import (
     segments_with_findings,
 )
 from akashi.infrastructure.reports import load_report, load_report_or_statement
+from akashi.infrastructure.settings import load_settings
 from akashi.interfaces.mcp import serve as mcp_serve
+from akashi.version import __version__
 
 __all__ = ["main"]
 
@@ -83,14 +88,26 @@ def _parser() -> argparse.ArgumentParser:
             "statement about strings, not about truth."
         ),
     )
-    audit_command.add_argument(
-        "--package", required=True, metavar="PATH", help="the ContextPackage, as JSON"
+    source = audit_command.add_mutually_exclusive_group(required=True)
+    source.add_argument("--package", metavar="PATH", help="the ContextPackage, as JSON")
+    source.add_argument(
+        "--contexts",
+        metavar="PATH",
+        help=(
+            "a JSON list of strings, or a RAGAS/DeepEval sample object, for a caller "
+            "with no ContextPackage. Reads user_input/input/question, "
+            "response/actual_output/answer and retrieved_contexts/retrieval_context/"
+            "contexts. No provenance is invented: offsets index the strings you "
+            "passed and the report says so"
+        ),
     )
     audit_command.add_argument(
         "--response",
-        required=True,
         metavar="PATH",
-        help="the answer to audit; - reads standard input",
+        help=(
+            "the answer to audit; - reads standard input. Not needed when --contexts "
+            "is a sample object that carries the answer"
+        ),
     )
     audit_command.add_argument(
         "--json", action="store_true", help="emit the report as JSON instead of text"
@@ -129,6 +146,33 @@ def _parser() -> argparse.ArgumentParser:
             "object holding the mapping, and argv carries names. For a report that "
             "says 'restored by' rather than 'asserted restored by', call "
             "akashi.audit(..., restorer=...) in the process that holds the session"
+        ),
+    )
+    audit_command.add_argument(
+        "--matcher",
+        default="",
+        metavar="NAME",
+        choices=["", *sorted(MATCHERS)],
+        help=(
+            f"which strings count as the same string: {', '.join(sorted(MATCHERS))}. "
+            f"The default is {DEFAULT_MATCHER.name}, which is what every number in "
+            f"docs/measurements.md was measured with. The name goes on the report and "
+            f"into its id, because it changes every count"
+        ),
+    )
+    audit_command.add_argument(
+        "--judge",
+        default=None,
+        metavar="MODEL",
+        nargs="?",
+        const="",
+        help=(
+            "ask a language model about the claims akashi could not settle, and record "
+            "what it said. Needs `pip install 'akashi[claude]'` and an API key, and it "
+            "is the one thing in akashi that reaches the network. A judgement is NOT a "
+            "verdict: it lands in its own section under the name of the model that gave "
+            "it, it is not reproducible, and it does not change report_id (ADR-0017). "
+            "Defaults to claude-opus-5"
         ),
     )
     audit_command.add_argument(
@@ -327,10 +371,44 @@ def _document(text: str, out: TextIO) -> None:
     buffer.flush()
 
 
+def _inputs(arguments: argparse.Namespace) -> tuple[ContextPackage, str]:
+    """The package and the answer, from whichever pair of flags was given.
+
+    `--contexts` is the door for somebody who has what every other library in
+    this space takes -- an answer and a list of retrieved strings -- and no
+    ContextPackage, which is almost everybody. A sample object may carry the
+    answer too, so `--response` is optional beside it and required beside a
+    package.
+    """
+    if arguments.package:
+        return load_package(arguments.package), _read(arguments.response)
+
+    body = json.loads(_read(arguments.contexts))
+    if isinstance(body, list):
+        return package_from_contexts(body), _read(arguments.response)
+    if not isinstance(body, dict):
+        raise ContractError(
+            f"--contexts is a JSON list of strings or a sample object, not {type(body).__name__}"
+        )
+
+    sample_answer, package = read_sample(body)
+    # An explicit --response wins over the one in the file: a caller who names
+    # both meant the one they named, and silently preferring the file would
+    # audit something other than what they asked about.
+    return package, _read(arguments.response) if arguments.response else sample_answer
+
+
 def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
-    package = load_package(arguments.package)
-    answer = _read(arguments.response)
-    chosen = packs(*arguments.language) if arguments.language else DEFAULT
+    # A flag beats a file beats a default, and the file said where it was. Both
+    # of these reach `report_id`, so a run configured one way cannot be mistaken
+    # for a run configured another -- which is the only reason a configuration
+    # file is safe to read at all.
+    settings = load_settings()
+    languages = arguments.language or list(settings.languages)
+    matcher_name = arguments.matcher or settings.matcher
+
+    package, answer = _inputs(arguments)
+    chosen = packs(*languages) if languages else DEFAULT
 
     report = audit(
         answer,
@@ -338,7 +416,23 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         chosen,
         restored_by=arguments.restored_by,
         akashi_version=__version__,
+        matcher=matcher_named(matcher_name) if matcher_name else DEFAULT_MATCHER,
     )
+    if arguments.judge is not None:
+        # After the audit and never during it. akashi has already decided every
+        # verdict by comparing strings; this adds an annotation about the ones
+        # it could not settle, and cannot move anything it did.
+        # Imported here and nowhere else. `import akashi` must not reach an
+        # HTTP client on a machine that happens to have the extra installed,
+        # and a module-level import would make it do exactly that.
+        from akashi.application.judging import judge_report
+        from akashi.infrastructure.adapters.claude_judge import DEFAULT_MODEL, ClaudeJudge
+
+        chosen_judge = ClaudeJudge(model=arguments.judge or DEFAULT_MODEL)
+        report = dataclasses.replace(
+            report, judged=judge_report(report, chosen_judge, package.evidence)
+        )
+
     if arguments.attestation:
         subject = arguments.subject or (
             "response" if arguments.response == "-" else Path(arguments.response).name
@@ -354,7 +448,7 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         # than the whole audit.
         print(as_text(report), end="", file=out)
 
-    if arguments.fail_on_findings and report.has_findings:
+    if (arguments.fail_on_findings or settings.fail_on_findings) and report.has_findings:
         return FOUND
     return AUDITED
 
@@ -573,6 +667,28 @@ def _tolerate_a_narrow_console() -> None:
             reconfigure(errors="replace")
 
 
+def _check_arguments(parser: argparse.ArgumentParser, arguments: argparse.Namespace) -> None:
+    """The one rule argparse cannot state, checked where argparse would.
+
+    `--response` is required beside `--package` and optional beside
+    `--contexts`, because a sample object may carry the answer and a package
+    never does. A missing one is a **wrong command line** and not an unauditable
+    input, so it exits 2 like every other misuse rather than 1 like a refusal.
+    """
+    if getattr(arguments, "command", "") != "audit" or arguments.response:
+        return
+    if arguments.package:
+        parser.error("--package needs --response: the answer to audit")
+    if arguments.contexts:
+        # A list of strings carries no answer; a sample object may.
+        with contextlib.suppress(OSError, ValueError, UnicodeDecodeError):
+            if isinstance(json.loads(_read(arguments.contexts)), list):
+                parser.error(
+                    "--contexts is a list of strings, so the answer has to come from "
+                    "--response. A sample object carrying both is the other way in."
+                )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI. Returns an exit code rather than calling ``sys.exit``.
 
@@ -582,6 +698,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     _tolerate_a_narrow_console()
     parser = _parser()
     arguments = parser.parse_args(argv)
+    _check_arguments(parser, arguments)
 
     try:
         if arguments.command == "eval":

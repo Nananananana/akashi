@@ -16,10 +16,11 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from akashi.domain.contradiction import SourceIndex
-from akashi.domain.coverage import assess
+from akashi.domain.coverage import PLAIN_CONTEXT_LIMITS, STANDING_LIMITS, assess
 from akashi.domain.extraction import extract_from_segment, kinds_not_extracted
 from akashi.domain.language import LanguagePack
-from akashi.domain.package import ContextPackage
+from akashi.domain.matching import DEFAULT_MATCHER, Matcher
+from akashi.domain.package import PLAIN_CONTRACT, ContextPackage
 from akashi.domain.report import Audited, AuditReport, ReportProvenance, content_hash
 from akashi.domain.segment import segment_answer
 from akashi.domain.verdict import check_segment
@@ -38,6 +39,7 @@ def audit(
     restorer: Restorer | None = None,
     restored_by: str = "",
     akashi_version: str = "",
+    matcher: Matcher = DEFAULT_MATCHER,
 ) -> AuditReport:
     """Audit ``answer`` against ``package``, or refuse.
 
@@ -64,10 +66,22 @@ def audit(
             # what can be audited and mark what cannot, rather than reporting a
             # masked value as a fabrication.
             admission.residue,
+            matcher,
         )
         for segment in segmentation.segments
     ]
-    assessment = assess(checked, kinds_not_extracted(packs))
+    assessment = assess(
+        checked,
+        kinds_not_extracted(packs),
+        # A package built from strings carries no provenance, and the report has
+        # to say so where the report is read rather than where the helper that
+        # built it is documented.
+        limits=(
+            (*STANDING_LIMITS, *PLAIN_CONTEXT_LIMITS)
+            if package.contract == PLAIN_CONTRACT
+            else STANDING_LIMITS
+        ),
+    )
 
     return AuditReport(
         answer=text,
@@ -83,6 +97,7 @@ def audit(
             # report rather than a note beside it.
             packs=tuple(sorted(pack.code for pack in packs)),
             akashi_version=akashi_version,
+            matcher=matcher.name,
         ),
         provenance=ReportProvenance(
             restored_by=admission.restored_by,

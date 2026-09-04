@@ -14,7 +14,8 @@
     "counts",
     "segments",
     "provenance",
-    "answer"
+    "answer",
+    "judged"
   ],
   "additionalProperties": false,
   "properties": {
@@ -36,7 +37,8 @@
         "segmenters",
         "extractors",
         "packs",
-        "akashi_version"
+        "akashi_version",
+        "matcher"
       ],
       "additionalProperties": false,
       "properties": {
@@ -76,6 +78,11 @@
         },
         "akashi_version": {
           "type": "string"
+        },
+        "matcher": {
+          "description": "Which strings counted as the same string. akashi ships 'normalized' -- folded form, a particular's internal spacing free, and a match rejected when it sits inside a longer token of the same kind -- and 'exact', which is the same boundary rules with no spacing tolerance. This is in report_id for the same reason the language packs are: it changes every count on the report, and two runs that answered it differently must not be able to claim one id. Required: a report that does not say which one produced it cannot be re-derived.",
+          "type": "string",
+          "minLength": 1
         }
       }
     },
@@ -250,6 +257,46 @@
           "description": "Dotted paths to fields the ContextPackage carried that its own contract does not list. tsumugi.context-package/1 is closed and every object in it sets additionalProperties: false, so a package carrying one of these does not conform to the contract it names -- and akashi audited it anyway. Context about the document, on the same footing as withheld: never an explanation of any finding (ADR-0012). Empty for a conforming package.",
           "type": "array",
           "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "judged": {
+      "description": "What a language model said about the claims akashi could not settle, each under the name of the model that said it. NOT verdicts and NOT in report_id: akashi's verdicts are decided by comparing strings and are the same on every machine on every day; these are not. A consumer must keep the two apart -- 'supported' means a model thought the evidence entails the claim, while 'grounded' means the string is in the text that was sent. Empty unless a judge ran (ADR-0017).",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "segment_id",
+          "particular",
+          "standing",
+          "because",
+          "model"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "segment_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "particular": {
+            "type": "string"
+          },
+          "standing": {
+            "type": "string",
+            "enum": [
+              "supported",
+              "unsupported",
+              "unclear"
+            ]
+          },
+          "because": {
+            "type": "string"
+          },
+          "model": {
+            "description": "Who answered. Required: two runs against two model versions are two different answers, and a reader who cannot tell them apart cannot act on either.",
             "type": "string",
             "minLength": 1
           }

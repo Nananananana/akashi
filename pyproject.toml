@@ -29,6 +29,16 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
+# The one extra that changes what akashi is. Everything else here is for
+# developing it; this is for running it differently.
+#
+# `pip install akashi` still brings nothing and reaches nothing -- the CI job
+# named "the dependency count is zero" checks the artefact rather than this
+# declaration. Installing this extra adds a language model to a tool whose whole
+# claim is that it does not use one, which is why it is an extra, why it needs
+# `--judge` on top, and why every judgement it produces is labelled with the
+# model that gave it and kept out of `report_id` (ADR-0017).
+claude = ["anthropic>=0.40"]
 dev = [
     "pytest>=8",
     "pytest-cov",
@@ -106,7 +116,13 @@ empty_parameter_set_mark = "fail_at_collect"
 # so must its test suite: a check that cannot run on a developer's machine, or
 # inside the networks that most need this tool, is a check that gets disabled.
 # The one job that runs them asks for them by name.
-addopts = "-q -m 'not network and not siblings'"
+# No `-q` here, deliberately. A caller who adds one of their own gets `-qq`,
+# which drops the summary line -- and a run piped into anything loses pytest's
+# exit code as well, so "nothing ran" and "everything passed" become the same
+# bytes. Measured: a collection error gives `grep -c '^FAILED'` = 0 and a real
+# exit code of 2. Removing the trap is cheaper than remembering it.
+# Found by `mamori`, which hit the same shape from the `-k` side.
+addopts = "-m 'not network and not siblings'"
 markers = [
     "network: reaches a host outside this machine. Deselected by default; run with -m network",
     # Needs a sibling library installed. Deselected by default because the

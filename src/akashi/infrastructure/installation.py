@@ -26,7 +26,10 @@ import sys
 from dataclasses import dataclass, field
 from importlib import resources
 from importlib.util import find_spec
+from pathlib import Path
 from typing import Any
+
+from akashi.infrastructure.settings import load_settings
 
 __all__ = [
     "Finding",
@@ -74,6 +77,10 @@ class Installation:
     console_encoding: str
     stdout_errors: str
     contract: Finding
+    #: What a configuration file or the environment set, and where each came
+    #: from. Empty when nobody configured anything, which is a different fact
+    #: from everything being at its default.
+    settings: tuple[str, ...] = ()
     packs: tuple[Finding, ...] = ()
     siblings: tuple[Finding, ...] = ()
     notes: tuple[str, ...] = field(default_factory=tuple)
@@ -91,7 +98,7 @@ class Installation:
 
 def inspect(packs: tuple[Any, ...]) -> Installation:
     """Look at the running installation. Reads; imports nothing new."""
-    from akashi import __version__
+    from akashi.version import __version__
 
     return Installation(
         akashi_version=__version__,
@@ -101,6 +108,7 @@ def inspect(packs: tuple[Any, ...]) -> Installation:
         console_encoding=_encoding(),
         stdout_errors=str(getattr(sys.stdout, "errors", "") or "unknown"),
         contract=_contract(),
+        settings=load_settings().describe(),
         packs=tuple(
             Finding("pack", f"{pack.code}  {pack.name}  {len(pack.rules)} rules  v{pack.version}")
             for pack in packs
@@ -157,10 +165,14 @@ def _sibling(name: str) -> Finding:
 
 
 def _location() -> str:
-    import akashi
+    """Where the package is installed, without importing the package.
 
-    paths = list(getattr(akashi, "__path__", []))
-    return paths[0] if paths else "unknown"
+    `import akashi` reaches the public surface, which re-exports the one-call
+    API in `interfaces` -- so infrastructure importing it is infrastructure
+    importing a layer above it. The layer contract found that; `__file__` gives
+    the same answer and names nothing.
+    """
+    return str(Path(__file__).resolve().parent.parent)
 
 
 def _encoding() -> str:

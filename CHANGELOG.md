@@ -141,6 +141,236 @@ API yet.
   it), **accidental** (true, and nobody designed or maintains it). This rule was
   in the second column and is now in the first.
 
+- **Extraction recall 95% → 99%, precision unchanged at 100%.** The
+  hand-marked corpus said akashi missed five particulars and all five were
+  `proper_noun`. Four were the same thing: `甲社` / `乙社` / `甲方` / `乙方` — a
+  contract party designation, which is what a clause is actually about.
+
+  ```text
+  recall over everything marked   91 of 96 -> 95 of 96
+  precision                       100%     -> 100%
+  spans exact rather than near    91 of 91 -> 95 of 95
+  unbearing segments (marked)     30%      -> 28%
+  ```
+
+  A rule, not a lookup: the stem is a closed set of five and the suffix a closed
+  set of three or four, so it reads a convention the way every other rule here
+  does. Precision holding across both corpora is the check that it is — a rule
+  that found four more names by finding things that are not names would trade a
+  silent miss for a loud lie.
+
+  **These four were in the measured set**, so the score is partly in-sample and
+  the rule is general; both halves are true, and `--held-out` reports the same
+  99%.
+
+- **What an external NER model would buy, measured before reaching for one.**
+  One of the five misses — `Borden Systems`, a company name with no legal form,
+  which no structural rule reaches. And **nothing at all** on the 30% of
+  segments akashi finds nothing in, because those segments are negations,
+  summaries and hedges with no name, figure or date in them:
+
+  ```text
+  No follow-up was arranged.
+  Liability under this agreement is not capped.
+  In short, either side can bring the arrangement to an end.
+  ```
+
+  Also worth recording before somebody reaches for one: **GLiNER's v1 models are
+  CC-BY-NC-4.0** and only v2.1 and GLiNER2 are Apache-2.0; spaCy's code and small
+  models are MIT with OntoNotes provenance behind the English one.
+
+  The caveat this cannot settle: the corpus is generated and marked by the
+  people who wrote the extractor (ADR-0010), so it may under-represent the text
+  a model would help with. Same shape as the corpus not being able to tell two
+  matchers apart.
+
+- **The shape everybody else already has.** akashi read
+  `tsumugi.context-package/1` and nothing else, and almost nobody outside this
+  family holds one — which made the barrier to trying akashi the package, not
+  the audit.
+
+  ```python
+  from akashi import evaluate
+
+  result = evaluate(answer="...", contexts=["...", "..."])
+  result.grounded_share  # 0.5
+  result.floating  # ('9.9kg',)
+  ```
+
+  A **RAGAS or DeepEval sample works unchanged**: `user_input` / `input` /
+  `question`, `response` / `actual_output` / `answer`, `retrieved_contexts` /
+  `retrieval_context` / `contexts`. On all three surfaces — the Python API,
+  `akashi audit --contexts sample.json`, and the MCP `audit` tool.
+
+  **No provenance is invented.** A package built from strings declares
+  `akashi.plain-context/1` and not tsumugi's contract, `source_path` stays
+  empty, offsets index the strings that were passed, and `limits` gains a line
+  saying so — because a reader who sees `notes/gear.md[1209:1214]` will go and
+  open that file.
+
+  And `grounded_share` is **not** a faithfulness score: every library in this
+  space reports a 0–1 number by that name computed by asking a model about
+  entailment, and this one is the share of load-bearing strings that occur in
+  the text that was sent. `result.limits` says so on the object.
+
+  The layer test caught two things while this landed: the one-call API belongs
+  beside the CLI and the MCP server rather than in `application` (which may name
+  only the domain and the ports), and `__version__` had to move out of the
+  public surface — `infrastructure` importing `akashi` for it became a cycle
+  once `__init__` re-exported something from `interfaces`.
+
+- **`akashi audit --judge`: a language model answers the part akashi cannot,
+  and the artefact keeps the two apart.** ADR-0003 said no model runs at audit
+  time, *ever*, and its reasoning still holds — a verdict that moves when nobody
+  changed anything is not an audit trail. What it got wrong is the step from
+  *"a verdict must not come from a model"* to *"nothing a model says may appear
+  on the artefact"*. [ADR-0017](docs/adr/0017-a-judge-annotates-an-audit-it-does-not-make-one.md)
+  amends it.
+
+  The cost of the old line is measured, not hypothetical: `verdict correctness`
+  sits at **59%**, and the gap is largely text the evidence supports in other
+  words. RAGAS, DeepEval and TruLens all answer that question; akashi's answer
+  was to not answer.
+
+  Six rules make it safe. A judgement shares **no word** with a verdict
+  (`supported` / `unsupported` / `unclear` against `grounded` / `floating` /
+  `contradicted`); they never share a section; **`report_id` does not move**, so
+  `recheck` still re-derives the audit with no network; a judge only sees what
+  akashi could not settle; every judgement names its model; and three sentences
+  join `limits` saying it is an opinion and is not reproducible.
+
+  `pip install akashi` still installs nothing and reaches nothing —
+  `akashi[claude]` is an extra, and `akashi.infrastructure.adapters` deliberately
+  does not re-export the judge, so `import akashi` loads no HTTP client even
+  where the extra is present. CI checks that on a machine that has it.
+
+- **A structural contract that was quietly weaker than its name.** `no-network`
+  read *"Nothing in akashi touches the network"* and measurement says otherwise:
+
+  ```text
+  a module here writing `import socket`      BROKEN
+  a module here writing `import anthropic`   KEPT      (anthropic opens sockets)
+  ```
+
+  import-linter does not traverse into an external package, so that contract and
+  that sentence were the same statement only while akashi had zero dependencies.
+  It is renamed to what it checks, and a second contract keeps the SDK to one
+  module — with no `ignore_imports` carve-out, because an exception that protects
+  nothing implies a check that is not happening.
+
+- **Settings, where the tools around it keep them.** `[tool.akashi]` in
+  `pyproject.toml`, a standalone `akashi.toml`, `AKASHI_*` in the environment,
+  and the command line, in that order of increasing precedence — the convention,
+  followed exactly, because a person configuring a Python project should not
+  have to learn a new place.
+
+  **What is not convention is why it is safe.** Both settings akashi reads reach
+  `report_id`, so a run configured one way cannot be mistaken for a run
+  configured another, and `akashi doctor` prints what was resolved *and which
+  file or variable each part came from*. A file three directories up that
+  quietly changed an audit, with nothing on either report to say why, is the
+  failure this project is about.
+
+  A key akashi does not read is **refused**: a typo in a configuration file is a
+  setting somebody believes is in force. `AKASHI_FAIL_ON_FINDINGS=maybe` is
+  refused rather than read as false, which is how a gate stops gating while the
+  pipeline that set it goes on believing it is armed.
+
+  `MAX_RUN` and `MAX_DEPTH` are deliberately not settings — they are bounds
+  akashi states about its own cost on input somebody else chose.
+
+- **Which strings count as the same string is a choice now, and it has a
+  name.** `domain/matching.py` answered the question the whole audit turns on
+  and never said which answer it gave. `audited.matcher` names it, `--matcher`
+  and the MCP `matcher` argument select it, and **it is in `report_id`** — for
+  the same reason the language packs are: it changes every count, and two audits
+  that answered differently must not be able to carry one id. `recheck`
+  re-derives with the matcher the report *names*, not with whatever the process
+  defaults to.
+
+  Two ship, and the second is not decoration — a port with one implementation is
+  a port nobody has tried to satisfy, which is what `Restorer` taught (#76).
+  `normalized` is the default and what every published number was measured with;
+  `exact` applies the same boundary rules with no spacing tolerance. Both fold
+  the text: turning that off as well would report a full-width `２.４kg` against
+  a half-width one as fabricated, which is not stricter but broken.
+
+  **And the corpus cannot tell them apart.** Over all 30 cases they ground
+  identically, particular for particular. The evidence holds 45 quantities
+  written with a space and no answer ever re-spaces one, because the generator
+  quotes the evidence verbatim — so the tolerance this module argues for at
+  length is worth nothing any published number measures. A test asserts the
+  agreement so the gap is visible, and says to delete itself when the corpus
+  grows the case.
+
+- **Two particulars did not resolve back into the text they were extracted
+  from.** Found by the round-trip property test, both pre-existing, both the
+  same shape — a comma between digits that reads as a thousands separator and is
+  not. It is the dangerous direction: akashi reporting an honest citation as
+  fabricated.
+
+  ```text
+  2026-08-30，300g   the `30` before the comma is a day, so `30,300` is no number
+  45,000，300g       the number's separator is half-width and the pause full-width;
+                     NFKC folded both to `,` and lost the author's own distinction
+  ```
+
+  `_is_number_tail` reads what is in front of the run before calling it a
+  number. `_same_width` requires a separator to have been written the way the
+  digits around it were — so a fully full-width `４５，０００` still binds, and a
+  half-width number beside a full-width pause does not. Both counterexamples are
+  pinned as `@example`, captured as strings before the tests were touched, per
+  the rule added with #60.
+
+- **A deeply nested document reached the user as a traceback, and killed the
+  MCP server.** `json.loads` recurses; a `RecursionError` is not a
+  `json.JSONDecodeError`, so it went past every reader akashi has. On the CLI it
+  printed a traceback — which akashi's own rule calls the wrong answer, because
+  a traceback reads as a bug in the tool rather than as a fact about the file.
+  On the MCP surface the exception left the request generator, left the loop and
+  **ended the process**: stdout empty, no reply, no reason. That loop exists so
+  that one bad message is not the end of a session.
+
+  `infrastructure/documents.py` counts nesting depth before parsing rather than
+  catching the failure after. Catching would depend on a recursion limit a
+  caller can change and on a C stack that differs by build — and where the stack
+  runs out first there is no exception to catch. Counting is arithmetic: it
+  cannot exhaust anything and gives the same answer everywhere, which an audit
+  needs (ADR-0003).
+
+  `MAX_DEPTH = 64`, set the way a floor is: the deepest JSON in this repository
+  is **10** (the two published schemas) and a real package is **5**.
+
+- **Extraction was quadratic in the length of an answer, and the answer is
+  text somebody else wrote.** akashi audits what a model produced and `akashi
+  mcp` lets the model choose the arguments, so the length and shape of an answer
+  are attacker-controlled. Measured end to end:
+
+  ```text
+  16,000 characters of ordinary prose    0.09 s
+  16,000 characters of digits           38.09 s     x4.0 per doubling
+  ```
+
+  Quadratic to three digits, across five sizes — 420x the cost of prose the same
+  length, and an hour at ten times the length. The cause is the ordinary
+  "long prefix matches, short suffix fails" shape: `\d[\d,.]*\d` followed by a
+  unit that is not there. Read with `re`'s own parser, **32 of the 40 shipped
+  rules** have an unbounded repetition.
+
+  `MAX_RUN = 256` bounds every repetition at compile time — **a bound and not a
+  timeout**, because an audit is reproducible (ADR-0003) and a run that gives up
+  after a second gives a different report on a slower machine. Set the way a
+  floor is: the longest particular in the corpus is 21 characters.
+
+  ```text
+  unbounded repeats   102 -> 0        particulars from the corpus   412 -> 412 identical
+  16,000 digits       38.09 s -> 1.60 s, and linear
+  ```
+
+  Every measured score is unchanged. The structural test reads what `_compiled`
+  actually produces rather than what the helper would return — written the other
+  way round first, and unwiring the bound left it green.
+
 - **The family diagram, with an honest dead end (#48).** Counting mentions
   across the six repositories, the `iriguchi` column was entirely zero: it
   referenced `mamori` 36 times and nothing referenced it. The library named

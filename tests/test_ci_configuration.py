@@ -291,3 +291,31 @@ def test_the_seam_job_type_checks_the_file_the_ordinary_run_excludes() -> None:
         if "mypy" in str(step.get("run", "")) and "test_seam_mamori" in str(step.get("run", ""))
     ]
     assert checked, "the seam file is excluded from mypy everywhere, so it is checked nowhere"
+
+
+def test_ci_checks_that_importing_akashi_reaches_no_network_stack() -> None:
+    """ADR-0017 put an HTTP client behind an extra. This is the check that it
+    stays behind it.
+
+    The property is not "akashi does not depend on anthropic" -- with the extra
+    installed it does. It is that `import akashi` does not *load* it, which
+    `adapters/__init__` not re-exporting the judge is what makes true. The
+    import-linter contract found that it was otherwise; this is the same fact
+    checked on a real interpreter, on a machine where the extra is present.
+    """
+    steps = [
+        step
+        for job in yaml.safe_load((WORKFLOWS / "ci.yml").read_text(encoding="utf-8"))[
+            "jobs"
+        ].values()
+        for step in job.get("steps", [])
+        if "not in sys.modules" in str(step.get("run", ""))
+    ]
+    assert steps, "no CI step checks that importing akashi loads no network stack"
+    body = str(steps[0]["run"])
+    assert "pip install" in body and "anthropic" in body, (
+        "the check has to run on a machine where the extra is installed, or it "
+        "proves only that the extra is absent"
+    )
+    for name in ("anthropic", "socket", "ssl"):
+        assert name in body

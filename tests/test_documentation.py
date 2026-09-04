@@ -267,6 +267,104 @@ def test_explain_and_the_contract_agree_on_which_fields_point_outward() -> None:
         assert field in outward, f"the contract no longer lists {field!r} as an assertion"
 
 
+def test_no_test_asserts_only_inside_a_loop_over_something_akashi_computed() -> None:
+    """The wider class, and the one that gives no hint from the file layout.
+
+    The check below catches a loop over what the *filesystem* handed back. This
+    catches a loop over what **akashi** handed back — an audit, an extraction, a
+    set of locations. Nothing about the code says the collection could be empty;
+    it just is, when a change makes it so, and the test goes green.
+
+    Two were here. `pairwise` over one particular yields no pairs, so the
+    overlap invariant passed with extraction returning `()`; and three nested
+    loops down to `locations` passed on an answer that grounded nothing. Both
+    count their population now and assert it before iterating.
+
+    A loop over an iterable written out in the test is not this: a literal
+    cannot become empty by surprise. Excluding those took the scan from one
+    false positive in three to none.
+
+    Reported by `mamori`, which found a shared contract skipping four of its five
+    subclasses — and the fifth passing against an empty result, which is the
+    same defect without even the skip to say something happened.
+    """
+    called = {
+        "audit",
+        "evaluate",
+        "evaluate_sample",
+        "extract_from_answer",
+        "extract_from_segment",
+        "segment_answer",
+        "claims_for",
+        "judge_report",
+        "locate",
+        "find_all",
+        "load_cases",
+        "read_sample",
+        "check_segment",
+        "assess",
+    }
+    offenders: list[str] = []
+
+    for path in sorted((ROOT / "tests").glob("test_*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for function in [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef) and node.name.startswith("test_")
+        ]:
+            decorators = {
+                getattr(one, "id", "") or getattr(getattr(one, "func", None), "id", "")
+                for one in function.decorator_list
+            }
+            if "given" in decorators:
+                continue  # hypothesis supplies the population and can never be empty
+            names = {
+                node.func.attr
+                if isinstance(node.func, ast.Attribute)
+                else getattr(node.func, "id", "")
+                for node in ast.walk(function)
+                if isinstance(node, ast.Call)
+            }
+            if not names & called:
+                continue
+            # A name bound to a literal is still a literal. `mamori` needed the
+            # same widening for its module constants, and the very next test
+            # written here -- a list of fragments assigned to `bearing` -- was
+            # flagged by the narrower rule.
+            literals = {
+                target.id
+                for node in [*ast.walk(function), *ast.walk(tree)]
+                if isinstance(node, ast.Assign)
+                and isinstance(node.value, (ast.Tuple, ast.List, ast.Set, ast.Constant, ast.Dict))
+                for target in node.targets
+                if isinstance(target, ast.Name)
+            }
+            loops = [
+                node
+                for node in ast.walk(function)
+                if isinstance(node, ast.For)
+                and any(isinstance(inner, ast.Assert) for inner in ast.walk(node))
+                and not isinstance(node.iter, (ast.Tuple, ast.List, ast.Set, ast.Constant))
+                and not (isinstance(node.iter, ast.Name) and node.iter.id in literals)
+            ]
+            if not loops:
+                continue
+            in_a_loop = {id(inner) for loop in loops for inner in ast.walk(loop)}
+            asserts_outside = [
+                node
+                for node in ast.walk(function)
+                if isinstance(node, ast.Assert) and id(node) not in in_a_loop
+            ]
+            if not asserts_outside:
+                offenders.append(f"{path.name}:{function.lineno} {function.name}")
+
+    assert not offenders, (
+        "these tests assert only inside a loop over something akashi computed, so a "
+        "change that empties it leaves them green: " + ", ".join(offenders)
+    )
+
+
 def test_no_test_asserts_only_inside_a_loop_over_something_it_discovered() -> None:
     """`for x in []: assert ...` is green, and so is `if not found: skip`.
 
