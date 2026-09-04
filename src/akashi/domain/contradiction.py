@@ -68,7 +68,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .anchor import Anchor
 from .evidence import Evidence, Location
@@ -87,12 +87,24 @@ __all__ = ["Contradiction", "SourceIndex", "SourceParticular", "replaces"]
 
 def _shape(text: str) -> str:
     """What is left of a value when its digits are taken out. ``2.4kg`` -> ``#kg``."""
-    return _DIGITS.sub("#", search_form(text).text)
+    return _shape_of(search_form(text).text)
 
 
 def _digits(text: str) -> str:
     """What is left of a value when everything but its digits is."""
-    return "".join(_DIGITS.findall(search_form(text).text))
+    return _digits_of(search_form(text).text)
+
+
+# The two above take raw text and reduce it; these take text already reduced.
+# `replaces` is the hot path -- it ran four reductions per candidate pair and
+# two of them were of strings it had just reduced -- and reducing once and
+# asking two questions of the result is the same answer for half the work.
+def _shape_of(reduced: str) -> str:
+    return _DIGITS.sub("#", reduced)
+
+
+def _digits_of(reduced: str) -> str:
+    return "".join(_DIGITS.findall(reduced))
 
 
 def replaces(source_text: str, answer_text: str) -> bool:
@@ -103,8 +115,9 @@ def replaces(source_text: str, answer_text: str) -> bool:
     other name. The text around them must differ, because two ways of writing
     the same value are the same value and would have grounded.
     """
-    source, answer = _digits(source_text), _digits(answer_text)
-    return bool(source) and source == answer and _shape(source_text) != _shape(answer_text)
+    left, right = search_form(source_text).text, search_form(answer_text).text
+    source, answer = _digits_of(left), _digits_of(right)
+    return bool(source) and source == answer and _shape_of(left) != _shape_of(right)
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,6 +158,29 @@ class SourceIndex:
     """
 
     entries: tuple[SourceParticular, ...] = ()
+
+    #: ``entries`` grouped by the two things `replaces` requires to be equal.
+    #:
+    #: `explain` used to walk every entry three times, once per scope, calling
+    #: `replaces` on each -- and `replaces` begins by refusing every pair whose
+    #: digits differ. On a realistic audit that was 7,360 comparisons, almost
+    #: all of them answered by the first line of the function.
+    #:
+    #: The grouping is exact rather than an approximation: `replaces` is false
+    #: unless the digits are identical and non-empty, so a bucket miss is a
+    #: definite no. Derived in `__post_init__` rather than in `of`, so a caller
+    #: building an index directly -- every test that does -- gets one too.
+    by_digits: dict[tuple[ParticularKind, str], tuple[SourceParticular, ...]] = field(
+        default_factory=dict, compare=False, repr=False
+    )
+
+    def __post_init__(self) -> None:
+        grouped: dict[tuple[ParticularKind, str], list[SourceParticular]] = {}
+        for entry in self.entries:
+            digits = _digits(entry.text)
+            if digits:
+                grouped.setdefault((entry.kind, digits), []).append(entry)
+        object.__setattr__(self, "by_digits", {key: tuple(value) for key, value in grouped.items()})
 
     @classmethod
     def of(cls, evidence: Evidence, packs: Sequence[LanguagePack]) -> SourceIndex:
@@ -196,13 +232,20 @@ class SourceIndex:
             ("item", lambda entry: entry.item_id in items),
             ("package", lambda entry: True),
         )
+        # Everything `replaces` could say yes to, found by lookup rather than by
+        # scanning. What is left for it to decide is the shape, which is the
+        # half of the rule that is actually about this pair.
+        reduced = search_form(floating.text).text
+        possible = self.by_digits.get((floating.kind, _digits_of(reduced)), ())
+        if not possible:
+            return None
+        shape = _shape_of(reduced)
+
         for where, within in scopes:
             candidates = [
                 entry
-                for entry in self.entries
-                if entry.kind is floating.kind
-                and within(entry)
-                and replaces(entry.text, floating.text)
+                for entry in possible
+                if within(entry) and _shape_of(search_form(entry.text).text) != shape
             ]
             if len(candidates) == 1:
                 found = candidates[0]
@@ -216,6 +259,60 @@ class SourceIndex:
                     ),
                 )
         return None
+
+    def nearby(
+        self,
+        floating: Particular,
+        grounded: Sequence[Location],
+        evidence: Evidence,
+        most: int = 5,
+    ) -> tuple[SourceParticular, ...]:
+        """Everything of the same kind the evidence does say, nearest scope first.
+
+        **This is not a finding and makes no claim about the floating value.**
+        `explain` names a source only when the digits are identical, which the
+        corpus priced at 12/12; anything looser was 47% and is not shipped as a
+        verdict. What is shipped instead is the list itself, unranked by any
+        similarity and unlabelled by any confidence: *you said 2.4kg, and the
+        quantities the evidence actually carries here are these, at these
+        offsets.*
+
+        The reason this exists is that `floating` alone is a dead end. A reader
+        told only that a figure is in none of the text still has to go and read
+        all of it, and akashi has already read all of it. Handing over the
+        candidates it looked at is the difference between a refusal and an
+        answer -- and it costs no confidence, because there is no threshold
+        here to be wrong about.
+
+        Scope is the ordering and the only one: the sentences the rest of this
+        segment resolved into, then those whole items, then everything sent. A
+        similarity score would put akashi's guess at the top of a list a reader
+        is about to trust, which is exactly what `explain` refuses to do.
+        """
+        if not self.entries or most <= 0:
+            return ()
+        sentences = self._sentences_of(grounded, evidence)
+        items = {item_id for item_id, _ in sentences}
+        found: list[SourceParticular] = []
+        scopes: tuple[Callable[[SourceParticular], bool], ...] = (
+            lambda entry: (entry.item_id, entry.sentence) in sentences,
+            lambda entry: entry.item_id in items,
+            lambda entry: True,
+        )
+        for within in scopes:
+            for entry in self.entries:
+                if entry.kind is not floating.kind or entry in found:
+                    continue
+                # The particular itself is not a neighbour of itself. It floated,
+                # so no *location* matched -- but the same string can sit in the
+                # evidence inside a longer token, and offering it back as "what
+                # the evidence says instead" would be a lie by omission.
+                if entry.text == floating.text or not within(entry):
+                    continue
+                found.append(entry)
+                if len(found) >= most:
+                    return tuple(found)
+        return tuple(found)
 
     def _sentences_of(
         self, grounded: Sequence[Location], evidence: Evidence

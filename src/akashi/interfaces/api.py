@@ -95,6 +95,27 @@ class Result:
         )
 
     @property
+    def nearby(self) -> dict[str, tuple[str, ...]]:
+        """For each floating particular, what the evidence carries of that kind.
+
+        **Not suggestions.** No similarity is computed and no claim is made that
+        any of these is the value the answer meant; they are the candidates
+        akashi looked at, in scope order. `report` carries the same list with the
+        offsets, which is what a reader actually opens -- this is the shape that
+        fits in a notebook.
+
+        Here because `floating` alone was a dead end: it told a caller a figure
+        was in none of the text and left them to walk the report to get any
+        further.
+        """
+        return {
+            one.particular.text: tuple(entry.text for entry in one.nearby)
+            for segment in self.report.assessment.segments
+            for one in segment.particulars
+            if one.nearby
+        }
+
+    @property
     def unchecked(self) -> tuple[str, ...]:
         """Why each skipped segment was skipped, one line each.
 

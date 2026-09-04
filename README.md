@@ -27,8 +27,18 @@ No API key. No model download. No network. `pip install akashi` brings **zero
 dependencies** and opens **zero sockets** — a CI job checks the built artefact,
 not the promise.
 
-That audit takes **0.35 ms**. A hundred-sentence answer against twenty
-retrieved chunks takes **56 ms**, on one CPU core, with nothing warmed up.
+That audit takes **0.33 ms**. A 120-sentence answer, one CPU core, best of
+nine batches:
+
+| retrieved contexts | v0.5 | before |
+| --- | --- | --- |
+| 10 | **13 ms** | 32 ms |
+| 40 | **23 ms** | 90 ms |
+| 160 | **61 ms** | 164 ms |
+
+The 2.4–3.8× came from one property that was being recomputed inside a loop and
+one linear scan that became a lookup; `tests/test_performance.py` holds both by
+counting operations rather than seconds.
 
 ## See it
 

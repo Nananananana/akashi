@@ -146,6 +146,12 @@ class Evidence:
         Ordered by item and then by position, so that a report over the same
         package is the same report every time (ADR-0003).
         """
+        # Reduced once, not once per item. `Particular.form` is a property that
+        # folds the text every time it is read, and this loop read it for every
+        # evidence item: on 240 particulars against 160 contexts that was 38,400
+        # reductions of 240 distinct strings, and two thirds of the time an
+        # audit spent looking things up.
+        form = particular.form
         found: list[Location] = []
         for entry in self.items:
             found.extend(
@@ -155,7 +161,7 @@ class Evidence:
                     layer=entry.layer,
                     producer=entry.producer,
                 )
-                for anchor in entry.locate(particular.form, matcher)
+                for anchor in entry.locate(form, matcher)
             )
         return tuple(found)
 

@@ -51,11 +51,29 @@ def main() -> None:
     show("a correct paraphrase", "The tent weighs 2.4 kilograms.", ["Tent mass: 2.4kg."])
     print("\n    Zero on a correct answer. `--judge` is the answer to this one.")
 
-    head(3, "What the limits say, on the artefact rather than in a README")
+    head(3, "Floating is not a dead end any more")
+    result = evaluate(
+        answer="The tent weighs 2.6kg.",
+        contexts=["The tent weighs 3.1kg. The pack is 900g.", "Gas is 250mg."],
+    )
+    print("\n    answer   The tent weighs 2.6kg.")
+    print(f"    -> floating {result.floating}")
+    for near in result.nearby.values():
+        print(f"       the evidence carries, of the same kind, near here: {', '.join(near)}")
+    for segment in result.report.assessment.segments:
+        for one in segment.particulars:
+            for entry in one.nearby:
+                span = entry.anchor.span
+                print(f"         {entry.text:>7}  at {entry.item_id}[{span.start}:{span.end}]")
+    print("\n    No similarity was computed and no ranking was applied. Scope is the")
+    print("    only ordering. akashi is not saying you meant 3.1kg -- it is saying")
+    print("    it read the evidence and this is what the evidence holds.")
+
+    head(4, "What the limits say, on the artefact rather than in a README")
     for line in evaluate(answer="The tent weighs 2.4kg.", contexts=["x"]).limits:
         print(f"    - {line}")
 
-    head(4, "A bound that changed the answer says so")
+    head(5, "A bound that changed the answer says so")
     digits = "1" * 301
     result = evaluate(answer=f"Transaction {digits} settled.", contexts=[f"Ref {digits}."])
     share = "none" if result.grounded_share is None else f"{result.grounded_share:.2f}"
@@ -67,7 +85,7 @@ def main() -> None:
         print(f"    {bound['name']}={bound['limit']}")
         print(f"      {bound['because']}")
 
-    head(5, "A dataset, and an aggregate that refuses to be a bare number")
+    head(6, "A dataset, and an aggregate that refuses to be a bare number")
     rows: list[dict[str, Any]] = [
         {
             "user_input": "q",
@@ -91,7 +109,7 @@ def main() -> None:
         print(f"\n    row {refusal.index} was refused, not dropped:")
         print(f"      {refusal.reason[:96]}...")
 
-    head(6, "In a test suite")
+    head(7, "In a test suite")
     from akashi.testing import GroundingError, assert_grounded
 
     try:
