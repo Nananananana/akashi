@@ -62,6 +62,27 @@ _SI = (
     r"°C|℃|°F|℉|K|ppm|px|pt)"
 )
 
+#: What may follow a unit and still be part of the same unit.
+#:
+#: Found by `tools/draft_genres.py` on the first batch of vocabulary that did
+#: not come from this repository's own author. The old rule stopped at the
+#: lookahead after the unit, and `/` is not a letter or a digit, so:
+#:
+#:     320 km/h   ->  320 km      a speed became a distance
+#:     10mg/mL    ->  10mg        a concentration became a mass
+#:     20,000 m³  ->  20,000 m    a volume became a length
+#:     120 m²     ->  120 m       an area became a length
+#:
+#: Every one of those is a particular akashi would then ground against a
+#: document that says something else, and report `grounded`. Nine of eighteen
+#: drafted values were this defect; none of the 30 hand-written corpus cases
+#: contained the notation at all.
+#:
+#: Only the superscript characters, never a bare ``2`` or ``3``: ``m2`` in
+#: running text is ``m`` followed by a number as often as it is a square metre,
+#: and guessing which would trade a miss for a wrong answer.
+_UNIT_TAIL = r"[²³]?(?:/" + _SI + r"[²³]?)?"
+
 
 COMMON = LanguagePack(
     code="und",
@@ -116,9 +137,10 @@ COMMON = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
-            pattern=_SIGN + _NUMBER + r"\s*" + _SI + r"(?![A-Za-z0-9])",
+            pattern=_SIGN + _NUMBER + r"\s*" + _SI + _UNIT_TAIL + r"(?![A-Za-z0-9])",
             priority=50,
-            note="the unit is part of the particular; 2.4kg and 2.4mg differ by it",
+            note="the unit is part of the particular; 2.4kg and 2.4mg differ by it, "
+            "and so do 320 km and 320 km/h",
         ),
         ExtractionRule(
             kind=ParticularKind.NUMBER,

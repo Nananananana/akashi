@@ -797,3 +797,69 @@ that string is* — is true and incomplete. Knowing where a string is does not s
 whether the sentence it landed in is about the same thing.
 
 `tools/measure_subject_agreement.py` reproduces every number above.
+
+## What vocabulary from another head trapped (#55)
+
+`proposals/0002` §7 lists *"the corpus measures its own author"* as a
+falsification condition. Every genre here was written by whoever was writing the
+extractor, so the way a quantity is *spelled* came from one head.
+
+`tools/draft_genres.py` asks a local model (`qwen2.5:14b-instruct`, ollama, on
+this machine) for subjects, attributes and — the part that matters — **values
+written the way a trade actually writes them**. Nothing it produces reaches a
+fixture: a person reads and commits. CI calls no model and ADR-0003 is untouched.
+
+Twenty-four drafts, three languages, one batch each:
+
+| | drafts | malformed | well-formed | akashi could not extract |
+| --- | --- | --- | --- | --- |
+| en | 8 | 5 | 3 | 1 |
+| ja | 8 | 1 | 7 | 4 |
+| zh | 8 | 0 | 8 | 4 |
+| **total** | **24** | **6** | **18** | **9 — 50%** |
+
+**Nine of eighteen, and they are one defect.**
+
+| written | akashi extracted | what changed |
+| --- | --- | --- |
+| `320 km/h` | `320 km` | a speed became a distance |
+| `10mg/mL` | `10mg` | a concentration became a mass |
+| `20,000 m³` | `20,000 m` | a volume became a length |
+| `120 m²` | `120 m` | an area became a length |
+| `320 公里/小时` | `320 公里` | a speed became a distance |
+| `1:45.32` | `1:45` | a different lap time |
+| `40' x 8'6"` | `40`, `8`, `6` | feet and inches, unrecognised |
+
+The quantity rule ended in a lookahead for a letter or a digit, and `/` is
+neither. **A particular cut at the slash grounds against a document that says
+something else and is reported `grounded`** — the same harm as #83, arriving
+deterministically and fixable deterministically.
+
+`docs/measurements.md` had recorded 99% extraction recall. That number was true
+of the corpus and the corpus contained none of this notation.
+
+**Fixed for `/` and for `²`/`³`.** Not for `1:45.32` or for feet-and-inches:
+those are new kinds rather than a wider unit, and they are recorded here rather
+than guessed at. Only the superscript characters count — `m2` in running text is
+`m` followed by a number as often as it is a square metre, and guessing would
+trade a miss for a wrong answer.
+
+After the fix: 30 cases, fabrication recall 42/42, false positives 0/42,
+reproducibility 30/30 — unchanged. The corpus could not see the defect and
+cannot see the repair either, which is the point being made.
+
+### Three versions of the check, and two of them were wrong
+
+The tool decides whether a drafted value is extractable, and that check was
+wrong twice before it was right.
+
+1. **Exact equality.** Called all five English drafts a miss, including three
+   where akashi was right: `5.2%` out of `5.2% ABV` is the value, and `ABV` is
+   what the value is *of*.
+2. **Compare the digits.** `fold` is NFKC, which turns the superscript in `m³`
+   into a digit — so it reported a real defect for a reason that was not true.
+   A check that reaches the right answer by the wrong route is one input away
+   from the wrong answer.
+3. **Look at what was left behind.** A leftover separated by a space or a comma
+   is a different word; one glued directly on changed the token. This is the
+   rule that ships.

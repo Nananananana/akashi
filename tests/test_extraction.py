@@ -611,3 +611,64 @@ def test_the_chinese_rule_has_no_lookaround_and_the_japanese_one_does() -> None:
 
     assert "(?<!" in party_rule("ja")
     assert "(?<!" not in party_rule("zh")
+
+
+# --- compound units, found by vocabulary from another head -------------------
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("The car does 320 km/h on the straight.", "320 km/h"),
+        ("Dose 10mg/mL by infusion.", "10mg/mL"),
+        ("Acceleration is 9.8 m/s at sea level.", "9.8 m/s"),
+        ("Volume is 20,000 m³ total.", "20,000 m³"),
+        ("Area is 120 m² exactly.", "120 m²"),
+        ("Density 7.8 g/cm³ measured.", "7.8 g/cm³"),
+    ],
+)
+def test_a_compound_unit_is_part_of_the_particular(sentence: str, expected: str) -> None:
+    """`320 km` is a distance and `320 km/h` is a speed, and akashi used to
+    extract the first from the second.
+
+    The old rule ended in a lookahead for a letter or a digit, and `/` is
+    neither -- so the unit was cut at the slash and the particular that came out
+    would ground against a document saying something else entirely.
+
+    None of the 30 hand-written corpus cases contained this notation. It was
+    found by `tools/draft_genres.py` on the first batch of vocabulary that did
+    not come from this repository's own author (#55), which is the whole
+    argument that issue makes.
+    """
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("It weighs 2.4kg.", "2.4kg"),
+        ("The tank holds 5 L.", "5 L"),
+        ("Ambient was -20℃ overnight.", "-20℃"),
+    ],
+)
+def test_a_plain_unit_still_ends_where_it_did(sentence: str, expected: str) -> None:
+    """The tail is optional, and adding it must not have moved anything that
+    already worked."""
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+def test_a_bare_two_or_three_after_a_unit_is_not_a_superscript() -> None:
+    """`m2` in running text is `m` followed by a number as often as it is a
+    square metre. Guessing would trade a miss for a wrong answer, so only the
+    superscript characters count."""
+    found = extract_from_answer(segment_answer("Measured 20 m2 across.", DEFAULT), DEFAULT)
+    assert "20 m2" not in [one.text for one in found]
+
+
+def test_a_unit_followed_by_a_word_is_still_refused() -> None:
+    """The lookahead is what keeps `320 kmx` from being a quantity, and it has
+    to survive the tail being bolted on in front of it."""
+    found = extract_from_answer(segment_answer("Read 320 kmx here.", DEFAULT), DEFAULT)
+    assert [one.text for one in found] == ["320"]

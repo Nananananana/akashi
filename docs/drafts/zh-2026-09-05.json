@@ -1,0 +1,140 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-order-quantity",
+      "language": "zh",
+      "subject": "货物运输订单",
+      "attribute": "订单数量",
+      "value": "350 吨",
+      "sentence": "该货物运输订单的订单数量为350 吨。",
+      "neighbour": "运输计划",
+      "superseded_value": "280 吨",
+      "heading": "货物运输订单详情",
+      "paraphrase": "这个运输订单上有多少货物需要运输呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "pharmacy-medication-dosage",
+      "language": "zh",
+      "subject": "药店药品",
+      "attribute": "剂量",
+      "value": "每次25毫克，每日三次",
+      "sentence": "根据药品说明书，该药品的剂量为每次25毫克，每日三次。",
+      "neighbour": "药品库存",
+      "superseded_value": "每次30毫克，每日两次",
+      "heading": "药品使用说明",
+      "paraphrase": "这种药品每次应该吃多少呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['25毫克'] from the value '每次25毫克，每日三次'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "allotment-crop-yield",
+      "language": "zh",
+      "subject": "菜园作物",
+      "attribute": "产量",
+      "value": "平均每平方米5千克",
+      "sentence": "该菜园作物的产量为平均每平方米5千克。",
+      "neighbour": "菜园管理记录",
+      "superseded_value": "平均每平方米3千克",
+      "heading": "作物产量报告",
+      "paraphrase": "这片菜园每平方米能产出多少呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['5千克'] from the value '平均每平方米5千克'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "motorsport-race-speed",
+      "language": "zh",
+      "subject": "赛车比赛",
+      "attribute": "最高速度",
+      "value": "320 公里/小时",
+      "sentence": "该赛车比赛的最高速度为320 公里/小时。",
+      "neighbour": "赛车手记录",
+      "superseded_value": "300 公里/小时",
+      "heading": "比赛数据",
+      "paraphrase": "这辆赛车在比赛中能跑多快呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['320 公里'] from the value '320 公里/小时'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "tailoring-clothing-size",
+      "language": "zh",
+      "subject": "服装定制",
+      "attribute": "尺寸",
+      "value": "M号",
+      "sentence": "该服装定制的尺寸为M号。",
+      "neighbour": "布料库存",
+      "superseded_value": "L号",
+      "heading": "定制记录",
+      "paraphrase": "这件衣服要做成多大号呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted nothing; the value 'M号' is not among them"
+      ]
+    },
+    {
+      "key": "brewing-alcohol-content",
+      "language": "zh",
+      "subject": "酿酒",
+      "attribute": "酒精含量",
+      "value": "12% vol",
+      "sentence": "该酿酒的酒精含量为12% vol。",
+      "neighbour": "酒水库存",
+      "superseded_value": "10% vol",
+      "heading": "酿酒记录",
+      "paraphrase": "这种酒的酒精浓度是多少呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "surveying-area-measurement",
+      "language": "zh",
+      "subject": "测量项目",
+      "attribute": "测量面积",
+      "value": "15000 平方米",
+      "sentence": "该测量项目的测量面积为15000 平方米。",
+      "neighbour": "测量报告",
+      "superseded_value": "12000 平方米",
+      "heading": "测量结果",
+      "paraphrase": "这片土地的实际面积有多大呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "aviation-maintenance-hour",
+      "language": "zh",
+      "subject": "航空维护",
+      "attribute": "维护时间",
+      "value": "50 小时",
+      "sentence": "该航空维护的维护时间为50 小时。",
+      "neighbour": "飞机维修记录",
+      "superseded_value": "40 小时",
+      "heading": "维护记录",
+      "paraphrase": "这架飞机需要维护多久呢？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    }
+  ]
+}
