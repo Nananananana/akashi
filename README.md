@@ -46,6 +46,31 @@ line and the MCP tool:
 akashi audit --contexts sample.json
 ```
 
+**A whole dataset**, which is the shape people actually have:
+
+```python
+from akashi import evaluate_samples
+
+results = evaluate_samples(rows)  # RAGAS, DeepEval or plain, mixed
+results.describe()
+# '0.412 over 1173 particulars in 486 of 500 rows; 2 refused'
+
+import pandas as pd
+
+pd.DataFrame(results.rows())  # akashi does not depend on pandas
+```
+
+Two decisions it makes so a caller does not have to make them wrong:
+
+- **The share counts particulars, not rows.** A mean of per-row shares weights a
+  one-particular answer the same as a forty-particular one, and has to decide
+  what a row with nothing checkable contributes — and every answer to that is
+  wrong. `describe()` says how many rows reached the number.
+- **A row akashi refuses is kept as a refusal**, not raised and not dropped.
+  One malformed row in five hundred should not lose the other 499, and a run
+  reported over 500 rows that audited 499 is the failure this project exists to
+  remove. `results.refused` names the index and the reason.
+
 **`grounded_share` is not a faithfulness score.** Every library in this space
 reports a 0–1 number by that name, computed by asking a model whether the
 context entails each claim. This one is *the share of load-bearing strings in
