@@ -427,11 +427,18 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         # Imported here and nowhere else. `import akashi` must not reach an
         # HTTP client on a machine that happens to have the extra installed,
         # and a module-level import would make it do exactly that.
-        from akashi.application.judging import judge_report
+        from akashi.application.judging import MAX_CLAIMS, claims_and_total, judge_report
+        from akashi.domain.bounds import from_unsent_claims
 
         chosen_judge = _judge(arguments.judge)
+        sent, total = claims_and_total(report)
         report = dataclasses.replace(
-            report, judged=judge_report(report, chosen_judge, package.evidence)
+            report,
+            judged=judge_report(report, chosen_judge, package.evidence),
+            # A judge that was shown 64 of 200 claims produces a report whose
+            # `judged` section looks complete. The shortfall is a fact about
+            # this audit and goes where every other one does.
+            bounds=(*report.bounds, *from_unsent_claims(len(sent), total, MAX_CLAIMS)),
         )
 
     if arguments.attestation:

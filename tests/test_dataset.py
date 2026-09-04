@@ -202,12 +202,12 @@ def test_a_dataframe_is_read_as_rows_and_not_as_column_names() -> None:
 
 def test_one_mapping_is_refused_rather_than_read_as_its_keys() -> None:
     with pytest.raises(ContractError, match="would audit its keys"):
-        evaluate_samples(ONE)  # type: ignore[arg-type]
+        evaluate_samples(ONE)
 
 
 def test_one_string_is_refused_rather_than_read_as_its_characters() -> None:
     with pytest.raises(ContractError, match="list of its characters"):
-        evaluate_samples("an answer")  # type: ignore[arg-type]
+        evaluate_samples("an answer")
 
 
 def test_a_plain_iterable_of_dicts_still_goes_straight_through() -> None:

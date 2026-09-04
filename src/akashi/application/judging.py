@@ -36,7 +36,7 @@ from akashi.domain.report import AuditReport
 from akashi.domain.verdict import Standing, Verdict
 from akashi.ports.judge import Claim, Judge, Judgement
 
-__all__ = ["claims_for", "judge_report"]
+__all__ = ["claims_and_total", "claims_for", "judge_report"]
 
 #: How many claims akashi will send in one run.
 #:
@@ -73,26 +73,54 @@ def claims_for(report: AuditReport) -> tuple[Claim, ...]:
     the answer an audit annotation would be the restoration claim ADR-0013
     exists to refuse.
     """
+    return _claims(report)[0]
+
+
+def claims_and_total(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
+    """The claims that will be sent, and how many there were to send.
+
+    The second number is what `MAX_CLAIMS` was hiding. 200 floating particulars
+    produced 64 claims, the judge answered 64, and the report carried 64
+    judgements with nothing saying the other 136 existed -- so a reader counted
+    the judgements and believed the judge had looked at the answer.
+
+    Kept separate from `claims_for` because only the caller that reports the
+    shortfall needs it, and every other caller would otherwise unpack a pair and
+    throw half of it away.
+    """
+    return _claims(report)
+
+
+def _claims(report: AuditReport) -> tuple[tuple[Claim, ...], int]:
+    """Both numbers in one pass.
+
+    Counting continues after the bound is reached rather than returning early:
+    the total is the whole point, and a loop that stops cannot report what it
+    stopped short of.
+    """
     found: list[Claim] = []
+    total = 0
     for segment in report.assessment.segments:
         if segment.verdict is Verdict.UNBEARING:
-            found.append(Claim(segment_id=segment.segment.segment_id, text=segment.segment.text))
-            if len(found) >= MAX_CLAIMS:
-                return tuple(found)
+            total += 1
+            if len(found) < MAX_CLAIMS:
+                found.append(
+                    Claim(segment_id=segment.segment.segment_id, text=segment.segment.text)
+                )
             continue
         for one in segment.particulars:
             if one.standing is not Standing.FLOATING or one.contradiction is not None:
                 continue
-            found.append(
-                Claim(
-                    segment_id=segment.segment.segment_id,
-                    text=segment.segment.text,
-                    particular=one.particular.text,
+            total += 1
+            if len(found) < MAX_CLAIMS:
+                found.append(
+                    Claim(
+                        segment_id=segment.segment.segment_id,
+                        text=segment.segment.text,
+                        particular=one.particular.text,
+                    )
                 )
-            )
-            if len(found) >= MAX_CLAIMS:
-                return tuple(found)
-    return tuple(found)
+    return tuple(found), total
 
 
 def judge_report(report: AuditReport, judge: Judge, evidence: Evidence) -> tuple[Judgement, ...]:
@@ -109,7 +137,7 @@ def judge_report(report: AuditReport, judge: Judge, evidence: Evidence) -> tuple
     akashi's own matching, which is the thing the judge is there to be
     independent of.
     """
-    claims = claims_for(report)
+    claims, _ = claims_and_total(report)
     if not claims:
         return ()
 
