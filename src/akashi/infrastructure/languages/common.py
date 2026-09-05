@@ -59,8 +59,40 @@ _SI = (
     r"ms|µs|ns|s|min|hr|hrs|h|"
     r"GHz|MHz|kHz|Hz|kW|MW|W|kV|V|mAh|mA|A|"
     r"TB|GB|MB|KB|kB|B|bit|"
-    r"°C|℃|°F|℉|K|ppm|px|pt)"
+    r"°C|℃|°F|℉|K|ppm|px|pt|"
+    # Trade units the corpus never wrote, because the person who wrote the
+    # corpus wrote the unit list too. Drafted vocabulary asked for tyre
+    # pressure and got `120psi`, which came out as a bare `120`.
+    r"psi|bar|kPa|MPa|Pa|rpm|kn|kt|dB|cal|kcal|J|kJ|N|Nm|hp|kWh)"
 )
+
+#: What may follow a unit and still be part of the same unit.
+#:
+#: Found by `tools/draft_genres.py` on the first batch of vocabulary that did
+#: not come from this repository's own author. The old rule stopped at the
+#: lookahead after the unit, and `/` is not a letter or a digit, so:
+#:
+#:     320 km/h   ->  320 km      a speed became a distance
+#:     10mg/mL    ->  10mg        a concentration became a mass
+#:     20,000 m³  ->  20,000 m    a volume became a length
+#:     120 m²     ->  120 m       an area became a length
+#:
+#: Every one of those is a particular akashi would then ground against a
+#: document that says something else, and report `grounded`. Nine of eighteen
+#: drafted values were this defect; none of the 30 hand-written corpus cases
+#: contained the notation at all.
+#:
+#: Only the superscript characters, never a bare ``2`` or ``3``: ``m2`` in
+#: running text is ``m`` followed by a number as often as it is a square metre,
+#: and guessing which would trade a miss for a wrong answer.
+#: A denominator may be spelled in the document's own script. `50mg/日` is a
+#: Japanese document writing a Latin unit over a local one, and the SI rule here
+#: matches before either language pack gets a turn -- so a tail that only took
+#: Latin denominators repaired `320 km/h` and left `50mg/日` cut at the slash.
+#: Bounded to three characters: a denominator is a unit, not a phrase.
+_DENOMINATOR = r"(?:" + _SI + r"[²³]?|[一-鿿]{1,3})"
+
+_UNIT_TAIL = r"[²³]?(?:/" + _DENOMINATOR + r")?"
 
 
 COMMON = LanguagePack(
@@ -116,9 +148,10 @@ COMMON = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
-            pattern=_SIGN + _NUMBER + r"\s*" + _SI + r"(?![A-Za-z0-9])",
+            pattern=_SIGN + _NUMBER + r"\s*" + _SI + _UNIT_TAIL + r"(?![A-Za-z0-9])",
             priority=50,
-            note="the unit is part of the particular; 2.4kg and 2.4mg differ by it",
+            note="the unit is part of the particular; 2.4kg and 2.4mg differ by it, "
+            "and so do 320 km and 320 km/h",
         ),
         ExtractionRule(
             kind=ParticularKind.NUMBER,

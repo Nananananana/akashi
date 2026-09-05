@@ -797,3 +797,162 @@ that string is* — is true and incomplete. Knowing where a string is does not s
 whether the sentence it landed in is about the same thing.
 
 `tools/measure_subject_agreement.py` reproduces every number above.
+
+## What vocabulary from another head trapped (#55)
+
+`proposals/0002` §7 lists *"the corpus measures its own author"* as a
+falsification condition. Every genre here was written by whoever was writing the
+extractor, so the way a quantity is *spelled* came from one head.
+
+`tools/draft_genres.py` asks a local model (`qwen2.5:14b-instruct`, ollama, on
+this machine) for subjects, attributes and — the part that matters — **values
+written the way a trade actually writes them**. Nothing it produces reaches a
+fixture: a person reads and commits. CI calls no model and ADR-0003 is untouched.
+
+Twenty-four drafts, three languages, one batch each:
+
+| | drafts | malformed | well-formed | akashi could not extract |
+| --- | --- | --- | --- | --- |
+| en | 8 | 5 | 3 | 1 |
+| ja | 8 | 1 | 7 | 4 |
+| zh | 8 | 0 | 8 | 4 |
+| **total** | **24** | **6** | **18** | **9 — 50%** |
+
+**Nine of eighteen, and they are one defect.**
+
+| written | akashi extracted | what changed |
+| --- | --- | --- |
+| `320 km/h` | `320 km` | a speed became a distance |
+| `10mg/mL` | `10mg` | a concentration became a mass |
+| `20,000 m³` | `20,000 m` | a volume became a length |
+| `120 m²` | `120 m` | an area became a length |
+| `320 公里/小时` | `320 公里` | a speed became a distance |
+| `1:45.32` | `1:45` | a different lap time |
+| `40' x 8'6"` | `40`, `8`, `6` | feet and inches, unrecognised |
+
+The quantity rule ended in a lookahead for a letter or a digit, and `/` is
+neither. **A particular cut at the slash grounds against a document that says
+something else and is reported `grounded`** — the same harm as #83, arriving
+deterministically and fixable deterministically.
+
+`docs/measurements.md` had recorded 99% extraction recall. That number was true
+of the corpus and the corpus contained none of this notation.
+
+**Fixed for `/` and for `²`/`³`.** Not for `1:45.32` or for feet-and-inches:
+those are new kinds rather than a wider unit, and they are recorded here rather
+than guessed at. Only the superscript characters count — `m2` in running text is
+`m` followed by a number as often as it is a square metre, and guessing would
+trade a miss for a wrong answer.
+
+After the fix: 30 cases, fabrication recall 42/42, false positives 0/42,
+reproducibility 30/30 — unchanged. The corpus could not see the defect and
+cannot see the repair either, which is the point being made.
+
+### Three versions of the check, and two of them were wrong
+
+The tool decides whether a drafted value is extractable, and that check was
+wrong twice before it was right.
+
+1. **Exact equality.** Called all five English drafts a miss, including three
+   where akashi was right: `5.2%` out of `5.2% ABV` is the value, and `ABV` is
+   what the value is *of*.
+2. **Compare the digits.** `fold` is NFKC, which turns the superscript in `m³`
+   into a digit — so it reported a real defect for a reason that was not true.
+   A check that reaches the right answer by the wrong route is one input away
+   from the wrong answer.
+3. **Look at what was left behind.** A leftover separated by a space or a comma
+   is a different word; one glued directly on changed the token. This is the
+   rule that ships.
+
+### Six more batches, and what the first fix left behind
+
+72 drafts in nine batches, three languages, same model. The rate against the
+extractor as each fix landed:
+
+| | well-formed | akashi could not extract | |
+| --- | --- | --- | --- |
+| before any fix (first 3 batches) | 18 | 9 | **50.0%** |
+| after the `/` and superscript fix | 54 | 10 | **18.5%** |
+| after the CJK denominator and trade units | 51 | 7 | **13.7%** |
+
+**The second round found that the first fix was half a fix.** `320 km/h` was
+repaired and `320 千米/小时` was still cut at the slash, because `_UNIT_TAIL`
+took a Latin denominator only. So was `50mg/日` — a Japanese document writing a
+Latin unit over a local one, which the shared SI rule matches before either
+language pack gets a turn. A test written for the Japanese katakana units then
+found the same omission a third time, in the rule beside the one that was fixed.
+
+That is the argument for running more than one batch: **a repair is written
+against the examples that prompted it**, and the examples that prompted it are
+the ones the first batch happened to contain.
+
+`psi`, `rpm`, `kWh`, `Nm`, `bar`, `kPa`, `dB`, `kcal`, `hp` and the rest were
+missing outright. The unit list was written by the person who wrote the corpus,
+so the corpus contained no unit the list was missing.
+
+The well-formed count *falls* between rows two and three because the tool
+learned to tell two failures apart. `每次25毫克，每日三次` is a clause in a field
+that asked for a value; akashi took `25毫克` out of it, which is the quantity in
+it. Counting that against akashi was flattering the drafts and slandering the
+extractor. Which side the leftover sits on decides it: glued on the **right** is
+akashi cutting a unit short, glued on the **left** is a draft that is a phrase.
+
+**The seven that remain, and none of them is a wider unit:**
+
+| | |
+| --- | --- |
+| `40' x 8'6"`, `25' x 50'`, `12フィート6インチ` | feet and inches — a new kind |
+| `5.5%vol` | a word after a percent sign |
+| `M号`, `纯棉` | a size and a material — akashi has no kind for either |
+
+Recorded rather than guessed at. The corpus evaluation is unchanged by every
+fix above: 42/42 fabrication recall, 0/42 false positives, 30/30
+reproducibility.
+
+## Whether a deterministic rule can see two sources disagreeing (#88)
+
+The candidate: **same kind, same shape, different digits, in a different item**.
+`3.1kg` and `2.8kg` both reduce to `#kg`, so a document giving one where another
+gives the other looks like a disagreement.
+
+Over the corpus, 108 grounded particulars, 6 protected cases skipped:
+
+| | |
+| --- | --- |
+| grounded particulars with at least one rival | **16 of 108 — 14.8%** |
+| rival pairs in total | 32 |
+| cases with any rival | 11 of 24 |
+
+**Every one of them is a false positive.** Not most — all of the sixteen:
+
+| value | rival | what they actually are |
+| --- | --- | --- |
+| `30 days` | `45 days`, `60 days` | notice period, payment terms, renewal period |
+| `68` | `128`, `82` | diastolic, systolic, pulse |
+| `第12条` | `第30条` | two different articles |
+
+A contract holds several time periods; a clinical note holds several
+measurements; a statute holds several article numbers. **A document that
+contains many values of one shape is not a document disagreeing with itself, it
+is a document.** Shape is a property of the notation, not of the subject.
+
+Twelve of the 32 pairs sit on a value the case marks as planted, and that is an
+artefact of matching plant text by string rather than evidence of the rule
+working: the plant is a digit drift, and the rival relationship is not what was
+planted.
+
+**So no deterministic rule ships for #88 either, and it is the same wall as
+#83.** Both need to know what a sentence is *about*, and
+`tools/measure_subject_agreement.py` already showed the deterministic route to
+that reads the script rather than the subject.
+
+**What does reach it is already shipped.** `--judge-grounded` (#89) turns a
+grounded particular into a claim, and a judge handed the whole evidence — both
+documents — is being asked exactly the right question:
+
+```
+(about: 3.1kg, found verbatim in: itm_01)  The tent weighs 3.1kg.
+evidence: [The tent weighs 3.1kg., Tent, revised spec: 2.8kg.]
+```
+
+`tools/measure_source_conflict.py` reproduces every number above.

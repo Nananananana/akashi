@@ -1,0 +1,140 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-container-volume",
+      "language": "ja",
+      "subject": "コンテナ船",
+      "attribute": "総積載量",
+      "value": "20,000 m³",
+      "sentence": "このコンテナ船の総積載量は20,000 m³です。",
+      "neighbour": "貨物船",
+      "superseded_value": "15,000 m³",
+      "heading": "コンテナ船の特徴",
+      "paraphrase": "この船はどのくらいの量を運べますか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['20,000 m'] from the value '20,000 m³'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "pharmacy-prescription-strength",
+      "language": "ja",
+      "subject": "処方薬",
+      "attribute": "薬剤濃度",
+      "value": "10mg/mL",
+      "sentence": "この処方薬の薬剤濃度は10mg/mLです。",
+      "neighbour": "サプリメント",
+      "superseded_value": "5mg/mL",
+      "heading": "処方薬の詳細",
+      "paraphrase": "この薬の強さは何ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['10mg'] from the value '10mg/mL'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "allotment-garden-size",
+      "language": "ja",
+      "subject": "家庭菜園",
+      "attribute": "面積",
+      "value": "120 m²",
+      "sentence": "この家庭菜園の面積は120 m²です。",
+      "neighbour": "公共公園",
+      "superseded_value": "100 m²",
+      "heading": "家庭菜園の概要",
+      "paraphrase": "この菜園の大きさは何ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['120 m'] from the value '120 m²'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "motorsport-car-speed",
+      "language": "ja",
+      "subject": "レーシングカー",
+      "attribute": "最高速度",
+      "value": "320 km/h",
+      "sentence": "このレーシングカーの最高速度は320 km/hです。",
+      "neighbour": "モーターサイクル",
+      "superseded_value": "300 km/h",
+      "heading": "レーシングカーの性能",
+      "paraphrase": "この車のどれくらいのスピードが出ますか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['320 km'] from the value '320 km/h'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "tailoring-suit-size",
+      "subject": "スーツ",
+      "attribute": "サイズ",
+      "value": "56 (胸囲)",
+      "sentence": "このスーツのサイズは56 (胸囲) です。",
+      "neighbour": "スカート",
+      "superseded_value": "54 (胸囲)",
+      "heading": "スーツの寸法",
+      "paraphrase": "このスーツのサイズは何ですか？",
+      "language": "ja",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute 'サイズ'"
+      ]
+    },
+    {
+      "key": "brewing-alcohol-content",
+      "language": "ja",
+      "subject": "ビール",
+      "attribute": "アルコール度数",
+      "value": "5.5% ABV",
+      "sentence": "このビールのアルコール度数は5.5% ABVです。",
+      "neighbour": "ワイン",
+      "superseded_value": "4.5% ABV",
+      "heading": "ビールの特性",
+      "paraphrase": "このビールのアルコール含有量は何パーセントですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "surveying-map-accuracy",
+      "language": "ja",
+      "subject": "地図",
+      "attribute": "精度",
+      "value": "1:5000",
+      "sentence": "この地図の精度は1:5000です。",
+      "neighbour": "衛星画像",
+      "superseded_value": "1:10000",
+      "heading": "地図の詳細",
+      "paraphrase": "この地図はどれくらい正確ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "aviation-maintenance-checklist",
+      "language": "ja",
+      "subject": "飛行機",
+      "attribute": "定期点検間隔",
+      "value": "100時間",
+      "sentence": "この飛行機の定期点検間隔は100時間です。",
+      "neighbour": "車両",
+      "superseded_value": "80時間",
+      "heading": "飛行機のメンテナンス",
+      "paraphrase": "この飛行機はどのくらい飛行後に点検が必要ですか？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    }
+  ]
+}

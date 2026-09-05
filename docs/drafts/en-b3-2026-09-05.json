@@ -1,0 +1,136 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-container-volume",
+      "language": "en",
+      "subject": "shipping container",
+      "attribute": "volume",
+      "value": "40' High Cube",
+      "sentence": "The selected shipping container has a volume of 40' High Cube.",
+      "neighbour": "cargo ship",
+      "superseded_value": "20' Standard",
+      "heading": "Container Volume",
+      "paraphrase": "What is the size of the container?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['40'] from the value \"40' High Cube\"; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "pharmacy-prescription-refills",
+      "subject": "pharmacy prescription",
+      "attribute": "refills",
+      "value": "2x30tabs",
+      "sentence": "This prescription allows for 2 refills of 30 tablets each.",
+      "neighbour": "prescription drug",
+      "superseded_value": "1x60tabs",
+      "heading": "Refills Allowed",
+      "paraphrase": "How many times can this prescription be refilled?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '2x30tabs' verbatim"
+      ]
+    },
+    {
+      "key": "allotment-garden-plot-size",
+      "language": "en",
+      "subject": "allotment garden plot",
+      "attribute": "size",
+      "value": "25' x 50'",
+      "sentence": "The allotment garden plot measures 25' x 50'.",
+      "neighbour": "community garden",
+      "superseded_value": "20' x 30'",
+      "heading": "Plot Dimensions",
+      "paraphrase": "How big is the garden plot?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['25', '50'] from the value \"25' x 50'\"; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "motorsport-race-distance",
+      "subject": "motorsport race",
+      "attribute": "distance",
+      "value": "600km",
+      "sentence": "The race distance is set at 600 kilometers.",
+      "neighbour": "circuit track",
+      "superseded_value": "500km",
+      "heading": "Race Length",
+      "paraphrase": "What is the length of the race?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '600km' verbatim"
+      ]
+    },
+    {
+      "key": "tailoring-shirt-sleevelength",
+      "subject": "tailoring shirt",
+      "attribute": "sleeve length",
+      "value": "27in",
+      "sentence": "The tailored shirt has a sleeve length of 27 inches.",
+      "neighbour": "suits",
+      "superseded_value": "25in",
+      "heading": "Sleeve Length",
+      "paraphrase": "How long are the sleeves?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '27in' verbatim"
+      ]
+    },
+    {
+      "key": "brewing-beer-ABV",
+      "language": "en",
+      "subject": "brewing beer",
+      "attribute": "alcohol by volume",
+      "value": "5.2%",
+      "sentence": "The current batch of beer has an alcohol by volume of 5.2%.",
+      "neighbour": "home brewing kit",
+      "superseded_value": "4.8%",
+      "heading": "ABV Content",
+      "paraphrase": "What is the alcohol content of the beer?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "surveying-site-elevation",
+      "subject": "surveying site",
+      "attribute": "elevation",
+      "value": "120m above sea level",
+      "sentence": "The elevation of the surveying site is 120 meters above sea level.",
+      "neighbour": "geographical landmark",
+      "superseded_value": "100m above sea level",
+      "heading": "Elevation",
+      "paraphrase": "How high is the site above sea level?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '120m above sea level' verbatim"
+      ]
+    },
+    {
+      "key": "aviation-maintenance-turbine-speed",
+      "subject": "aviation maintenance",
+      "attribute": "turbine speed",
+      "value": "10,000 rpm",
+      "sentence": "The turbine speed is set to 10,000 revolutions per minute.",
+      "neighbour": "aircraft engine",
+      "superseded_value": "9,500 rpm",
+      "heading": "Turbine RPM",
+      "paraphrase": "What is the speed of the turbine?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '10,000 rpm' verbatim"
+      ]
+    }
+  ]
+}

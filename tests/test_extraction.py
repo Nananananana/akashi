@@ -611,3 +611,116 @@ def test_the_chinese_rule_has_no_lookaround_and_the_japanese_one_does() -> None:
 
     assert "(?<!" in party_rule("ja")
     assert "(?<!" not in party_rule("zh")
+
+
+# --- compound units, found by vocabulary from another head -------------------
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("The car does 320 km/h on the straight.", "320 km/h"),
+        ("Dose 10mg/mL by infusion.", "10mg/mL"),
+        ("Acceleration is 9.8 m/s at sea level.", "9.8 m/s"),
+        ("Volume is 20,000 m³ total.", "20,000 m³"),
+        ("Area is 120 m² exactly.", "120 m²"),
+        ("Density 7.8 g/cm³ measured.", "7.8 g/cm³"),
+    ],
+)
+def test_a_compound_unit_is_part_of_the_particular(sentence: str, expected: str) -> None:
+    """`320 km` is a distance and `320 km/h` is a speed, and akashi used to
+    extract the first from the second.
+
+    The old rule ended in a lookahead for a letter or a digit, and `/` is
+    neither -- so the unit was cut at the slash and the particular that came out
+    would ground against a document saying something else entirely.
+
+    None of the 30 hand-written corpus cases contained this notation. It was
+    found by `tools/draft_genres.py` on the first batch of vocabulary that did
+    not come from this repository's own author (#55), which is the whole
+    argument that issue makes.
+    """
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("It weighs 2.4kg.", "2.4kg"),
+        ("The tank holds 5 L.", "5 L"),
+        ("Ambient was -20℃ overnight.", "-20℃"),
+    ],
+)
+def test_a_plain_unit_still_ends_where_it_did(sentence: str, expected: str) -> None:
+    """The tail is optional, and adding it must not have moved anything that
+    already worked."""
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+def test_a_bare_two_or_three_after_a_unit_is_not_a_superscript() -> None:
+    """`m2` in running text is `m` followed by a number as often as it is a
+    square metre. Guessing would trade a miss for a wrong answer, so only the
+    superscript characters count."""
+    found = extract_from_answer(segment_answer("Measured 20 m2 across.", DEFAULT), DEFAULT)
+    assert "20 m2" not in [one.text for one in found]
+
+
+def test_a_unit_followed_by_a_word_is_still_refused() -> None:
+    """The lookahead is what keeps `320 kmx` from being a quantity, and it has
+    to survive the tail being bolted on in front of it."""
+    found = extract_from_answer(segment_answer("Read 320 kmx here.", DEFAULT), DEFAULT)
+    assert [one.text for one in found] == ["320"]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("Inflate to 120psi cold.", "120psi"),
+        ("Idle at 800rpm steady.", "800rpm"),
+        ("Output 15kWh daily.", "15kWh"),
+        ("Torque 40Nm applied.", "40Nm"),
+    ],
+)
+def test_a_trade_unit_the_corpus_never_wrote(sentence: str, expected: str) -> None:
+    """The unit list was written by the person who wrote the corpus, so the
+    corpus contained no unit the list was missing. Drafted vocabulary asked for
+    tyre pressure and got `120psi`, which came out as a bare `120`."""
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("用量は50mg/日です。", "50mg/日"),
+        ("最高速度は320 千米/小时です。", "320 千米/小时"),
+        ("投与量は5ミリグラム/日でした。", "5ミリグラム/日"),
+    ],
+)
+def test_a_denominator_may_be_in_the_documents_own_script(sentence: str, expected: str) -> None:
+    """The first repair for this took Latin denominators only, so `320 km/h`
+    was fixed while `320 千米/小时` was still cut at the slash -- a fix that was
+    half a fix, in exactly the half the corpus could not show.
+
+    Found by running a second batch of drafted vocabulary after shipping the
+    first repair, which is the argument for running more than one batch.
+    """
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+def test_a_denominator_is_a_unit_and_not_a_phrase() -> None:
+    """Bounded to three characters. Without a bound `10km/東京都渋谷区` would
+    become one particular, and a report citing it would quote a place as a
+    unit."""
+    found = extract_from_answer(
+        segment_answer("距離は10km/東京都渋谷区までです。", DEFAULT), DEFAULT
+    )
+    assert "10km/東京都渋谷区" not in [one.text for one in found]
+
+
+def test_a_unit_followed_by_a_space_and_a_place_is_untouched() -> None:
+    found = extract_from_answer(segment_answer("距離は10km 東京まで。", DEFAULT), DEFAULT)
+    assert "10km" in [one.text for one in found]

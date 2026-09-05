@@ -1,0 +1,134 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-document",
+      "language": "en",
+      "subject": "a shipping container",
+      "attribute": "volume",
+      "value": "40' x 8'6\" x 8'6\"",
+      "sentence": "The container has dimensions of 40' x 8'6\" x 8'6\", providing ample space for cargo.",
+      "neighbour": "a cargo ship",
+      "superseded_value": "20' x 8' x 8'",
+      "heading": "Shipping Container Specifications",
+      "paraphrase": "What are the dimensions of the container?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['40', '8', '6', '8', '6'] from the value '40\\' x 8\\'6\" x 8\\'6\"'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "pharmacy-inventory",
+      "language": "en",
+      "subject": "a box of prescription drugs",
+      "attribute": "quantity",
+      "value": "240 mL",
+      "sentence": "Each box contains 240 mL of the prescribed liquid medication.",
+      "neighbour": "a bottle of over-the-counter pills",
+      "superseded_value": "150 mL",
+      "heading": "Pharmacy Inventory Report",
+      "paraphrase": "How much medication is in the box?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "allotment-record",
+      "language": "en",
+      "subject": "a plot of land",
+      "attribute": "length",
+      "value": "120ft",
+      "sentence": "The plot of land measures 120ft in length from end to end.",
+      "neighbour": "a garden shed",
+      "superseded_value": "100ft",
+      "heading": "Allotment Plot Dimensions",
+      "paraphrase": "How long is the plot of land?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "motorsport-vehicle",
+      "subject": "a racing car",
+      "attribute": "speed",
+      "value": "210mph",
+      "sentence": "The racing car has a top speed of 210mph, making it incredibly fast.",
+      "neighbour": "a street car",
+      "superseded_value": "190mph",
+      "heading": "Racing Car Specifications",
+      "paraphrase": "What is the top speed of the car?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute 'speed'"
+      ]
+    },
+    {
+      "key": "tailoring-measure",
+      "subject": "a bespoke suit",
+      "attribute": "chest measurement",
+      "value": "42\"",
+      "sentence": "The chest measurement for the bespoke suit is 42 inches.",
+      "neighbour": "a dress",
+      "superseded_value": "40\"",
+      "heading": "Tailoring Measurements",
+      "paraphrase": "What is the chest size of the suit?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '42\"' verbatim"
+      ]
+    },
+    {
+      "key": "brewing-batch",
+      "subject": "a batch of beer",
+      "attribute": "alcohol content",
+      "value": "5.2% ABV",
+      "sentence": "This batch of beer has an alcohol content of 5.2% ABV.",
+      "neighbour": "a barrel of wine",
+      "superseded_value": "4.8% ABV",
+      "heading": "Brewing Batch Report",
+      "paraphrase": "What is the alcohol content of the beer?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute 'alcohol content'"
+      ]
+    },
+    {
+      "key": "surveying-mark",
+      "subject": "a surveying marker",
+      "attribute": "elevation",
+      "value": "1025m",
+      "sentence": "The surveying marker is set at an elevation of 1025 meters above sea level.",
+      "neighbour": "a mountain peak",
+      "superseded_value": "980m",
+      "heading": "Surveying Marker Details",
+      "paraphrase": "What is the height of the surveying marker?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '1025m' verbatim"
+      ]
+    },
+    {
+      "key": "aviation-maintenance",
+      "subject": "an airplane engine",
+      "attribute": "service interval",
+      "value": "2500h",
+      "sentence": "The service interval for the airplane engine is 2500 hours of operation.",
+      "neighbour": "a helicopter propeller",
+      "superseded_value": "2000h",
+      "heading": "Aviation Maintenance Log",
+      "paraphrase": "How many hours until the next service for the engine?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '2500h' verbatim"
+      ]
+    }
+  ]
+}

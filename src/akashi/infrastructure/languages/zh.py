@@ -122,6 +122,11 @@ _UNITS = (
     r"克|吨|米|升|天|周|月|年|时|分|秒|倍|度|岁)"
 )
 
+#: A denominator, in either script. A Chinese document writes `50mg/日` as
+#: readily as `50毫克/天`, so the tail takes a Latin unit as well as a local one.
+_PER = r"(?:/(?:" + _UNITS + r"|[A-Za-z]{1,4}))?"
+
+
 CHINESE = LanguagePack(
     code="zh",
     version=1,
@@ -150,8 +155,14 @@ CHINESE = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
-            pattern=_UNBRACKETED + r"\s*(?:万|亿)?\s*" + _UNITS,
+            pattern=_UNBRACKETED + r"\s*(?:万|亿)?\s*" + _UNITS + _PER,
             priority=55,
+            note=(
+                "the denominator belongs to the unit. `320 千米/小时` is a speed "
+                "and `320 千米` is a distance, and the first fix for this took "
+                "only Latin denominators -- so `320 km/h` was repaired while "
+                "`320 千米/小时` was still cut at the slash"
+            ),
         ),
         ExtractionRule(
             kind=ParticularKind.PROPER_NOUN,

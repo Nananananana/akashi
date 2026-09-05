@@ -1,0 +1,136 @@
+{
+  "drafts": [
+    {
+      "key": "document-tracking",
+      "language": "zh",
+      "subject": "运输单据",
+      "attribute": "货物重量",
+      "value": "25kg",
+      "sentence": "此运输单据中的货物重量为25kg。",
+      "neighbour": "运输合同",
+      "superseded_value": "20kg",
+      "heading": "运输单据记录",
+      "paraphrase": "这份运输单据中载明的货物有多重？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "pharmacy-record",
+      "subject": "药品库存",
+      "attribute": "药品有效期",
+      "value": "2023-12-31",
+      "sentence": "该批次药品的有效期至2023年12月31日。",
+      "neighbour": "药品采购订单",
+      "superseded_value": "2023-10-01",
+      "heading": "药品有效期记录",
+      "paraphrase": "这批药品可以在什么时候之前使用？",
+      "language": "zh",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '2023-12-31' verbatim"
+      ]
+    },
+    {
+      "key": "allotment-garden",
+      "language": "zh",
+      "subject": "菜园种植",
+      "attribute": "生长周期",
+      "value": "90天",
+      "sentence": "该品种蔬菜的生长周期为90天。",
+      "neighbour": "花园杂记",
+      "superseded_value": "85天",
+      "heading": "蔬菜生长周期",
+      "paraphrase": "这种蔬菜从种植到收获需要多长时间？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "motorsport-report",
+      "subject": "赛车赛事",
+      "attribute": "最高速度",
+      "value": "312km/h",
+      "sentence": "赛车在测试赛道上的最高速度为312km/h。",
+      "neighbour": "赛车维修记录",
+      "superseded_value": "305km/h",
+      "heading": "赛车性能报告",
+      "paraphrase": "这辆赛车能达到的最高速度是多少？",
+      "language": "zh",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute '最高速度'"
+      ]
+    },
+    {
+      "key": "tailoring-order",
+      "language": "zh",
+      "subject": "服装定制",
+      "attribute": "面料种类",
+      "value": "纯棉",
+      "sentence": "客户要求定制的服装面料为纯棉。",
+      "neighbour": "服装设计图",
+      "superseded_value": "混纺",
+      "heading": "定制服装材料",
+      "paraphrase": "这件衣服应该用什么面料来做？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted nothing; the value '纯棉' is not among them"
+      ]
+    },
+    {
+      "key": "brewery-log",
+      "language": "zh",
+      "subject": "啤酒酿造",
+      "attribute": "酒精度",
+      "value": "5.5%vol",
+      "sentence": "该批次啤酒的酒精度为5.5%vol。",
+      "neighbour": "酿造记录",
+      "superseded_value": "5.2%vol",
+      "heading": "啤酒酒精度记录",
+      "paraphrase": "这瓶啤酒的酒精含量是多少？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "missed",
+      "why": [
+        "extracted ['5.5%'] from the value '5.5%vol'; what is left of it is attached to what came out, so the value changed rather than narrowed"
+      ]
+    },
+    {
+      "key": "surveying-notes",
+      "subject": "土地测量",
+      "attribute": "面积",
+      "value": "12345m²",
+      "sentence": "这块土地的测量面积为12345平方米。",
+      "neighbour": "地形图",
+      "superseded_value": "12300m²",
+      "heading": "土地测量报告",
+      "paraphrase": "这块土地的尺寸有多大？",
+      "language": "zh",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '12345m²' verbatim"
+      ]
+    },
+    {
+      "key": "aviation-maintenance",
+      "language": "zh",
+      "subject": "航空维护",
+      "attribute": "飞行时间",
+      "value": "2000小时",
+      "sentence": "此飞机的累计飞行时间为2000小时。",
+      "neighbour": "航空器维护日志",
+      "superseded_value": "1950小时",
+      "heading": "航空器飞行时间记录",
+      "paraphrase": "这架飞机已经飞行了多久？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    }
+  ]
+}

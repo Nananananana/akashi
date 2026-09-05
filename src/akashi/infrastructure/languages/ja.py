@@ -136,6 +136,11 @@ _COUNTERS = (
     r"日|月|年|週|時|分|秒|割|倍|度|階|位|歳|才)"
 )
 
+#: A denominator, in either script. See the Chinese pack for the defect this
+#: closes: the first repair took Latin denominators only.
+_PER = r"(?:/(?:" + _COUNTERS + r"|[A-Za-z]{1,4}))?"
+
+
 JAPANESE = LanguagePack(
     code="ja",
     version=1,
@@ -185,14 +190,18 @@ JAPANESE = LanguagePack(
             kind=ParticularKind.QUANTITY,
             pattern=_UNBRACKETED + r"\s*(?:キログラム|グラム|ミリグラム|トン|"
             r"キロメートル|メートル|センチメートル|ミリメートル|センチ|ミリ|"
-            r"リットル|ミリリットル|パーセント|ポイント|キロ)",
+            r"リットル|ミリリットル|パーセント|ポイント|キロ)" + _PER,
             priority=76,
             note="a unit spelled in katakana, which the SI alternation cannot match",
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
-            pattern=r"[-−+±]?" + _UNBRACKETED + r"\s*" + _COUNTERS,
+            pattern=r"[-−+±]?" + _UNBRACKETED + r"\s*" + _COUNTERS + _PER,
             priority=55,
+            note=(
+                "the denominator belongs to the unit, in either script: a "
+                "Japanese document writes `50mg/日` as readily as `50ミリグラム/日`"
+            ),
         ),
         ExtractionRule(
             kind=ParticularKind.NUMBER,
