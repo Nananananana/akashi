@@ -29,7 +29,7 @@ from typing import Any
 
 from akashi.domain.language import LanguagePack
 from akashi.domain.matching import DEFAULT_MATCHER, matcher_named
-from akashi.domain.package import ContextPackage
+from akashi.domain.package import ContextPackage, Protection
 from akashi.domain.report import content_hash
 from akashi.errors import ContractError
 from akashi.ports import Restorer
@@ -115,6 +115,7 @@ def recheck(
     restorer: Restorer | None = None,
     restored_by: str = "",
     akashi_version: str = "",
+    protection: Protection | None = None,
 ) -> Recheck:
     """Re-derive ``archived`` from the inputs it names, and say what differs.
 
@@ -162,6 +163,7 @@ def recheck(
         restored_by=restored_by,
         akashi_version=akashi_version,
         matcher=chosen,
+        protection=protection,
     ).to_dict()
 
     archived_version = str(audited.get("akashi_version", ""))

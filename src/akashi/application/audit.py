@@ -21,17 +21,22 @@ from akashi.domain.bounds import (
     oversized_runs,
 )
 from akashi.domain.contradiction import SourceIndex
-from akashi.domain.coverage import PLAIN_CONTEXT_LIMITS, STANDING_LIMITS, assess
+from akashi.domain.coverage import (
+    IRREVERSIBLE_PROTECTION_LIMITS,
+    PLAIN_CONTEXT_LIMITS,
+    STANDING_LIMITS,
+    assess,
+)
 from akashi.domain.extraction import MAX_RUN, extract_from_segment, kinds_not_extracted
 from akashi.domain.language import LanguagePack
 from akashi.domain.matching import DEFAULT_MATCHER, LOCATION_LIMIT, Matcher
-from akashi.domain.package import PLAIN_CONTRACT, ContextPackage
+from akashi.domain.package import PLAIN_CONTRACT, ContextPackage, Protection
 from akashi.domain.report import Audited, AuditReport, ReportProvenance, content_hash
 from akashi.domain.segment import segment_answer
 from akashi.domain.verdict import check_segment
 from akashi.ports import Restorer
 
-from .admit import admit
+from .admit import admit, effective_protection
 
 __all__ = ["audit"]
 
@@ -45,6 +50,7 @@ def audit(
     restored_by: str = "",
     akashi_version: str = "",
     matcher: Matcher = DEFAULT_MATCHER,
+    protection: Protection | None = None,
 ) -> AuditReport:
     """Audit ``answer`` against ``package``, or refuse.
 
@@ -53,7 +59,8 @@ def audit(
     an empty package, where every particular floats correctly and uselessly and
     the coverage numbers are what say so.
     """
-    admission = admit(answer, package, restorer, restored_by=restored_by)
+    admission = admit(answer, package, restorer, restored_by=restored_by, protection=protection)
+    protection = effective_protection(package, protection)
     text = admission.answer
 
     segmentation = segment_answer(text, packs)
@@ -82,9 +89,16 @@ def audit(
         # to say so where the report is read rather than where the helper that
         # built it is documented.
         limits=(
-            (*STANDING_LIMITS, *PLAIN_CONTEXT_LIMITS)
-            if package.contract == PLAIN_CONTRACT
-            else STANDING_LIMITS
+            *STANDING_LIMITS,
+            *(PLAIN_CONTEXT_LIMITS if package.contract == PLAIN_CONTRACT else ()),
+            # Only when it bit: a line about masked values on a report with no
+            # masked value is a warning about nothing, and a reader learns to
+            # skip the section it lives in.
+            *(
+                IRREVERSIBLE_PROTECTION_LIMITS
+                if protection is not None and not protection.reversible and admission.residue
+                else ()
+            ),
         ),
     )
 
@@ -126,7 +140,7 @@ def audit(
         provenance=ReportProvenance(
             restored_by=admission.restored_by,
             restoration_asserted=admission.asserted,
-            protection_by=package.protection.by if package.protection else "",
+            protection_by=protection.by if protection else "",
             withheld=tuple(package.evidence.withheld_by_rule().items()),
             unrecognised=package.unrecognised,
         ),

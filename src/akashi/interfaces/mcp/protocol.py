@@ -124,8 +124,16 @@ class Request:
             )
         return value
 
-    def mapping(self, name: str) -> dict[str, Any]:
+    def mapping(self, name: str, *, required: bool = True) -> dict[str, Any] | None:
+        """A JSON object argument, or ``None`` for an optional one that was not sent.
+
+        ``None`` rather than ``{}``: an empty object is a value a caller can send
+        and be refused for, and folding "absent" into it would let a missing
+        protection record read as a malformed one.
+        """
         value = self.params.get(name)
+        if value is None and not required:
+            return None
         if not isinstance(value, dict):
             raise RpcError(INVALID_PARAMS, f"{name!r} must be a JSON object")
         return value

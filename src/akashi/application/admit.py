@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from akashi.domain.package import ContextPackage
+from akashi.domain.package import ContextPackage, Protection
 from akashi.domain.protection import PlaceholderResidue, find_placeholders
 from akashi.errors import ProtectedResponseError
 from akashi.ports import Restorer
@@ -77,6 +77,7 @@ def admit(
     restorer: Restorer | None = None,
     *,
     restored_by: str = "",
+    protection: Protection | None = None,
 ) -> Admission:
     """Clear ``answer`` for audit, restore it, or refuse.
 
@@ -99,7 +100,7 @@ def admit(
             "two is wrong, and guessing which would put the wrong name on the report."
         )
     residue = find_placeholders(answer)
-    protection = package.protection
+    protection = effective_protection(package, protection)
 
     if protection is None and not residue:
         # Nothing to restore and nothing to refuse -- but the caller's word is
@@ -196,6 +197,33 @@ def admit(
             f"exists to stop."
         )
     return Admission(answer=restored, restored_by=protection.by, residue=remaining)
+
+
+def effective_protection(package: ContextPackage, document: Protection | None) -> Protection | None:
+    """The protection the audit acts on, from the package or from a record.
+
+    A caller may hand akashi a `mamori.protection-scope/1` record as a document
+    (Sora does: it does not import mamori and has no restorer to pass). That
+    record describes the same three facts `provenance.protection` does, and it
+    is the only record there is when the redactor ran *after* the package was
+    built -- the case the package cannot know about.
+
+    When both exist they must agree. Two answers to "who protected this, in
+    which scope, reversibly or not" is one too many, and picking either would
+    put a name on the report that one of the two sources contradicts.
+    """
+    if document is None:
+        return package.protection
+    if package.protection is not None and package.protection != document:
+        raise ProtectedResponseError(
+            f"the package says it was protected by {package.protection.by} "
+            f"(scope {package.protection.scope!r}, "
+            f"reversible={package.protection.reversible}) and the protection record "
+            f"says {document.by} (scope {document.scope!r}, "
+            f"reversible={document.reversible}). One of the two is about a different "
+            f"document, and akashi will not guess which."
+        )
+    return document
 
 
 def _examples(residue: tuple[PlaceholderResidue, ...], limit: int = 3) -> str:
