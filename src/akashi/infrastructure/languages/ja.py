@@ -17,6 +17,8 @@ from __future__ import annotations
 from akashi.domain.language import LanguagePack
 from akashi.domain.particular import ExtractionRule, ParticularKind
 
+from .common import FULLWIDTH_THOUSANDS
+
 __all__ = ["JAPANESE"]
 
 #: Titles and honorifics that make what precedes them a person's name. A name
@@ -124,7 +126,9 @@ _DIGITS = r"(?:\d[\d,.]*\d|\d|[〇一二三四五六七八九十百千]+)"
 #: word except a dictionary. Recall lost on small bare numerals, precision kept
 #: everywhere. A false find is what a reader judges the tool by.
 _UNBRACKETED = (
-    r"(?:\d[\d,.]*\d|\d|[〇一二三四五六七八九]*[十百千万億兆][〇一二三四五六七八九十百千万億兆]*)"
+    r"(?:\d(?:[\d,.]|"
+    + FULLWIDTH_THOUSANDS
+    + r")*\d|\d|[〇一二三四五六七八九]*[十百千万億兆][〇一二三四五六七八九十百千万億兆]*)"
 )
 
 #: Counters. Japanese attaches one to almost every number, which is what makes

@@ -724,3 +724,54 @@ def test_a_denominator_is_a_unit_and_not_a_phrase() -> None:
 def test_a_unit_followed_by_a_space_and_a_place_is_untouched() -> None:
     found = extract_from_answer(segment_answer("距離は10km 東京まで。", DEFAULT), DEFAULT)
     assert "10km" in [one.text for one in found]
+
+
+# --- #81: a full-width thousands separator, and only that ---------------------
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("合計は４５，０００円です。", "４５，０００円"),
+        ("参加者は１，２３４人です。", "１，２３４人"),
+        ("Total ４５，０００ units shipped.", "４５，０００"),
+        # `辆` and `元` are Chinese-only. The first version of this row used
+        # `件`, which is a Japanese counter too, so the Japanese rule produced
+        # the particular and unwiring the Chinese one changed nothing.
+        ("共有１，０００辆。", "１，０００辆"),
+        ("总额为４５，０００元。", "４５，０００元"),
+    ],
+)
+def test_a_fullwidth_thousands_separator_binds(sentence: str, expected: str) -> None:
+    """#81. The extractor reads the original and `，` was not a separator it
+    knew, so `４５，０００円` came out as `４５` and `０００円` -- and the matcher,
+    reading the folded `45,000円`, could find neither standing alone. An honest
+    citation, reported as fabricated twice over.
+
+    Four sentences on purpose, one per rule that carries a number core: the
+    shared NUMBER rule (`Total ４５，０００ units`), the Japanese money and counter
+    rules, and the Chinese counter rule. The rule lives in one constant and is
+    wired into three patterns; a poison that unwires one of them must be caught
+    by the sentence that goes through that one.
+    """
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "must_not_appear", "why"),
+    [
+        ("见第3，5，7条。", "3，5", "half-width digits beside a full-width comma: an enumeration"),
+        ("合計は45，０００円です。", "45，０００", "mixed width is not a number anyone wrote"),
+        ("番号は１，２３です。", "１，２３", "two digits after the comma is not a thousands group"),
+        ("番号は１，２３４５です。", "１，２３４５", "nor is four"),
+    ],
+)
+def test_a_fullwidth_comma_that_is_not_a_thousands_separator_does_not_bind(
+    sentence: str, must_not_appear: str, why: str
+) -> None:
+    """The other half of the rule, and the half a wider rule would break: a
+    full-width comma binds only between full-width digits, and only with
+    exactly three of them after it. Each row removes one of those conditions."""
+    found = [one.text for one in extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)]
+    assert not any(must_not_appear in text for text in found), (why, found)

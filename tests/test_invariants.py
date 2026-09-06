@@ -254,6 +254,18 @@ def test_nothing_grounds_against_an_empty_package(answer: str) -> None:
 #                        distinction the author made. `_same_width` keeps it.
 @example(source="2026-08-30，300g")
 @example(source="45,000，300g")
+# Two more for #81, captured before the extractor was touched. The pair is the
+# whole rule: a full-width comma binds only between full-width digits, and only
+# as a thousands group.
+#
+#   `４５，０００円`   one money particular. Before the fix the extractor split at
+#                   the comma it did not recognise, took `４５` and `０００円`, and
+#                   the matcher -- reading the folded `45,000円` -- could find
+#                   neither standing alone. An honest citation, twice fabricated.
+#   `第3，5，7条`     three references, unchanged. Half-width digits beside a
+#                   full-width comma is an enumeration, not a number.
+@example(source="合計は４５，０００円です。")
+@example(source="见第3，5，7条。")
 @SLOW
 def test_every_particular_of_the_sources_grounds_in_the_sources(source: str) -> None:
     """The round trip. Everything akashi can extract from the text that was
