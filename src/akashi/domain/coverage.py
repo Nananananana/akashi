@@ -32,6 +32,8 @@ from .span import Span
 from .verdict import CheckedSegment, Standing, Verdict
 
 __all__ = [
+    "IRREVERSIBLE_PROTECTION_LIMITS",
+    "PLAIN_CONTEXT_LIMITS",
     "STANDING_LIMITS",
     "Assessment",
     "Coverage",
@@ -197,6 +199,18 @@ class Assessment:
 #: file. A reader who sees `context 2[41:46]` does not, and must not be led to.
 #: The artefact travels and the documentation does not (ADR-0005), so this is on
 #: the artefact rather than in a README about the compatibility layer.
+#: Said when a protection record declared `reversible: false` and the answer
+#: still carries placeholder-shaped tokens. Those segments are `unverifiable`,
+#: and the reason has to travel with the report: a reader who sees one without
+#: this line will read it as akashi having given up rather than as a redactor
+#: having masked something nobody can put back (ADR-0008).
+IRREVERSIBLE_PROTECTION_LIMITS: tuple[str, ...] = (
+    "The answer was protected irreversibly (the protection record declares "
+    "reversible: false), so segments carrying a placeholder are 'unverifiable': "
+    "akashi could not look at the value a mask replaced. That is unknown, not "
+    "false, and it is not counted as a finding.",
+)
+
 PLAIN_CONTEXT_LIMITS: tuple[str, ...] = (
     "The evidence was supplied as plain strings, so every offset here indexes "
     "the string that was passed in, at the position given -- not a document. "

@@ -52,6 +52,17 @@ A consumer holding a report needs nothing else. `answer` is in it verbatim and
 every span indexes that string, so a finding can be followed without the
 package, the corpus, or akashi.
 
+**A span is in code points, not bytes.** `[start, end)` are Python string
+indices into `answer`, so `answer[start:end]` is the text the object is about --
+always, for every span that says it is into `answer`. This is the one place the
+two units in this document differ on purpose: `response_hash` is over the
+**UTF-8 bytes** (a hash has to be over bytes); `response_length` and every span
+are in **code points** (a highlight has to land on a character). In CJK text
+the two disagree by a factor of about three, and a consumer that indexes the
+answer by byte will highlight a different word from the one akashi found. It is
+said here because a consumer asked (Sora, 2026-09-05) and could not find it: the
+definition was on the `span` type and not beside the fields that use it.
+
 **akashi is the reference producer and is not required to be the only one.**
 
 ---
@@ -110,7 +121,7 @@ worth stating rather than leaving to be discovered.
 | in a report | with the package | without it |
 |---|---|---|
 | `answer` | the text audited | **the same**: the answer is in the report |
-| a particular's `span` | an offset into `answer` | **checkable**: slice `answer` and look |
+| a particular's `span` | code-point offsets into `answer` | **checkable**: `answer[start:end]` is the text |
 | `segments[].text` | a slice of `answer` | **checkable**, the same way |
 | `counts`, `coverage` | arithmetic over the above | **checkable** |
 | `locations[]` — `source_path`, `section`, `span` | open the document and look | **an assertion**. Nothing in the report holds that document |

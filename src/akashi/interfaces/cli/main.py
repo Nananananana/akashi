@@ -31,7 +31,7 @@ from typing import TextIO
 
 from akashi.application import audit, recheck
 from akashi.domain.matching import DEFAULT_MATCHER, MATCHERS, matcher_named
-from akashi.domain.package import ContextPackage
+from akashi.domain.package import ContextPackage, Protection
 from akashi.errors import AkashiError, ContractError
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
@@ -42,7 +42,7 @@ from akashi.evaluation.rendering import as_text as evaluation_text
 from akashi.evaluation.rendering import measured_values
 from akashi.infrastructure.installation import inspect as inspect_installation
 from akashi.infrastructure.languages import DEFAULT, packs
-from akashi.infrastructure.packages import load_package
+from akashi.infrastructure.packages import load_package, read_protection_scope
 from akashi.infrastructure.packages.plain import package_from_contexts, read_sample
 from akashi.infrastructure.rendering import (
     as_diagnosis,
@@ -137,6 +137,18 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     audit_command.add_argument(
+        "--protection",
+        default="",
+        metavar="PATH",
+        help=(
+            "a mamori.protection-scope/1 record (JSON file, or - for stdin), for a "
+            "pipeline that holds the record beside the protected answer and does not "
+            "import mamori. reversible: false makes segments still carrying a "
+            "placeholder 'unverifiable' rather than 'floating', and the report says so "
+            "in limits. If the package also declares protection the two must agree"
+        ),
+    )
+    audit_command.add_argument(
         "--restored-by",
         default="",
         metavar="WHO",
@@ -208,6 +220,18 @@ def _parser() -> argparse.ArgumentParser:
     recheck_command.add_argument("--package", required=True, metavar="PATH")
     recheck_command.add_argument(
         "--response", required=True, metavar="PATH", help="- reads standard input"
+    )
+    recheck_command.add_argument(
+        "--protection",
+        default="",
+        metavar="PATH",
+        help=(
+            "a mamori.protection-scope/1 record (JSON file, or - for stdin), for a "
+            "pipeline that holds the record beside the protected answer and does not "
+            "import mamori. reversible: false makes segments still carrying a "
+            "placeholder 'unverifiable' rather than 'floating', and the report says so "
+            "in limits. If the package also declares protection the two must agree"
+        ),
     )
     recheck_command.add_argument(
         "--restored-by",
@@ -385,6 +409,13 @@ def _document(text: str, out: TextIO) -> None:
     buffer.flush()
 
 
+def _protection(arguments: argparse.Namespace) -> Protection | None:
+    """The protection record named on the command line, or nothing."""
+    if not arguments.protection:
+        return None
+    return read_protection_scope(json.loads(_read(arguments.protection)), "--protection")
+
+
 def _inputs(arguments: argparse.Namespace) -> tuple[ContextPackage, str]:
     """The package and the answer, from whichever pair of flags was given.
 
@@ -431,6 +462,7 @@ def _audit(arguments: argparse.Namespace, out: TextIO) -> int:
         restored_by=arguments.restored_by,
         akashi_version=__version__,
         matcher=matcher_named(matcher_name) if matcher_name else DEFAULT_MATCHER,
+        protection=_protection(arguments),
     )
     if arguments.judge is not None:
         # After the audit and never during it. akashi has already decided every
@@ -605,6 +637,7 @@ def _recheck(arguments: argparse.Namespace, out: TextIO) -> int:
         chosen,
         restored_by=arguments.restored_by,
         akashi_version=__version__,
+        protection=_protection(arguments),
     )
 
     if arguments.json:

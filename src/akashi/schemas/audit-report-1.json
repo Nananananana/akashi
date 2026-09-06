@@ -51,6 +51,7 @@
           "$ref": "#/$defs/hash"
         },
         "response_length": {
+          "description": "len(answer) in code points -- the same unit every span in this report uses, and NOT the byte length response_hash was computed over.",
           "type": "integer",
           "minimum": 0
         },
@@ -412,7 +413,8 @@
           "type": "string"
         },
         "span": {
-          "$ref": "#/$defs/span"
+          "$ref": "#/$defs/span",
+          "description": "Code-point offsets into `answer` (Python string indices), not bytes: `answer[start:end]` is the text this object is about. A consumer highlighting the answer must index by code point; in CJK text a byte offset lands on a different character. `audited.response_hash` is over UTF-8 BYTES and `audited.response_length` is in code points -- deliberately different units, and only the second matches this field."
         },
         "rule": {
           "$ref": "#/$defs/skip_rule"
@@ -452,7 +454,8 @@
           "type": "string"
         },
         "span": {
-          "$ref": "#/$defs/span"
+          "$ref": "#/$defs/span",
+          "description": "Code-point offsets into the SOURCE document named by `document_id`, not into `answer`. Not checkable from the report alone: nothing in it holds that document."
         },
         "layer": {
           "$ref": "#/$defs/layer"
@@ -477,7 +480,8 @@
           "minLength": 1
         },
         "span": {
-          "$ref": "#/$defs/span"
+          "$ref": "#/$defs/span",
+          "description": "Code-point offsets into `answer` (Python string indices), not bytes: `answer[start:end]` is the text this object is about. A consumer highlighting the answer must index by code point; in CJK text a byte offset lands on a different character. `audited.response_hash` is over UTF-8 BYTES and `audited.response_length` is in code points -- deliberately different units, and only the second matches this field."
         },
         "standing": {
           "$ref": "#/$defs/standing"
@@ -511,7 +515,7 @@
               "document_id": { "type": "string" },
               "source_path": { "type": "string" },
               "section": { "type": "string" },
-              "span": { "$ref": "#/$defs/span" }
+              "span": { "$ref": "#/$defs/span", "description": "Code-point offsets into the SOURCE document named by `document_id`, not into `answer`. Not checkable from the report alone: nothing in it holds that document." }
             }
           }
         }
@@ -573,7 +577,8 @@
           "minLength": 1
         },
         "span": {
-          "$ref": "#/$defs/span"
+          "$ref": "#/$defs/span",
+          "description": "Code-point offsets into `answer` (Python string indices), not bytes: `answer[start:end]` is the text this object is about. A consumer highlighting the answer must index by code point; in CJK text a byte offset lands on a different character. `audited.response_hash` is over UTF-8 BYTES and `audited.response_length` is in code points -- deliberately different units, and only the second matches this field."
         },
         "text": {
           "type": "string",
@@ -692,7 +697,8 @@
           "type": "string"
         },
         "span": {
-          "$ref": "#/$defs/span"
+          "$ref": "#/$defs/span",
+          "description": "Code-point offsets into the SOURCE document named by `document_id`, not into `answer`. Not checkable from the report alone: nothing in it holds that document."
         },
         "why": {
           "description": "The rule that produced this finding, in words. A finding that cannot say why it is a finding is one nobody can appeal.",

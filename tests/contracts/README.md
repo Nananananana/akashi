@@ -8,6 +8,7 @@ installing anything.
 |---|---|---|
 | `context-package-1.json` | [`tsumugi`](https://github.com/Nananananana/tsumugi), `schemas/context-package-1.json` | Apache-2.0 |
 | `context-package-seam.json` | [`tsumugi`](https://github.com/Nananananana/tsumugi), `fixtures/seam/context-package.json` | Apache-2.0 |
+| `protection-scope-1.json` | [`mamori`](https://github.com/Nananananana/mamori), `src/mamori/schemas/protection-scope-1.json` | Apache-2.0 |
 
 They are a pair and they answer different questions. The schema says what the
 shape **may** be; the fixture is one instance of it that the producer really

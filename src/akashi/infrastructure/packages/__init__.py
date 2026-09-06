@@ -11,6 +11,7 @@ from __future__ import annotations
 from akashi.domain.package import ContextPackage, Protection
 
 from .contextpackage import ACCEPTED_CONTRACT, load_package, read_package
+from .protectionscope import read_protection_scope
 
 __all__ = [
     "ACCEPTED_CONTRACT",
@@ -18,4 +19,5 @@ __all__ = [
     "Protection",
     "load_package",
     "read_package",
+    "read_protection_scope",
 ]

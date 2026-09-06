@@ -22,6 +22,17 @@
       "retrieved": "2026-09-04",
       "licence": "Apache-2.0",
       "why": "A real ContextPackage, emitted by the reference producer for a fixed corpus and a fixed question. The schema says what the shape may be; this says what tsumugi actually emits. Test material only."
+    },
+    {
+      "file": "protection-scope-1.json",
+      "repo": "Nananananana/mamori",
+      "path": "src/mamori/schemas/protection-scope-1.json",
+      "branch": "main",
+      "commit": "78fca1368580434daac891162dc8514b890859c8",
+      "sha256": "217e248d918f7e14a61a62f8abb15a4d06e1e320497c569e957a5657913a2e79",
+      "retrieved": "2026-09-06",
+      "licence": "Apache-2.0",
+      "why": "Sora hands akashi a protection record as a document rather than a restorer (R1). The reader in infrastructure/packages/protectionscope.py is checked against the real contract, and its one rule that differs from the tsumugi block -- a missing `reversible` reads as false -- is mamori's ADR-0032, not akashi's guess."
     }
   ]
 }

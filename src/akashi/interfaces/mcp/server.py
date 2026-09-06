@@ -33,9 +33,10 @@ from typing import IO, Any, Final
 from akashi.application import audit as run_audit
 from akashi.application.recheck import recheck as run_recheck
 from akashi.domain.matching import DEFAULT_MATCHER, Matcher, matcher_named
+from akashi.domain.package import Protection
 from akashi.errors import AkashiError
 from akashi.infrastructure.languages import DEFAULT, packs
-from akashi.infrastructure.packages import read_package
+from akashi.infrastructure.packages import read_package, read_protection_scope
 from akashi.infrastructure.packages.plain import package_from_contexts
 from akashi.infrastructure.rendering import as_text, explain_segment
 from akashi.infrastructure.reports import read_report
@@ -88,6 +89,19 @@ INSTRUCTIONS: Final = (
     "reading the score."
 )
 
+_PROTECTION_SCHEMA: Final[dict[str, Any]] = {
+    "type": "object",
+    "description": (
+        "A mamori.protection-scope/1 record, inline, for a caller that holds the "
+        "record beside the protected text and does not import mamori. It carries "
+        "who protected the answer, in which scope, and whether that can be undone. "
+        "reversible: false makes every segment still carrying a placeholder "
+        "'unverifiable' rather than 'floating', and the report says so in limits[]. "
+        "If the package also declares protection, the two must agree. A record "
+        "declaring '+surrogate' is refused: akashi reads tokens, not invented names."
+    ),
+}
+
 _PACKAGE_SCHEMA: Final[dict[str, Any]] = {
     "type": "object",
     "description": (
@@ -131,6 +145,7 @@ TOOLS: Final[list[dict[str, Any]]] = [
                         "because it decides every count."
                     ),
                 },
+                "protection": _PROTECTION_SCHEMA,
                 "restored_by": {
                     "type": "string",
                     "description": (
@@ -174,6 +189,7 @@ TOOLS: Final[list[dict[str, Any]]] = [
                 },
                 "answer": {"type": "string", "description": "The answer it was made over."},
                 "package": _PACKAGE_SCHEMA,
+                "protection": _PROTECTION_SCHEMA,
                 "restored_by": {"type": "string"},
             },
             "required": ["report", "answer", "package"],
@@ -317,6 +333,7 @@ class McpServer:
             restored_by=tool.text("restored_by", required=False),
             akashi_version=__version__,
             matcher=self._matcher(tool),
+            protection=self._protection(tool),
         )
         return as_text(report), report.to_dict()
 
@@ -328,6 +345,7 @@ class McpServer:
             self._packs(tool),
             restored_by=tool.text("restored_by", required=False),
             akashi_version=__version__,
+            protection=self._protection(tool),
         )
         body = {
             "archived_id": result.archived_id,
@@ -346,6 +364,16 @@ class McpServer:
             tool.text("segment_id"),
             particular=tool.text("particular", required=False) or None,
         )
+
+    def _protection(self, tool: Request) -> Protection | None:
+        """The protection record a caller sent beside the answer, or nothing.
+
+        Read by the protection-scope reader and not the package reader: the two
+        contracts disagree about a missing `reversible`, and the record's own
+        rule -- absent reads as false -- is the one that applies to a record.
+        """
+        raw = tool.mapping("protection", required=False)
+        return None if raw is None else read_protection_scope(raw, "protection")
 
     def _package(self, tool: Request) -> Any:
         """A ContextPackage, or one built from the strings a caller has.
