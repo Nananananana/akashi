@@ -13,7 +13,6 @@ field name, and the direction in which being wrong is loud rather than silent.
 
 from __future__ import annotations
 
-import io
 import json
 from pathlib import Path
 from typing import Any
@@ -30,6 +29,7 @@ from akashi.errors import ContractError, ProtectedResponseError
 from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import read_protection_scope
 from akashi.infrastructure.packages.plain import package_from_contexts
+from conftest import mcp_call
 
 RECORD: dict[str, Any] = {
     "contract": "mamori.protection-scope/1",
@@ -209,32 +209,12 @@ def test_a_reversible_record_with_no_restorer_is_a_refusal_that_says_so() -> Non
 # --- the same door on every surface --------------------------------------------------
 
 
-def _mcp(arguments: dict[str, Any], name: str = "audit") -> dict[str, Any]:
-    from akashi.interfaces.mcp import PROTOCOL_VERSION, serve
-
-    meta = {
-        "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
-        "io.modelcontextprotocol/clientCapabilities": {},
-    }
-    request = json.dumps(
-        {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {"_meta": meta, "name": name, "arguments": arguments},
-        },
-        ensure_ascii=False,
-    )
-    out = io.StringIO()
-    serve(io.StringIO(request + "\n"), out)
-    result: dict[str, Any] = json.loads(out.getvalue())["result"]
-    return result
-
-
 def test_the_mcp_audit_tool_takes_the_record_as_sora_sends_it() -> None:
     """R2 confirmed too: the argument names are `answer` and `package`/`contexts`,
     and `protection` sits beside them."""
-    result = _mcp({"answer": MASKED_ANSWER, "contexts": CONTEXTS, "protection": RECORD})
+    result = mcp_call(
+        "audit", {"answer": MASKED_ANSWER, "contexts": CONTEXTS, "protection": RECORD}
+    )
     assert result.get("isError") is not True
     body = result["structuredContent"]
     assert [segment["verdict"] for segment in body["segments"]] == ["unverifiable", "grounded"]
@@ -245,19 +225,21 @@ def test_the_mcp_audit_tool_takes_the_record_as_sora_sends_it() -> None:
 def test_the_mcp_refusal_carries_the_word_refused() -> None:
     """R3. `isError: true` alone cannot be told from `failed`; the word is what
     Sora keys on."""
-    result = _mcp(
+    result = mcp_call(
+        "audit",
         {
             "answer": MASKED_ANSWER,
             "contexts": CONTEXTS,
             "protection": record(reversible=True, masked=[]),
-        }
+        },
     )
     assert result.get("isError") is True
     assert result["content"][0]["text"].startswith("akashi refused:")
 
 
 def test_the_mcp_tool_refuses_a_surrogate_record_as_a_tool_error() -> None:
-    result = _mcp(
+    result = mcp_call(
+        "audit",
         {
             "answer": "x",
             "contexts": ["x"],
@@ -265,7 +247,7 @@ def test_the_mcp_tool_refuses_a_surrogate_record_as_a_tool_error() -> None:
                 contract="mamori.protection-scope/1+surrogate",
                 protected=[{"kind": "PERSON", "count": 1}],
             ),
-        }
+        },
     )
     assert result.get("isError") is True
     assert "surrogates" in result["content"][0]["text"]
@@ -303,14 +285,14 @@ def test_the_mcp_recheck_re_derives_with_the_record(tmp_path: Path) -> None:
     )
     first = next(segment.verdict for segment in original.assessment.segments)
     assert first is Verdict.UNVERIFIABLE, "the archive does not exercise the record"
-    result = _mcp(
+    result = mcp_call(
+        "recheck",
         {
             "report": original.to_dict(),
             "answer": MASKED_ANSWER,
             "package": json.loads(package_file.read_text(encoding="utf-8")),
             "protection": RECORD,
         },
-        name="recheck",
     )
     assert result.get("isError") is not True, result["content"][0]["text"]
     assert result["structuredContent"]["matches"] is True

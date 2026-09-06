@@ -8,9 +8,12 @@ convention added after the first accident.
 
 from __future__ import annotations
 
+import io
+import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -63,3 +66,49 @@ def published_schema() -> Path:
 
     shipped = files("akashi") / "schemas" / "audit-report-1.json"
     return Path(str(shipped))
+
+
+def mcp_call(name: str, arguments: dict[str, Any], identifier: int = 1) -> dict[str, Any]:
+    """One `tools/call` against the MCP server, and its result.
+
+    Three test files were building this request by hand -- the envelope, the
+    `_meta` block with the protocol version, the StringIO pair -- and the copies
+    had already drifted: two asserted a single reply and one did not. A helper
+    that every caller has to reimplement is a helper that eventually disagrees
+    with itself about what the protocol looks like.
+
+    The `_meta` block is not decoration. Revision 2026-07-28 retired the
+    `initialize` handshake and requires the protocol version on every request,
+    so a copy of this that forgets it is testing the legacy path by accident.
+
+    **`test_mcp.py` keeps its own pair and should.** This returns `result` and
+    asserts one reply, which is what a test *about a tool* wants. That file is
+    about the transport -- several messages down one stream, a notification that
+    must not be answered, a client from before the handshake was retired, an
+    `error` envelope with a reserved code -- and none of those survive being
+    handed only the `result` of a single exchange.
+    """
+    from akashi.interfaces.mcp import PROTOCOL_VERSION, serve
+
+    request = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "id": identifier,
+            "method": "tools/call",
+            "params": {
+                "_meta": {
+                    "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
+                    "io.modelcontextprotocol/clientCapabilities": {},
+                },
+                "name": name,
+                "arguments": arguments,
+            },
+        },
+        ensure_ascii=False,
+    )
+    out = io.StringIO()
+    assert serve(io.StringIO(request + "\n"), out) == 0
+    replies = [json.loads(line) for line in out.getvalue().splitlines() if line]
+    assert len(replies) == 1, f"one request, {len(replies)} replies"
+    result: dict[str, Any] = replies[0]["result"]
+    return result

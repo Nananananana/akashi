@@ -14,7 +14,6 @@ otherwise would send a reader to open a file that does not exist.
 
 from __future__ import annotations
 
-import io
 import json
 from pathlib import Path
 
@@ -24,6 +23,7 @@ from akashi import evaluate, evaluate_sample
 from akashi.domain.package import PLAIN_CONTRACT
 from akashi.errors import ContractError
 from akashi.infrastructure.packages.plain import FIELDS, package_from_contexts, read_sample
+from conftest import mcp_call
 
 ANSWER = "The tent weighs 2.4kg and the gas is 9.9kg."
 CONTEXTS = ["The tent weighs 2.4kg.", "Gas cartridge, 250mg."]
@@ -231,28 +231,7 @@ def test_a_package_still_needs_a_response(tmp_path: Path) -> None:
 
 
 def test_the_mcp_tool_takes_contexts() -> None:
-    from akashi.interfaces.mcp import PROTOCOL_VERSION, serve
-
-    meta = {
-        "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
-        "io.modelcontextprotocol/clientCapabilities": {},
-    }
-    request = json.dumps(
-        {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {
-                "_meta": meta,
-                "name": "audit",
-                "arguments": {"answer": ANSWER, "contexts": CONTEXTS},
-            },
-        },
-        ensure_ascii=False,
-    )
-    out = io.StringIO()
-    serve(io.StringIO(request + "\n"), out)
-    body = json.loads(out.getvalue())["result"]["structuredContent"]
+    body = mcp_call("audit", {"answer": ANSWER, "contexts": CONTEXTS})["structuredContent"]
     assert body["counts"]["grounded_share"] == 0.5
     assert any("plain strings" in line for line in body["limits"])
 
