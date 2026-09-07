@@ -192,7 +192,8 @@ JAPANESE = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
-            pattern=_UNBRACKETED + r"\s*(?:キログラム|グラム|ミリグラム|トン|"
+            pattern=_UNBRACKETED + r"\s*(?:平方キロメートル|平方センチメートル|平方メートル|"
+            r"立方センチメートル|立方メートル|キログラム|グラム|ミリグラム|トン|"
             r"キロメートル|メートル|センチメートル|ミリメートル|センチ|ミリ|"
             r"リットル|ミリリットル|パーセント|ポイント|キロ)" + _PER,
             priority=76,

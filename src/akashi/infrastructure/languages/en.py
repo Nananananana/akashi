@@ -216,6 +216,26 @@ ENGLISH = LanguagePack(
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
             pattern=(
+                r"[-−+±]?(?<![\d])\d[\d,.]*\s*(?:sq|square|cu|cubic)\.?\s*"
+                r"(?:ft|feet|foot|in|inches|inch|yds?|yards?|mi|miles?|"
+                r"km|cm|mm|m|kilometres?|kilometers?|metres?|meters?|"
+                r"centimetres?|centimeters?)(?![A-Za-z])"
+            ),
+            priority=77,
+            note=(
+                "an area or a volume with the dimension spelled as a word. English "
+                "puts it BEFORE the unit where Japanese and Chinese put it after, so "
+                "the superscript tail in the shared pack -- which is where `m²` is "
+                "read -- cannot reach it, and `120 sq ft` came out as `120`. "
+                "In the English pack because `square` is an English word. The shared "
+                "pack holds the SI symbols, which belong to no script; putting a "
+                "word there is how a repair ends up written for one script and "
+                "found missing from another a batch later."
+            ),
+        ),
+        ExtractionRule(
+            kind=ParticularKind.QUANTITY,
+            pattern=(
                 r"[-−+±]?(?<![\d])\d[\d,.]*\s*(?:kilograms?|kilogrammes?|grams?|grammes?|"
                 r"milligrams?|tonnes?|tons?|pounds?|ounces?|kilometres?|kilometers?|"
                 r"metres?|meters?|centimetres?|centimeters?|millimetres?|millimeters?|"
