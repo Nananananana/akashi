@@ -1149,3 +1149,68 @@ matching.
 Pinned in both directions, and both directions are needed — a poison walking
 only the archived keys hides an appearing field, and one walking only the
 re-derived keys hides a vanished one.
+
+## The same defect, four times: making the discipline mechanical
+
+Four rounds of drafted vocabulary found four defects, and they were four
+instances of one shape -- **a rule written against the examples that prompted
+it, when the notation exists in scripts that batch did not contain**:
+
+| | landed in | missed | found by |
+| --- | --- | --- | --- |
+| `/` denominators | Latin | CJK | batch 2 |
+| the katakana unit rule | the rule beside it | itself | a test written for the fix |
+| feet and inches | English, Japanese | Chinese | batch 4 |
+| compound duration | -- | built for three at once | the table below |
+
+The corpus cannot catch this, because the corpus has the same author as the
+rule, and `kinds_not_extracted` cannot either: every one of these was **inside**
+a covered kind. `40'` and `12英尺` are both `quantity`, so the Chinese half
+being missing moved no kind at all.
+
+Writing the discipline into a commit message and a docstring, which is what the
+fourth round did, is not a check. `tests/test_notation_families.py` is: a
+hand-written matrix of notation families, each cell holding every spelling that
+script writes the family in.
+
+Two things about its construction were measured rather than assumed.
+
+**It reads with one language pack at a time.** The first version used the
+default, which loads all of them, and a poison removing the Chinese duration
+chain went straight through -- the *Japanese* rule matched the Chinese sentence,
+because `分` and `秒` are written the same. Whether Chinese is read **by the
+Chinese pack** is the whole question a hole in this table asks.
+
+**A cell is a list of probes, not one.** With one probe per script the matrix
+cannot fail on the second row of the table above, where the defect was two rules
+inside a single pack and only one of them was repaired. Widening the cell is
+what made that row reachable.
+
+### What the table found on its first run
+
+Not a script half-fix. `120 sq ft`, `120平方米` and `120平方メートル` each came
+out as a bare `120` -- an area reduced to a number in all three scripts at once,
+a particular akashi would then ground against a document saying something else.
+
+English puts the dimension before the unit and the other two after, so the
+superscript tail in the shared pack, which is where `m²` is read, could not
+reach any of them. Repaired in one commit with each half in the pack that owns
+the spelling: `square` is an English word and putting it beside the SI symbols
+in the shared pack is exactly how the four defects above happened.
+
+### Poison run
+
+| poison | caught by |
+| --- | --- |
+| the Chinese imperial half removed (batch 4's defect) | `zh-feet-and-inches` |
+| the CJK denominator removed (batch 2's defect) | `ja-` and `zh-a-unit-over-a-unit` |
+| the whole Chinese duration rule removed | `zh-compound-duration` |
+| the katakana rule loses its denominator (defect 3's shape) | `ja-a-unit-over-a-unit` |
+| the English `sq`/`cubic` rule removed | `en-an-area-or-a-volume` |
+| `平方米` removed | `zh-an-area-or-a-volume` |
+| `平方メートル` removed | `ja-an-area-or-a-volume` |
+| the table reduced to one family | `the_table_is_not_empty` |
+| one script's row deleted from a family | `every_family_has_a_cell_for_every_script` |
+
+Three of the four historical defects are now mechanically checkable; the fourth
+is the one the table was written to keep from happening again.

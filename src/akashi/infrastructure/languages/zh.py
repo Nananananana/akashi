@@ -119,7 +119,8 @@ _UNBRACKETED = r"(?:\d(?:[\d,.]|" + FULLWIDTH_THOUSANDS + r")*\d|\d|" + _MAGNITU
 
 #: Measure words and units. Longest first, so that 小时 wins over 时.
 _UNITS = (
-    r"(?:公斤|千克|毫克|公里|千米|厘米|毫米|毫升|小时|分钟|"
+    r"(?:平方公里|平方千米|平方厘米|平方米|立方厘米|立方米|"
+    r"公斤|千克|毫克|公里|千米|厘米|毫米|毫升|小时|分钟|"
     r"个|人|件|次|台|本|张|条|只|辆|家|位|名|页|章|"
     # `片` (a tablet) and `亩` (a land area) were missing outright, found by
     # drafted vocabulary. The list was written by whoever wrote the extractor,
