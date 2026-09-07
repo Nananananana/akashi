@@ -35,6 +35,9 @@ from akashi.errors import (
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "akashi"
 
+#: Any producer string; the tests below are about shape, not about a version.
+BY = "akashi/0.0.0-test"
+
 #: The kinds a raise site gets without asking, one per exception class.
 DEFAULTS = {
     cls.default_kind
@@ -91,7 +94,7 @@ def test_every_kind_in_the_catalogue_is_one_something_can_raise() -> None:
     assert not unreachable, f"catalogued but never raised: {sorted(unreachable)}"
 
 
-def test_every_kind_something_can_raise_is_in_the_catalogue() -> None:
+def test_every_kind_something_can_raise_is_in_the_catalogue(by=BY) -> None:
     """The other direction, and the one that decays: a raise site added with a
     new `kind=` and no catalogue entry is a failure a consumer's screen cannot
     name, and nothing else would say so."""
@@ -155,17 +158,17 @@ def test_both_sentences_are_written_and_are_not_the_same_one(entry: Any) -> None
 
 
 def test_the_document_declares_a_draft_contract() -> None:
-    body = catalogue()
+    body = catalogue(by=BY)
     assert body["contract"] == CONTRACT
     assert CONTRACT.endswith("-draft"), "the field set can still move; say so in the name"
 
 
 def test_the_document_is_plain_data() -> None:
-    json.dumps(catalogue(), ensure_ascii=False)
+    json.dumps(catalogue(by=BY), ensure_ascii=False)
 
 
 def test_every_entry_carries_every_field_a_consumer_folds_on() -> None:
-    for entry in catalogue()["errors"]:
+    for entry in catalogue(by=BY)["errors"]:
         assert set(entry) == {"kind", "status", "outcome", "retryable", "detail", "detail_ja"}
         assert entry["outcome"] in {"refused", "unavailable", "failed", "timed_out"}
         assert isinstance(entry["retryable"], bool)
@@ -176,7 +179,7 @@ def test_open_namespaces_is_empty_and_that_is_a_fact() -> None:
     mamori's and tsumugi's contracts, and a document of either shape that it
     refuses is refused under akashi's name -- what failed is akashi's reading,
     not their writing."""
-    assert catalogue()["open_namespaces"] == []
+    assert catalogue(by=BY)["open_namespaces"] == []
     assert OPEN_NAMESPACES == ()
 
 
@@ -265,8 +268,10 @@ def test_the_command_prints_the_document_and_exits_zero(tmp_path: Path) -> None:
     with out.open("w", encoding="utf-8") as handle, contextlib.redirect_stdout(handle):
         code = main(["errors", "--json"])
     assert code == AUDITED
+    from akashi import __version__
+
     body = json.loads(out.read_text(encoding="utf-8"))
-    assert body == catalogue()
+    assert body == catalogue(by=f"akashi/{__version__}")
 
 
 def test_the_table_names_every_kind_for_a_person(tmp_path: Path) -> None:
@@ -319,3 +324,55 @@ def test_a_broken_tiling_is_a_refusal_and_not_a_traceback() -> None:
     assert isinstance(raised.value, AkashiError), "the CLI's refusal handler must see it"
     assert isinstance(raised.value, ValueError), "anything written against the old type still works"
     assert "runs past the end" in str(raised.value)
+
+
+def test_the_document_says_which_akashi_wrote_it() -> None:
+    """Sora's R-E1 example carried `by` and the first implementation did not.
+
+    A consumer comparing their pinned copy against this one in CI is comparing
+    against a *version*; a document that does not name it makes the difference
+    real and unattributable. Same shape and same reasoning as
+    `mamori.protection-scope/1`: the version says which rules were in force.
+    """
+    assert catalogue(by=BY)["by"] == BY
+
+
+def test_a_catalogue_with_no_producer_is_refused_rather_than_published() -> None:
+    """Required rather than defaulted. A default is a document somebody
+    eventually publishes unlabelled, and `errors` imports nothing -- not even
+    the version -- so the caller is the only one who can say."""
+    import inspect
+
+    # The signature, not just the empty string. A poison that gave `by` a
+    # default left every test here green -- because none of them called
+    # `catalogue()` with no argument, which is exactly the call a default
+    # exists to permit.
+    parameter = inspect.signature(catalogue).parameters["by"]
+    assert parameter.default is inspect.Parameter.empty, "a default is an unlabelled document"
+
+    with pytest.raises(ValueError, match="no producer"):
+        catalogue(by="")
+
+
+def test_the_command_line_stamps_the_running_version() -> None:
+    import contextlib
+    import io
+
+    from akashi import __version__
+    from akashi.interfaces.cli.main import main
+
+    captured = io.StringIO()
+    with contextlib.redirect_stdout(captured):
+        main(["errors", "--json"])
+    assert json.loads(captured.getvalue())["by"] == f"akashi/{__version__}"
+
+
+def test_the_producer_matches_the_shape_the_family_uses() -> None:
+    """`name/version`, which is what mamori's contract requires of the same
+    field -- so a consumer reading several catalogues parses one shape."""
+    import re
+
+    from akashi import __version__
+    from akashi.interfaces.cli.main import main  # noqa: F401
+
+    assert re.fullmatch(r"[A-Za-z0-9._-]+/[A-Za-z0-9._+-]+", f"akashi/{__version__}")

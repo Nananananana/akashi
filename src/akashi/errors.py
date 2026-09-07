@@ -281,14 +281,32 @@ CATALOGUE: Final[tuple[ErrorKind, ...]] = (
 )
 
 
-def catalogue() -> dict[str, Any]:
+def catalogue(by: str) -> dict[str, Any]:
     """The catalogue as plain data, for `akashi errors --json`.
 
     A document, like everything else akashi publishes: a consumer reads it,
     compares it with what they had, and notices the day it changes.
+
+    ``by`` is the producer as ``name/version``, and it is **required rather than
+    defaulted** for two reasons. This module imports nothing, not even the
+    version -- an error type that depends on a layer cannot be raised from below
+    it, and that emptiness is what keeps the rule true. And a catalogue that
+    could be built without saying which akashi wrote it is a catalogue somebody
+    eventually publishes that way: a consumer comparing their pinned copy
+    against this one in CI is comparing against a version, and a document that
+    does not name it makes the difference unattributable.
+
+    The shape is `mamori.protection-scope/1`'s, and so is the reasoning it gives
+    for it: *the version matters -- it says which rules were in force.*
     """
+    if not by:
+        raise ValueError(
+            "a catalogue with no producer cannot be compared against a pinned copy: "
+            "the difference would be real and unattributable"
+        )
     return {
         "contract": CONTRACT,
+        "by": by,
         "errors": [entry.to_dict() for entry in CATALOGUE],
         "open_namespaces": list(OPEN_NAMESPACES),
     }
