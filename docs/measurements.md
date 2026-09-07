@@ -1214,3 +1214,45 @@ in the shared pack is exactly how the four defects above happened.
 
 Three of the four historical defects are now mechanically checkable; the fourth
 is the one the table was written to keep from happening again.
+
+## An exception is not an absence
+
+sora reported two defects of its own on 2026-09-11, unprompted, and one of them
+was a shape worth looking for here: **a parse failure reaching `.ok()?` and
+reading as "this machine does not have it"** -- "absent" and "answered, and
+could not be read" collapsed into one value.
+
+Looked for the same shape in akashi. Four of the five candidates were already
+right and say why in their own comments: `contextpackage` refuses an unknown
+`kiseki` layer rather than treating it as an ordinary fact, `matching` refuses
+an unknown matcher rather than falling back to the default, `certificate` reads
+a verdict from a newer akashi as not-a-finding *deliberately*, because a
+document may outlive its reader, and `installation._contract` reports "not in
+the installed package" and "present and not readable JSON" as two findings.
+
+`installation._sibling` was the fifth, and it collapsed:
+
+    try:
+        found = find_spec(name) is not None
+    except (ImportError, ValueError):
+        found = False
+    return Finding(name, "importable" if found else "not installed", ok=found)
+
+`find_spec` returns `None` for a name that is not there and *raises* when
+something answered and could not be read -- a package whose parent fails to
+import, a `sys.modules` entry carrying no specification. Both came back as
+**"not installed"**, which sends a reader to `pip install mamori`. That succeeds
+and changes nothing, while the real fault stays where it was.
+
+The distinction was already drawn in the function directly above it. This is
+not a case of nobody knowing the right shape; it is a case of the right shape
+being written once and not applied to the neighbour -- which is the same
+failure the notation table above exists for, in a different material.
+
+| poison | caught |
+| --- | --- |
+| the collapse restored | yes |
+| every sibling reported unreadable (the over-correction) | yes |
+
+The second poison is there because the first one alone passes on a change that
+reports *everything* as unreadable, which would be worse than what it replaced.
