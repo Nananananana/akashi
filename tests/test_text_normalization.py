@@ -281,3 +281,128 @@ def test_reduction_agrees_with_unicode_on_a_string_with_no_whitespace(text: str)
     expected = unicodedata.normalize("NFKC", unicodedata.normalize("NFKC", text).casefold())
     assume(not any(character.isspace() for character in expected))
     assert search_form(text).text == expected
+
+
+# --- the reduction that moves nothing ----------------------------------------
+#
+# `search_form` takes a fast path when none of the reduction's steps would move
+# a character. Folding was a third of an audit's time, and the long way costs a
+# Python loop iteration plus two `unicodedata.normalize` calls per character
+# where finding out costs three C calls.
+#
+# A fast path is only allowed to exist while it agrees with the definition, so
+# the definition stays reachable as `_reduced_the_long_way` and the agreement is
+# a property rather than a comment.
+
+#: Every character here is one that broke a version of the fast path, plus the
+#: ordinary ones. `ﬁ` expands, `゙` composes after `か` and does not
+#: after `字`, `ß` folds to two characters, `　` and `\t` are whitespace
+#: that is not a space, `２` is full width.
+_TRICKY = (
+    "abcXYZ019 .,\t\n\u3000\u00e9\ufb01\u3099\u0301\uff12\uff14\u9aa8\u5b57\u00df\u3002\uff0c\u304b"
+)
+
+REDUCIBLE = st.text(alphabet=_TRICKY, max_size=16)
+
+
+@given(text=REDUCIBLE)
+def test_the_fast_path_and_the_long_way_are_the_same_reduction(text: str) -> None:
+    """The property the fast path exists under. Everything -- the reduced text,
+    both halves of the map -- or it is not the same reduction."""
+    from akashi.domain.text import _reduced_the_long_way
+
+    assert search_form(text) == _reduced_the_long_way(text)
+
+
+@pytest.mark.parametrize(
+    ("text", "why"),
+    [
+        ("The reading was 2.4 kg.", "ordinary English, nothing to move"),
+        ("項目42の重量は294.42キログラムでした。", "ordinary Japanese, nothing to move"),
+        ("该批货物重294.42千克。", "ordinary Chinese, nothing to move"),
+    ],
+)
+def test_the_fast_path_is_actually_taken_on_ordinary_prose(text: str, why: str) -> None:
+    """Without this the property above is satisfied by a fast path that never
+    fires, which is the shape of speed work that measures well and does
+    nothing."""
+    from akashi.domain.text import _unmoved
+
+    assert _unmoved(text) is not None, f"the fast path is not reached for {why}"
+
+
+#: Every code point that reaches the fast path only because it is not already
+#: NFKC-normalized -- the fifteen a scan of all of Unicode turned up when the
+#: condition was poisoned away and the suite stayed green.
+#:
+#: They are here because "the two paths agree on these" is the reason that
+#: condition is allowed to be a doorman rather than a check, and a reason held
+#: only in a docstring is a reason nothing will notice losing.
+ONLY_THE_NFKC_DOOR = [
+    0x00B5,
+    0x017F,
+    0x03D0,
+    0x03D1,
+    0x03D5,
+    0x03D6,
+    0x03F0,
+    0x03F1,
+    0x03F4,
+    0x03F5,
+    0x1E9B,
+    0x1FBE,
+    0x2126,
+    0x212A,
+    0x212B,
+]
+
+
+@pytest.mark.parametrize("point", ONLY_THE_NFKC_DOOR, ids=lambda point: f"U+{point:04X}")
+def test_the_texts_only_the_nfkc_door_refuses_would_have_been_answered_correctly(
+    point: int,
+) -> None:
+    """MICRO SIGN, LATIN SMALL LETTER LONG S, the Greek symbol variants, ANGSTROM
+    SIGN. Each folds to something already normalized and one character wide, so
+    the fast path would have given the same answer -- which is what makes the
+    condition above a doorman and not a check, and is therefore worth holding.
+    """
+    from akashi.domain.text import SearchForm, _reduced_the_long_way, _unmoved
+
+    character = chr(point)
+    assert _unmoved(character) is None, "this point no longer takes the long way"
+
+    # What the fast path would have returned with the door open. Built here
+    # rather than by patching, because the claim is about the answer and not
+    # about which branch produced it.
+    folded = character.casefold()
+    assert len(folded) == len(character), "a wider fold; a different condition refuses this"
+    through_the_door = SearchForm(
+        original=character,
+        text=folded,
+        origin=tuple(range(len(character))),
+        extent=tuple(range(1, len(character) + 1)),
+    )
+    assert through_the_door == _reduced_the_long_way(character)
+
+
+@pytest.mark.parametrize(
+    ("text", "why"),
+    [
+        (" leading space", "a space at the start is dropped"),
+        ("trailing space ", "a space at the end is dropped"),
+        ("two  spaces", "a run collapses"),
+        ("a\tb", "a tab becomes a space"),
+        ("ﬁle", "NFKC expands one character into two"),
+        ("\u304b\u3099", "a dakuten composes with what precedes it"),
+        ("\u5b57\u3099", "a dakuten that composes with nothing still shares a cluster"),
+        ("Straße", "case folding turns one character into two"),
+        ("", "empty"),
+    ],
+)
+def test_the_fast_path_refuses_the_texts_it_cannot_answer(text: str, why: str) -> None:
+    """Each of these is a condition in `_unmoved`, and each was put there by a
+    disagreement the property above found rather than by reasoning first."""
+    from akashi.domain.text import _reduced_the_long_way, _unmoved
+
+    assert _unmoved(text) is None, f"the fast path claimed {text!r}, where {why}"
+    assert search_form(text) == _reduced_the_long_way(text)

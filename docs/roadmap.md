@@ -133,6 +133,45 @@ enough to matter is an answer no reader reads, and akashi has no user reporting
 it. The measurement to take first is what real answers and real packages are
 sized like -- `bench` owns that -- not another structure.
 
+### 1.8 Reducing text was a third of an audit -- done
+
+**Done.** With the locations work of 1.6 finished, the cost moved: `search_form`
+and `_fold` were 34% of an audit and `extraction._candidates` 29%.
+
+Folding ran a Python loop iteration and two `unicodedata.normalize` calls per
+character. Memoizing `_fold` was the obvious move and measured **0.84x** on
+English -- 36 distinct characters produced 472,996 calls, so the hit rate was
+99.99% and `lru_cache` still cost about what the two `normalize` calls cost. It
+was not the call that was expensive; it was calling it per character at all.
+
+Ordinary text is not moved by any step of the reduction, and three C calls find
+that out. 1.42x on a batch of English samples, 1.54x with more contexts per
+sample, 1.19x on Japanese, and **neutral** on a single audit that reuses one
+package -- which is the row worth keeping, because it says where the win is not.
+
+Full numbers, the five conditions and the disagreement that put each one there:
+`docs/measurements.md`, "The reduction that moves nothing".
+
+### 1.9 What is measured and not taken
+
+Two, both real, both behind a question rather than behind effort.
+
+**The offset map.** `origin` and `extent` are `tuple(range(n))` when the map is
+the identity, and they are 18% of what a 400x400 audit traces. A `range` object
+would be free -- and `range(3) == (0, 1, 2)` is `False`, so `SearchForm.__eq__`
+would stop agreeing between the fast path and the definition, which is exactly
+what the property test permitting the fast path compares.
+
+**The rules that cannot match.** 46 rules run against every segment, and 87% of
+them cannot match an English sentence. The cost is genuine C-level scanning --
+0.139 ms of `_candidates`'s 0.167 ms -- so the only way to remove it is not to
+run the pattern, which needs a literal that any match must contain. The same
+argument as `required_run`, one level up. It is not taken because deriving that
+soundly from an arbitrary regex needs `re`'s private parser, and a prefilter
+that is *nearly* sound drops findings silently. Restricting rules by the
+segment's script would be sound to implement and would **change the answer**,
+which is a different proposal and belongs in an ADR, not in a speed section.
+
 ## 2. Where akashi is harder to adopt than it needs to be
 
 ### 2.1 One sample at a time — done

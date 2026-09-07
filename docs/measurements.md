@@ -1356,3 +1356,88 @@ That also surfaced the coupling worth stating: `required_run` must be read off
 the **folded** form, which is what `Evidence.locate` passes. Folding lowercases,
 so the probe for `12 March 2026` read off the raw string is `March`, which
 appears in no reduced text anywhere.
+
+## The reduction that moves nothing
+
+After the locations work above, the remaining cost moved. Profiled the shape a
+consumer actually runs -- `evaluate_samples` over rows that each carry their own
+contexts, which is what RAGAS and DeepEval datasets are -- rather than one large
+audit:
+
+| | share of an audit |
+| --- | --- |
+| `search_form` + `_fold` | 34% |
+| `extraction._candidates` | 29% |
+| everything else | 37% |
+
+`_fold` was called 472,996 times for 300 English samples, and each call runs
+`unicodedata.normalize` twice on one character. **36 distinct characters
+produced those 472,996 calls**, so memoizing looks obvious -- and measured 0.84x
+on English, because `lru_cache` costs about what two `normalize` calls on a
+one-character string cost. It was not the call that was expensive; it was
+calling it per character at all.
+
+### What is actually true of ordinary text
+
+Nothing the reduction does moves it. No leading or trailing space, no run of
+whitespace, nothing but spaces, already NFKC, no combining marks, and case
+folding that is one character for one. When all of that holds the map is the
+identity and the reduced text is `text.casefold()` -- three C calls to find out,
+against a Python loop iteration and two `normalize` calls per character.
+
+| | long way | fast path | |
+| --- | --- | --- | --- |
+| English sentence | 0.023 ms | 0.004 ms | 5.6x |
+| English, 2.3 KB | 0.642 ms | 0.087 ms | 7.4x |
+| Japanese sentence | 0.014 ms | 0.005 ms | 2.9x |
+| Japanese, 1.4 KB | 0.390 ms | 0.107 ms | 3.6x |
+
+End to end, and where it does and does not help:
+
+| | before | after | |
+| --- | --- | --- | --- |
+| 400 English samples x 8 contexts | 4.12 s | 2.91 s | **1.42x** |
+| 100 English samples x 40 contexts | 4.29 s | 2.78 s | **1.54x** |
+| 400 Japanese samples x 8 contexts | 2.81 s | 2.37 s | **1.19x** |
+| one 400-sentence audit, package reused | 0.369 s | 0.361 s | **neutral** |
+
+The last row is the honest one. A package's items are folded once when the
+package is built, so an audit that reuses a package barely folds at all; three
+repeats of that measurement put the two within each other's noise. The win is
+where every sample builds its own package, which is every batch a consumer runs.
+
+### The conditions, and how each got there
+
+Each was added because the property test found a disagreement, not by reasoning
+first. The first version had two conditions and disagreed on 776 of 60,000
+generated texts: a combining mark that composes with **nothing** (`字` + U+3099)
+is `is_normalized("NFKC", ...)` true, and the long way still gives both
+characters the span of the whole cluster where the fast path gives each its own.
+
+### A poison that did not fail, and what was done about it
+
+Poisoning away the `is_normalized("NFKC", text)` condition **left the whole
+suite green.** Every other condition covers it: an expansion (`ﬁ`) fails the
+one-to-one fold, a composition fails the combining-mark check, and a Hangul
+jamo pair -- which composes with no combining mark anywhere -- fails the *fold*
+still not being NFKC.
+
+A scan of every assigned code point found **15 that only this condition
+refuses, and none where the two paths would have differed.**
+
+It stays, and the docstring now says it is a doorman rather than a check: it
+cannot produce a wrong answer, only a slower one, and what it costs is one C
+call against a failure that would be silent, unbounded, and in the offsets. The
+15 code points are pinned in `tests/test_text_normalization.py` — because
+"the two paths agree on these" is the whole reason the condition is allowed to
+be unfalsifiable, and a reason held only in a docstring is a reason nothing will
+notice losing.
+
+### Measured and not taken
+
+`origin` and `extent` are `tuple(range(n))` on the fast path, and they are
+0.94 MiB of the 5.3 MiB a 400x400 audit traces — **18%**. A `range` object
+would be free. It is not done here because `range(3) == (0, 1, 2)` is `False`,
+so `SearchForm.__eq__` would stop agreeing between the two paths, and the
+property test that lets the fast path exist compares exactly that. It is a real
+saving behind a real design question, which is a different change.
