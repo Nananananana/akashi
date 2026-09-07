@@ -94,7 +94,7 @@ def test_every_kind_in_the_catalogue_is_one_something_can_raise() -> None:
     assert not unreachable, f"catalogued but never raised: {sorted(unreachable)}"
 
 
-def test_every_kind_something_can_raise_is_in_the_catalogue(by=BY) -> None:
+def test_every_kind_something_can_raise_is_in_the_catalogue() -> None:
     """The other direction, and the one that decays: a raise site added with a
     new `kind=` and no catalogue entry is a failure a consumer's screen cannot
     name, and nothing else would say so."""
