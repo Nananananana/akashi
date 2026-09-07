@@ -32,7 +32,7 @@ from typing import TextIO
 from akashi.application import audit, recheck
 from akashi.domain.matching import DEFAULT_MATCHER, MATCHERS, matcher_named
 from akashi.domain.package import ContextPackage, Protection
-from akashi.errors import AkashiError, ContractError
+from akashi.errors import CATALOGUE, CONTRACT, AkashiError, ContractError, catalogue
 from akashi.evaluation import load_cases, run
 from akashi.evaluation.case import Split
 from akashi.evaluation.floors import check as check_floors
@@ -293,6 +293,24 @@ def _parser() -> argparse.ArgumentParser:
             "facts about a machine, and the two defects this project shipped that "
             "were invisible in development were both facts about a machine."
         ),
+    )
+
+    errors_command = commands.add_parser(
+        "errors",
+        help="every way akashi refuses, by name, as a document",
+        description=(
+            "Prints akashi.errors/1-draft: the closed set of names akashi prints "
+            "when it refuses, each with whether asking again could help. For an "
+            "orchestrator folding failures from several libraries into one place, "
+            "a stable name is what makes that possible -- and a name, unlike a "
+            "sentence, cannot quote what it was given. Carries no paths, no "
+            "message templates and no example values, for that reason."
+        ),
+    )
+    errors_command.add_argument(
+        "--json",
+        action="store_true",
+        help="the document itself. Without it, a table for a person",
     )
 
     certificate_command = commands.add_parser(
@@ -568,6 +586,23 @@ def _judge(named: str) -> Judge:
     return ClaudeJudge(model=named or DEFAULT_MODEL)
 
 
+def _errors(arguments: argparse.Namespace, out: TextIO) -> int:
+    """The catalogue of refusals, as a document or as a table.
+
+    Exits `AUDITED`: printing what akashi can refuse is not itself a refusal,
+    and a consumer comparing this against their own copy in CI needs a zero.
+    """
+    if arguments.json:
+        _document(json.dumps(catalogue(), ensure_ascii=False, indent=2) + "\n", out)
+        return AUDITED
+    print(CONTRACT, file=out)
+    for entry in CATALOGUE:
+        retry = "retryable" if entry.retryable else "not retryable"
+        print(f"\n  {entry.kind}  ({entry.outcome}, exit {entry.status}, {retry})", file=out)
+        print(f"    {entry.detail}", file=out)
+    return AUDITED
+
+
 def _doctor(_arguments: argparse.Namespace, out: TextIO) -> int:
     """What is here, and what is not.
 
@@ -787,6 +822,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _certificate(arguments, sys.stdout)
         if arguments.command == "doctor":
             return _doctor(arguments, sys.stdout)
+        if arguments.command == "errors":
+            return _errors(arguments, sys.stdout)
         if arguments.command == "mcp":
             return _mcp(arguments, sys.stdout)
         if arguments.command != "audit":  # pragma: no cover - argparse refuses it first

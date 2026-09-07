@@ -138,7 +138,8 @@ class ClaudeJudge:
             raise ContractError(
                 f"the judge declined to answer ({getattr(details, 'category', 'no category')}). "
                 f"akashi records what a judge said and does not supply an answer on its "
-                f"behalf, so this report has no judgements rather than invented ones."
+                f"behalf, so this report has no judgements rather than invented ones.",
+                kind="JudgeRefused",
             )
 
         return _read(response, claims, self._model)
@@ -157,7 +158,8 @@ def _client() -> Any:
         raise ContractError(
             "a Claude judge needs the anthropic SDK, which akashi does not install: "
             "`pip install 'akashi[claude]'`. akashi itself has no dependencies and "
-            "reaches no network, and a judge is the one thing that changes that."
+            "reaches no network, and a judge is the one thing that changes that.",
+            kind="JudgeUnavailable",
         ) from error
     return anthropic.Anthropic()
 
