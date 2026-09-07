@@ -22,6 +22,8 @@ from __future__ import annotations
 from akashi.domain.language import LanguagePack
 from akashi.domain.particular import ExtractionRule, ParticularKind
 
+from .common import FULLWIDTH_THOUSANDS
+
 __all__ = ["CHINESE"]
 
 #: Titles that make what precedes them a person's name. Chinese surnames are
@@ -113,7 +115,7 @@ _DIGITS = r"(?:\d[\d,.]*\d|\d|[〇零一二三四五六七八九十百千两]+)"
 #: in every other sentence is noise a reader learns to ignore. `三个` is a real
 #: quantity and is not found; the trade is deliberate and is the same one.
 _MAGNITUDE = r"[〇零一二三四五六七八九两]*[十百千万亿][〇零一二三四五六七八九十百千万亿两]*"
-_UNBRACKETED = r"(?:\d[\d,.]*\d|\d|" + _MAGNITUDE + r")"
+_UNBRACKETED = r"(?:\d(?:[\d,.]|" + FULLWIDTH_THOUSANDS + r")*\d|\d|" + _MAGNITUDE + r")"
 
 #: Measure words and units. Longest first, so that 小时 wins over 时.
 _UNITS = (

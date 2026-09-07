@@ -30,7 +30,28 @@ __all__ = ["COMMON"]
 #: A run of digits with separators inside it, bounded so that it cannot start
 #: or end in the middle of a longer one. ``234`` is not a number inside
 #: ``1,234``, and reporting it as one would ground a figure nobody wrote.
-_NUMBER = r"(?<![\d.,])\d(?:[\d,.]*\d)?(?![\d])"
+#: A full-width comma that is a thousands separator, and only then.
+#:
+#: The extractor reads the original text and ``，`` (U+FF0C) is not in the
+#: separator class, so ``４５，０００円`` came out as two particulars -- ``４５`` and
+#: ``０００円`` -- and neither resolved back into the text it was taken from,
+#: because the matcher reads the folded form, where NFKC has made it ``45,000円``
+#: and the comma binds. An honest citation reported as fabricated (#81).
+#:
+#: The rule that separates that from ``第3，5，7条`` -- an enumeration, where
+#: every clause number must stay its own particular -- is the one the matcher
+#: already uses on its side: **the separator was written at the width its digits
+#: were.** A full-width comma binds only between full-width digits, and only
+#: with exactly three of them after it, which is what a thousands group is in
+#: every language akashi reads. ``45,000，300g`` keeps its full-width pause
+#: because the digits beside it are half-width, and ``第3，5，7条`` splits for
+#: the same reason.
+#:
+#: Fixed-width lookarounds, so the comma is consumed as part of the run only
+#: when both conditions hold and is left alone -- as a boundary -- otherwise.
+FULLWIDTH_THOUSANDS = r"(?<=[０-９])，(?=[０-９]{3}(?![０-９]))"
+
+_NUMBER = r"(?<![\d.,])\d(?:(?:[\d,.]|" + FULLWIDTH_THOUSANDS + r")*\d)?(?![\d])"
 
 #: A sign, where one belongs to the value. ``-20℃`` and ``20℃`` are different
 #: temperatures and ``±0.02mm`` is a different tolerance from ``0.02mm``. The

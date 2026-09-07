@@ -13,7 +13,6 @@ field name, and the direction in which being wrong is loud rather than silent.
 
 from __future__ import annotations
 
-import io
 import json
 from pathlib import Path
 from typing import Any
@@ -28,8 +27,9 @@ from akashi.domain.package import Protection
 from akashi.domain.verdict import Verdict
 from akashi.errors import ContractError, ProtectedResponseError
 from akashi.infrastructure.languages import DEFAULT
-from akashi.infrastructure.packages import read_protection_scope
+from akashi.infrastructure.packages import load_package, read_protection_scope
 from akashi.infrastructure.packages.plain import package_from_contexts
+from conftest import mcp_call
 
 RECORD: dict[str, Any] = {
     "contract": "mamori.protection-scope/1",
@@ -209,32 +209,12 @@ def test_a_reversible_record_with_no_restorer_is_a_refusal_that_says_so() -> Non
 # --- the same door on every surface --------------------------------------------------
 
 
-def _mcp(arguments: dict[str, Any], name: str = "audit") -> dict[str, Any]:
-    from akashi.interfaces.mcp import PROTOCOL_VERSION, serve
-
-    meta = {
-        "io.modelcontextprotocol/protocolVersion": PROTOCOL_VERSION,
-        "io.modelcontextprotocol/clientCapabilities": {},
-    }
-    request = json.dumps(
-        {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {"_meta": meta, "name": name, "arguments": arguments},
-        },
-        ensure_ascii=False,
-    )
-    out = io.StringIO()
-    serve(io.StringIO(request + "\n"), out)
-    result: dict[str, Any] = json.loads(out.getvalue())["result"]
-    return result
-
-
 def test_the_mcp_audit_tool_takes_the_record_as_sora_sends_it() -> None:
     """R2 confirmed too: the argument names are `answer` and `package`/`contexts`,
     and `protection` sits beside them."""
-    result = _mcp({"answer": MASKED_ANSWER, "contexts": CONTEXTS, "protection": RECORD})
+    result = mcp_call(
+        "audit", {"answer": MASKED_ANSWER, "contexts": CONTEXTS, "protection": RECORD}
+    )
     assert result.get("isError") is not True
     body = result["structuredContent"]
     assert [segment["verdict"] for segment in body["segments"]] == ["unverifiable", "grounded"]
@@ -245,19 +225,21 @@ def test_the_mcp_audit_tool_takes_the_record_as_sora_sends_it() -> None:
 def test_the_mcp_refusal_carries_the_word_refused() -> None:
     """R3. `isError: true` alone cannot be told from `failed`; the word is what
     Sora keys on."""
-    result = _mcp(
+    result = mcp_call(
+        "audit",
         {
             "answer": MASKED_ANSWER,
             "contexts": CONTEXTS,
             "protection": record(reversible=True, masked=[]),
-        }
+        },
     )
     assert result.get("isError") is True
     assert result["content"][0]["text"].startswith("akashi refused:")
 
 
 def test_the_mcp_tool_refuses_a_surrogate_record_as_a_tool_error() -> None:
-    result = _mcp(
+    result = mcp_call(
+        "audit",
         {
             "answer": "x",
             "contexts": ["x"],
@@ -265,7 +247,7 @@ def test_the_mcp_tool_refuses_a_surrogate_record_as_a_tool_error() -> None:
                 contract="mamori.protection-scope/1+surrogate",
                 protected=[{"kind": "PERSON", "count": 1}],
             ),
-        }
+        },
     )
     assert result.get("isError") is True
     assert "surrogates" in result["content"][0]["text"]
@@ -303,14 +285,14 @@ def test_the_mcp_recheck_re_derives_with_the_record(tmp_path: Path) -> None:
     )
     first = next(segment.verdict for segment in original.assessment.segments)
     assert first is Verdict.UNVERIFIABLE, "the archive does not exercise the record"
-    result = _mcp(
+    result = mcp_call(
+        "recheck",
         {
             "report": original.to_dict(),
             "answer": MASKED_ANSWER,
             "package": json.loads(package_file.read_text(encoding="utf-8")),
             "protection": RECORD,
         },
-        name="recheck",
     )
     assert result.get("isError") is not True, result["content"][0]["text"]
     assert result["structuredContent"]["matches"] is True
@@ -383,3 +365,74 @@ def test_the_contract_says_the_unit_beside_every_field_that_carries_a_span() -> 
     length = schema["properties"]["audited"]["properties"]["response_length"]["description"]
     assert "code points" in length
     assert "NOT the byte length" in length
+
+
+# --- what Sora asked to have confirmed, pinned rather than replied to ---------
+
+
+def test_a_report_names_no_person(tmp_path: Path) -> None:
+    """R6. Sora hands akashi an answer, a package and sometimes a protection
+    record, and nothing about whose they are. akashi must not grow a field for
+    it: matching is "is this string in this context", and whose context it is
+    does not help. Sora's ledger holds the who and joins on `report_id`.
+
+    Asserted over the whole serialized document rather than over a list of
+    fields, because the failure this guards is a field nobody thought to check.
+    """
+    body = evaluate(answer="The tent weighs 2.4kg.", contexts=["The tent weighs 2.4kg."]).to_dict()
+    flat = json.dumps(body, ensure_ascii=False).casefold()
+    for word in ("owner", "profile", "username", "account", "operator"):
+        assert f'"{word}"' not in flat, f"a report carries {word!r}"
+    assert "user" not in {key.casefold() for key in body}
+    assert "user" not in {key.casefold() for key in body["provenance"]}
+    assert "user" not in {key.casefold() for key in body["audited"]}
+
+
+def test_no_protection_record_is_not_a_missing_one() -> None:
+    """R7. Sora's local path never goes through mamori, so it passes no record.
+    That is "nothing protected this", not "the caller forgot", and the report
+    must not carry a line about it -- a note about the absence of something is
+    what teaches a reader to skip the section it lives in.
+    """
+    body = evaluate(answer="テントは 2.4kg。", contexts=["テントは 2.4kg。"]).to_dict()
+    assert body["provenance"]["protection_by"] == ""
+    assert body["provenance"]["restoration_asserted"] is False
+    assert not [line for line in body["limits"] if "protect" in line.casefold()]
+    assert [segment["verdict"] for segment in body["segments"]] == ["grounded"]
+    assert body["counts"]["grounded_share"] == 1.0
+
+
+def test_the_same_audit_twice_is_the_same_report() -> None:
+    """U5. Sora asked which way this goes and had implemented the other one:
+    `report_id` is an id for *this audit of these inputs*, not for the event of
+    auditing. Two calls fold into one ledger row.
+
+    The whole document, not only the id -- an id that matched over a document
+    that did not would be worse than either answer.
+    """
+    from akashi import __version__
+
+    package = load_package(Path(__file__).parent / "packages" / "gear-ja.json")
+    answer = "テントは 2.4kg、ガスは 9.9kg。"
+    first = audit(answer, package, DEFAULT, akashi_version=__version__)
+    again = audit(answer, package, DEFAULT, akashi_version=__version__)
+    assert first.report_id == again.report_id
+    assert first.to_dict() == again.to_dict()
+
+
+def test_a_different_matcher_is_a_different_report_id() -> None:
+    """The other half of U5, and the reason the matcher is in the id at all: two
+    audits that answered "which strings count as the same string" differently
+    must not be foldable into one row."""
+    from akashi import __version__
+    from akashi.domain.matching import matcher_named
+
+    package = load_package(Path(__file__).parent / "packages" / "gear-ja.json")
+    answer = "テントは 2.4kg、ガスは 9.9kg。"
+    ids = {
+        audit(
+            answer, package, DEFAULT, akashi_version=__version__, matcher=matcher_named(name)
+        ).report_id
+        for name in ("normalized", "exact")
+    }
+    assert len(ids) == 2

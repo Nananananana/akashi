@@ -303,7 +303,19 @@ def _coverage(report: dict[str, Any]) -> list[str]:
         scored = "nothing in this answer could be checked"
     else:
         scored = f"{grounded} of {grounded + floating} particulars grounded ({float(share):.0%})"
-    lines.append(f"<tr><th>Grounded</th><td>{escape(scored)}</td></tr>")
+    # The denial on the same line as the number, not below it among `limits`.
+    #
+    # Sora put it there on their own screen and reported what happened: shown to
+    # a non-engineer, the first question was "is this a score for being right?"
+    # -- so the answer belongs where that question is asked, which is beside the
+    # figure. `limits` still carries the full sentence further down; this is the
+    # six words that reach somebody who reads one line and signs.
+    #
+    # akashi had the rule that `limits` travels on the artefact (ADR-0005) and
+    # said nothing about where. A consumer knew, because a consumer watched
+    # somebody read it.
+    denial = "" if share is None else ' <span class="sub">&mdash; not a faithfulness score</span>'
+    lines.append(f"<tr><th>Grounded</th><td>{escape(scored)}{denial}</td></tr>")
     lines.append("</table>")
     return lines
 

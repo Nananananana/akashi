@@ -63,6 +63,30 @@ answer by byte will highlight a different word from the one akashi found. It is
 said here because a consumer asked (Sora, 2026-09-05) and could not find it: the
 definition was on the `span` type and not beside the fields that use it.
 
+**A code point is not a UTF-16 code unit either.** `answer[start:end]` above is
+written in Python, where a string is indexed by code point and the expression is
+exactly right. It is *not* right in JavaScript, Java, C# or any other language
+whose strings are UTF-16: there `answer.slice(start, end)` counts a surrogate
+pair as two, so one emoji or one rare kanji anywhere earlier in the answer
+shifts every span after it. A JavaScript consumer wants
+`Array.from(answer).slice(start, end).join("")`, or the equivalent for their
+runtime.
+
+Three units, and a span is only ever the third:
+
+| | `テントは２.４kg、参加者は12人。` | ...with one emoji | what uses it |
+| --- | --- | --- | --- |
+| UTF-8 bytes | 44 | 48 | `audited.response_hash` |
+| UTF-16 code units | 18 | 20 | nothing in this contract |
+| **code points** | **18** | **19** | **every span, `audited.response_length`** |
+
+The first row separates from the other two on any CJK text; the third separates
+from the second only outside the BMP, which is why a consumer can get this
+wrong and stay right for months. Reported by Sora (2026-09-06), who hit it
+building the highlight and had already worked around it: the contract said
+"code point" truthfully, and a reader in a UTF-16 language read
+`answer[start:end]` in the semantics of their own.
+
 **akashi is the reference producer and is not required to be the only one.**
 
 ---
@@ -231,8 +255,24 @@ report** rather than guessing at it. Fail closed.
 ### `report_id`
 
 `sha256` over exactly what determined the report: the response hash, the
-package id, the akashi version, the segmenters, the extractors and the language
-pack set.
+package id, the akashi version, the segmenters, the extractors, the language
+pack set, and **the matcher**.
+
+The matcher was added to the id when it became selectable and this list was not
+updated with it, so for a while the contract described an id one field shorter
+than the one akashi computes. Caught by a consumer whose question -- *"same
+answer, same package, same matcher"* -- assumed the field was there (Sora,
+2026-09-07). `tests/test_documentation.py` now reads this list out of this
+section and compares it with what `report_id` actually hashes, so the next
+omission is a failing test rather than a reader's wrong assumption.
+
+**Two audits of the same inputs produce the same id, and byte-identical
+documents.** Not "an id for this event" -- an id for *this audit of these
+inputs*. A consumer holding a ledger can fold duplicates on it, and it is the
+same property `recheck` rests on: re-deriving from the inputs a report names
+must arrive at the id that report carries, or one of the two is wrong. It
+follows from the three exclusions below, and is stated here as well because
+following from something is not the same as being findable.
 
 Three things are deliberately **not** in it.
 

@@ -518,3 +518,61 @@ def test_the_demo_runs_and_still_shows_what_it_claims_to() -> None:
     assert "0.400 over 5 particulars in 2 of 3 rows; 1 refused" in out
     assert "was refused, not dropped" in out
     assert "below at_least=0.900" in out
+
+
+def test_the_contract_lists_every_field_report_id_actually_hashes() -> None:
+    """The drift this exists for: `matcher` was added to the id when it became
+    selectable and `docs/audit-report.md` was not updated, so for a while the
+    contract described an id one field shorter than the one akashi computes.
+
+    Nothing caught it. A consumer did, by asking a question whose wording
+    assumed the field was there (Sora, 2026-09-07) -- which is a reader doing a
+    test's job, and only by luck.
+
+    Read out of both sides rather than compared against a list written here: a
+    third copy would drift from the other two the same way.
+    """
+    import inspect
+    import re
+
+    from akashi.domain import report as report_module
+
+    source = inspect.getsource(report_module.report_id)
+    canonical = source[source.index("canonical = ") : source.index("return f")]
+    # No exclusions. The first version skipped `response_length` pre-emptively,
+    # and the contract says three things are deliberately NOT in the id -- so a
+    # field appearing here that the prose calls excluded is exactly the
+    # regression worth failing on, and the exclusion was hiding it.
+    hashed = set(re.findall(r"audited\.(\w+)", canonical))
+    assert hashed, "the id's canonical form was not found; this test is reading the wrong thing"
+
+    # The LIST, and only the list: the first paragraph of the section. Scoped
+    # this tightly because the first version of this test read the whole
+    # section, and the paragraphs explaining the drift mention every field by
+    # name -- so deleting `the matcher` from the list left the word findable in
+    # the prose about having lost it, and the poison walked through.
+    section = (Path("docs/audit-report.md").read_text(encoding="utf-8")).split("### `report_id`")[1]
+    described = section.strip().split("\n\n")[0]
+    assert described.startswith("`sha256` over"), (
+        f"the section no longer opens with the list; this test is reading {described[:60]!r}"
+    )
+
+    #: What the prose calls each field it hashes. The mapping is here because
+    #: the document is written for a person -- "the language pack set" rather
+    #: than `packs` -- and a contract that had to name its fields in code
+    #: spelling would be a worse contract.
+    prose = {
+        "response_hash": "response hash",
+        "package_id": "package id",
+        "akashi_version": "akashi version",
+        "segmenters": "segmenters",
+        "extractors": "extractors",
+        "packs": "language\npack set",
+        "matcher": "matcher",
+    }
+    assert set(prose) == hashed, (
+        f"report_id hashes {sorted(hashed)} and this test knows how to look for "
+        f"{sorted(prose)}. A field was added or removed; say what the document calls it."
+    )
+    missing = [field for field, words in prose.items() if words not in described]
+    assert not missing, f"report_id hashes {missing} and the contract does not list them"
