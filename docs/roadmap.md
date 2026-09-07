@@ -96,6 +96,43 @@ The tolerance is probably right for CJK and the argument for it is in
 `domain/matching.py`; what is missing is a case in the corpus where the two
 answers differ. ADR-0018 point 5.
 
+### 1.6 An audit was quadratic in answer x package — done
+
+**Done.** Two axes met and neither was bounded, so an audit of 60 KB against 400
+documents took 8.6 s and 32 MiB, and doubling both multiplied the cost by 4.1.
+Now 1.0 s and 4.7 MiB, and doubling both multiplies by 2.05. Same verdicts on
+every measured row.
+
+Three things, and the first is the one worth carrying forward: **`LOCATION_LIMIT`
+capped how many places a particular is reported in within one document, and
+nothing capped how many documents it was cited from.** The comment giving the
+reason -- a particular that occurs everywhere carries no more information for
+being listed everywhere -- was written for the axis that prompted it. A package
+of contracts that all cite the same date produced one location per contract.
+
+`SOURCE_LIMIT` is now that bound, with a receipt saying the document count is a
+floor. `required_run` lets `Evidence.locate` skip an item that provably cannot
+hold a particular, and the truncation receipt is counted once per particular
+rather than once per document per particular.
+
+Full table, the measurement that was wrong, and the poison that found a *test*
+rather than the code: `docs/measurements.md`, "Where an audit's time and memory
+actually went".
+
+### 1.7 The remaining superlinearity is the answer axis
+
+Bounded now on the package axis and not on the answer's: an answer of *n*
+particulars still asks every one of them of every item, and the prefilter makes
+that cheap rather than absent. Measured, doubling the answer alone against a
+fixed package is ×3.1.
+
+An inverted index over the evidence would make it a lookup. It is **not**
+proposed yet, and the reason is the one this file keeps making: nothing has been
+measured that says the remaining cost is anybody's problem. An answer long
+enough to matter is an answer no reader reads, and akashi has no user reporting
+it. The measurement to take first is what real answers and real packages are
+sized like -- `bench` owns that -- not another structure.
+
 ## 2. Where akashi is harder to adopt than it needs to be
 
 ### 2.1 One sample at a time — done

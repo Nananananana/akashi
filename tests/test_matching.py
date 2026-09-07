@@ -9,12 +9,13 @@ makes a fabricated one look correct.
 from __future__ import annotations
 
 import itertools
+import re
 
 import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from akashi.domain.matching import find_all, pattern_for
+from akashi.domain.matching import _RUNS, find_all, pattern_for, required_run
 from akashi.domain.span import Span
 from akashi.domain.text import search_form
 
@@ -164,6 +165,89 @@ def test_a_hit_across_a_collapsed_run_covers_the_whole_run() -> None:
 
 _PIECES = [*"0123456789", ".", ",", " ", "kg", "第", "条", "三", "千", "人", "は", "abc"]
 TEXTS = st.lists(st.sampled_from(_PIECES), max_size=40).map("".join)
+
+
+# --- the literal a haystack must contain to be worth searching ---------------
+#
+# `Evidence.locate` skips an item whose text does not hold this, which turns a
+# regex walk and a tuple into one substring test. That is a speed change and it
+# is allowed to be one only while the skip is *sound* -- so the property below
+# is what makes it a speed change rather than an answer change.
+
+
+def test_the_required_run_is_one_of_the_runs_the_pattern_is_built_from() -> None:
+    """Both are `_RUNS.findall(form)`, and they have to stay that way. A
+    prefilter reasoned about a pattern it no longer shares a derivation with is
+    a filter that has quietly stopped being a check."""
+    for form in ("2.45kg", "2.4kg", "第30条", "12 March 2026", "1,200 units"):
+        pattern = pattern_for(form)
+        assert pattern is not None
+        runs = _RUNS.findall(form)
+        probe = required_run(form)
+        assert probe in runs, f"{probe!r} is not one of {form!r}'s runs {runs}"
+        assert len(probe) == max(len(run) for run in runs), "a shorter run is less selective"
+        assert re.escape(probe) in pattern.pattern
+
+    assert required_run("") == ""
+    assert required_run("   ") == ""
+
+
+#: Forms and a text that really does contain each, so the property below is
+#: about a hit rather than about the absence of one.
+#:
+#: Written out because the generated `TEXTS` almost never happen to contain a
+#: form. A poison replacing the probe with a literal that need not be present
+#: at all went straight through the first version of these: the assertion sat
+#: under `if find_all(...)`, hypothesis produced hardly any text that hit, and
+#: a test that reaches its assertion on almost no example is green about almost
+#: nothing.
+HITTING = [
+    ("30", "there were 30 of them"),
+    ("2.4", "the tent weighs 2.4 kilograms"),
+    ("2.4kg", "the tent weighs 2.4 kg exactly"),
+    ("第30条", "第30条による"),
+    ("三千人", "三千人が参加した"),
+    ("1,200", "the total was 1,200 units"),
+    ("12 March 2026", "signed on 12 March 2026 by both"),
+]
+
+
+@pytest.mark.parametrize(("form", "haystack"), HITTING)
+def test_the_required_run_is_present_wherever_a_hit_is(form: str, haystack: str) -> None:
+    """The direction that makes skipping safe: a hit implies the run is there.
+
+    Stated this way round on purpose. The other direction -- the run is there,
+    so there is a hit -- is false and must stay false: `2.4` occurs in `12.40`
+    and is not a match, which is the whole of `_bounded`.
+    """
+    # Folded first, which is what `Evidence.locate` passes: `particular.form`
+    # is already reduced. Reading `required_run` off the unfolded text is how a
+    # sound prefilter becomes unsound -- folding lowercases, so the probe for
+    # `12 March 2026` would be `March`, which is in no reduced text anywhere.
+    folded = search_form(form).text
+    hay = search_form(haystack)
+    assert find_all(folded, hay), "this pair does not hit, so it says nothing about skipping"
+    assert required_run(folded) in hay.text, (
+        f"{folded!r} was found in {haystack!r} whose reduced text does not contain "
+        f"{required_run(folded)!r}; skipping on that test would drop a real hit"
+    )
+
+
+@given(form=st.sampled_from([form for form, _ in HITTING]), before=TEXTS, after=TEXTS)
+def test_the_skip_and_the_search_agree_on_every_text(form: str, before: str, after: str) -> None:
+    """What `Evidence.locate` actually does, as a property: filtering first and
+    searching gives what searching alone gives.
+
+    The form is *placed* in the text rather than hoped for. Padding on both
+    sides is what makes it a real question -- the boundary rules decide whether
+    the placed copy still counts, and either answer is fine here so long as the
+    two ways of arriving at it agree.
+    """
+    folded = search_form(form).text
+    hay = search_form(before + form + after)
+    probe = required_run(folded)
+    filtered = () if (probe and probe not in hay.text) else find_all(folded, hay)
+    assert filtered == find_all(folded, hay)
 
 
 @given(haystack=TEXTS)
