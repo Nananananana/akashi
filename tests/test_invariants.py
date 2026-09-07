@@ -266,6 +266,11 @@ def test_nothing_grounds_against_an_empty_package(answer: str) -> None:
 #                   full-width comma is an enumeration, not a number.
 @example(source="合計は４５，０００円です。")
 @example(source="见第3，5，7条。")
+# The clock boundary, from adding fractional seconds to the TIME rule. A widened
+# lookahead pulled `14:30` out of the middle of a digit run, and it could not
+# ground back into the text it was taken from -- this property found it on the
+# first run after the change, before any hand-written test did.
+@example(source="14:302.4kg")
 @SLOW
 def test_every_particular_of_the_sources_grounds_in_the_sources(source: str) -> None:
     """The round trip. Everything akashi can extract from the text that was

@@ -134,8 +134,20 @@ def test_the_packs_are_passed_in_rather_than_imported() -> None:
 
 
 def test_a_narrower_pack_set_widens_what_no_rule_covers() -> None:
-    report = audit(answer_text(), gear(), packs("ja"))
-    assert "duration" in report.assessment.coverage.kinds_not_extracted
+    """ADR-0005 on the artefact: a kind nothing looked for is named, or a clean
+    sheet reads as an absence of findings.
+
+    Narrowed to the shared pack, which is the narrowing that still widens now
+    that every language pack covers every kind.
+    """
+    from akashi.infrastructure.languages import COMMON
+
+    report = audit(answer_text(), gear(), [COMMON])
+    assert "proper_noun" in report.assessment.coverage.kinds_not_extracted
+    assert "reference" in report.assessment.coverage.kinds_not_extracted
+
+    everything = audit(answer_text(), gear(), DEFAULT)
+    assert everything.assessment.coverage.kinds_not_extracted == ()
 
 
 # --- Reproducibility ----------------------------------------------------------

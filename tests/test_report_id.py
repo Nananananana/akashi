@@ -18,7 +18,7 @@ from akashi import __version__
 from akashi.application import audit
 from akashi.domain.package import ContextPackage
 from akashi.domain.report import Audited, report_id
-from akashi.infrastructure.languages import DEFAULT, packs
+from akashi.infrastructure.languages import DEFAULT
 from akashi.infrastructure.packages import load_package
 from akashi.interfaces.cli.main import main
 
@@ -75,10 +75,12 @@ def test_the_pack_set_is_in_the_id() -> None:
     """The part that is easy to miss. Narrowing the packs changes the
     segmentation and therefore every count, so two audits that hashed the same
     either way could claim one id for different findings."""
+    from akashi.infrastructure.languages import COMMON
+
     everything = audit(answer(), gear(), DEFAULT, akashi_version=__version__)
-    japanese = audit(answer(), gear(), packs("ja"), akashi_version=__version__)
-    assert everything.assessment.coverage != japanese.assessment.coverage
-    assert everything.report_id != japanese.report_id
+    narrowed = audit(answer(), gear(), [COMMON], akashi_version=__version__)
+    assert everything.assessment.coverage != narrowed.assessment.coverage
+    assert everything.report_id != narrowed.report_id
 
 
 def test_a_one_character_change_to_the_answer_changes_the_id() -> None:

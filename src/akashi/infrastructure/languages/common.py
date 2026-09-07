@@ -137,6 +137,13 @@ _UNIT_TAIL = r"[²³]?(?:/" + _DENOMINATOR + r")?"
 _IMPERIAL = (
     r"(?<!\d)\d+(?:\.\d+)?['′](?:\s*\d+(?:\.\d+)?[\"″])?(?![\d'\"′″A-Za-z])"
     r"|(?<!\d)\d+(?:\.\d+)?フィート(?:\s*\d+(?:\.\d+)?インチ)?"
+    # And in Chinese. Added a batch later than the other two, which is the
+    # third time a repair here has been written against the languages that
+    # prompted it: `/` denominators landed in Latin and missed CJK, then the
+    # Japanese katakana rule was missed beside the one being fixed, then this.
+    # A rule with a script in it needs asking, once, which scripts it is for.
+    r"|(?<!\d)\d+(?:\.\d+)?英尺(?:\s*\d+(?:\.\d+)?英寸)?"
+    r"|(?<!\d)\d+(?:\.\d+)?英寸"
 )
 
 
@@ -160,8 +167,17 @@ COMMON = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.TIME,
-            pattern=r"(?<![\d:])\d{1,2}:\d{2}(?::\d{2})?(?![\d:])",
+            pattern=r"(?<![\d:])\d{1,2}:\d{2}(?::\d{2})?(?:\.\d{1,3})?(?![\d:])",
             priority=80,
+            note=(
+                "the fractional seconds belong to the value. `1:45.32` was coming "
+                "out as `1:45`, which is a different lap time, and a report citing "
+                "it would point a reader at a number the document does not give. "
+                "The lookahead is unchanged from before the fraction was added: a "
+                "first attempt widened its lookahead and the round-trip "
+                "property answered with `14:302.4kg`, where `14:30` was extracted "
+                "out of the middle of a digit run and could not ground back"
+            ),
         ),
         ExtractionRule(
             kind=ParticularKind.PERCENTAGE,

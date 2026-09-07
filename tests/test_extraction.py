@@ -227,10 +227,25 @@ def test_every_kind_is_covered_by_some_rule_now() -> None:
 
 
 def test_narrowing_the_packs_widens_what_is_not_extracted() -> None:
-    """A kind that only the Japanese pack finds is unfound without it, and the
-    report has to say so rather than showing a clean sheet."""
-    assert ParticularKind.DURATION not in kinds_not_extracted(packs("en"))
-    assert ParticularKind.DURATION in kinds_not_extracted(packs("ja"))
+    """A kind no loaded rule covers is unfound, and the report has to say so
+    rather than showing a clean sheet.
+
+    The instance used to be DURATION, which only the English pack found. Giving
+    Japanese and Chinese a compound-duration rule removed the instance -- the
+    property is unchanged and every language pack now covers every kind, so the
+    narrowing that still widens is to the shared pack alone.
+
+    Three kinds are out of the shared pack's reach, and each for a reason rather
+    than by accident: `proper_noun` and `reference` are recognised structurally
+    -- an honorific, a legal form, `第N条` -- and structure belongs to a
+    language; `duration` is spelled in counters, which are a language's too.
+    """
+    assert kinds_not_extracted(packs("ja")) == ()
+    assert kinds_not_extracted([COMMON]) == (
+        ParticularKind.DURATION,
+        ParticularKind.PROPER_NOUN,
+        ParticularKind.REFERENCE,
+    )
 
 
 def test_the_shared_pack_is_always_loaded() -> None:
@@ -827,3 +842,83 @@ def test_an_apostrophe_that_is_a_quotation_mark_is_untouched() -> None:
         )
     ]
     assert found == ["12"]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("集装箱是12英尺 x 8英尺 6英寸。", ["12英尺", "8英尺 6英寸"]),
+        ("高度是6英寸。", ["6英寸"]),
+        ("每次250毫克/片。", ["250毫克/片"]),
+        ("面积是10亩。", ["10亩"]),
+    ],
+)
+def test_chinese_units_the_list_did_not_have(sentence: str, expected: list[str]) -> None:
+    """Feet and inches in Chinese, and two units missing outright.
+
+    The imperial rule landed in English and Japanese a batch earlier and missed
+    `英尺` / `英寸`, which is **the third time a repair here has been written
+    against the languages that happened to prompt it**: `/` denominators landed
+    in Latin and missed CJK, then the Japanese katakana rule was missed beside
+    the very rule being fixed, then this.
+
+    `片` and `亩` were absent from the Chinese unit list altogether. The list
+    was written by whoever wrote the extractor, so it contained no unit its
+    author had not thought of -- which is #55's argument, arriving again.
+    """
+    found = [one.text for one in extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)]
+    assert found == expected
+
+
+# --- a compound duration, built for three scripts at once --------------------
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("Lap 1:45.32 recorded.", "1:45.32"),
+        ("Duration 2:05:30 total.", "2:05:30"),
+        ("The meeting ran 1:30.", "1:30"),
+        ("ラップは1分30秒5でした。", "1分30秒5"),
+        ("所要2時間30分でした。", "2時間30分"),
+        ("用時1分30秒。", "1分30秒"),
+        ("用时2小时30分。", "2小时30分"),
+    ],
+)
+def test_a_compound_duration_is_one_value(sentence: str, expected: str) -> None:
+    """`1:45.32` was coming out as `1:45` -- a different lap time -- and
+    `1分30秒5` as three particulars where the document gives one, any of them
+    free to ground against something unrelated.
+
+    **Written for all three scripts in one commit, deliberately.** The three
+    repairs before this were each written against the script that happened to
+    prompt them -- `/` denominators in Latin only, the katakana rule missed
+    beside the very rule being fixed, feet and inches in English and Japanese
+    but not Chinese -- and each was found a batch later by the script left out.
+    """
+    found = extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)
+    assert expected in [one.text for one in found]
+
+
+def test_the_clock_boundary_did_not_widen_when_the_fraction_was_added() -> None:
+    """The round-trip property answered the first attempt with `14:302.4kg`,
+    where a widened lookahead pulled `14:30` out of the middle of a digit run
+    and it could not ground back into the text it came from.
+
+    Pinned as an `@example` on that property too; here as well, because this is
+    where a reader changing the pattern will look.
+    """
+    found = [
+        one.text for one in extract_from_answer(segment_answer("14:302.4kg", DEFAULT), DEFAULT)
+    ]
+    assert "14:30" not in found
+
+
+def test_the_counters_live_in_the_packs_that_own_them() -> None:
+    """Not in the shared pack. `分`, `秒`, `時間`, `小时` are a language's, and
+    a shared rule carrying them would have an English document matching them."""
+    from akashi.infrastructure.languages import COMMON
+
+    shared = [rule.pattern for rule in COMMON.rules]
+    assert not any("分" in pattern or "秒" in pattern for pattern in shared)
+    assert ParticularKind.DURATION in kinds_not_extracted([COMMON])

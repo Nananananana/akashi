@@ -121,7 +121,10 @@ _UNBRACKETED = r"(?:\d(?:[\d,.]|" + FULLWIDTH_THOUSANDS + r")*\d|\d|" + _MAGNITU
 _UNITS = (
     r"(?:公斤|千克|毫克|公里|千米|厘米|毫米|毫升|小时|分钟|"
     r"个|人|件|次|台|本|张|条|只|辆|家|位|名|页|章|"
-    r"克|吨|米|升|天|周|月|年|时|分|秒|倍|度|岁)"
+    # `片` (a tablet) and `亩` (a land area) were missing outright, found by
+    # drafted vocabulary. The list was written by whoever wrote the extractor,
+    # so it contained no unit the extractor's author did not think of.
+    r"克|吨|米|升|天|周|月|年|时|分|秒|倍|度|岁|片|亩)"
 )
 
 #: A denominator, in either script. A Chinese document writes `50mg/日` as
@@ -149,6 +152,26 @@ CHINESE = LanguagePack(
             kind=ParticularKind.REFERENCE,
             pattern=r"第\s*" + _DIGITS + r"\s*(?:条|款|项|章|节|编|款|表|图|版|次)",
             priority=90,
+        ),
+        ExtractionRule(
+            kind=ParticularKind.DURATION,
+            pattern=(
+                r"(?<![\d])\d+小时(?:\s*\d+分)?(?:\s*\d+秒\d?)?"
+                r"|(?<![\d])\d+分\s*\d+秒\d?"
+            ),
+            priority=82,
+            note=(
+                "a duration spelled in counters, chained into one value. Drafted "
+                "vocabulary produced `1分30秒5` and akashi took three "
+                "particulars where the document gives one, any of them free to "
+                "ground against something unrelated.\n"
+                "\n"
+                "In THIS pack rather than the shared one, because the counters are "
+                "this language's -- and written for both CJK packs in one commit, "
+                "after asking once which scripts it is for. The three repairs "
+                "before it were each written against the script that happened to "
+                "prompt them and each was found a batch later by the one left out."
+            ),
         ),
         ExtractionRule(
             kind=ParticularKind.MONEY,

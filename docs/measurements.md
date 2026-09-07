@@ -909,6 +909,66 @@ Recorded rather than guessed at. The corpus evaluation is unchanged by every
 fix above: 42/42 fabrication recall, 0/42 false positives, 30/30
 reproducibility.
 
+### A fourth round, and the same half-fix for the third time
+
+24 more drafts. Four misses, and one of them was a repair of mine that had been
+written against the languages that happened to prompt it:
+
+| | |
+| --- | --- |
+| `12英尺 x 8英尺 6英寸` | **feet and inches in Chinese.** The imperial rule landed a batch earlier in English and Japanese and missed `英尺` / `英寸` |
+| `250毫克/片`, `10亩` | `片` and `亩` were absent from the Chinese unit list outright |
+| `1分30秒5` | a compound duration — the same family as `1:45.32`, now seen twice |
+
+**Three times now, in the same shape:**
+
+1. `/` denominators landed in Latin and missed CJK (batch 2 found it)
+2. the Japanese katakana rule was missed **beside the very rule being fixed**
+   (a test written for it found it)
+3. the imperial rule landed in English and Japanese and missed Chinese (this
+   batch found it)
+
+A repair is written against the examples that prompted it, and the examples
+that prompted it are whatever that batch happened to contain. **A rule with a
+script in it needs asking, once, which scripts it is for** — the question is
+cheap and nothing in the corpus asks it, because the corpus has the same author
+as the rule.
+
+`1分30秒5` is now the second sighting of a compound duration and by the rule
+written for `5.5%vol` it has earned a decision. It is **still not closed**, and
+for a different reason: `1:45.32` and `1分30秒5` are two notations for one
+concept, and a rule for either alone would be the third half-fix in a row. It
+is recorded here as a family, waiting for the shape to be built once for all
+three scripts rather than for whichever one appears next.
+
+### And then it was, once, for all three
+
+| written | before | now |
+| --- | --- | --- |
+| `1:45.32` | `1:45` — a different lap time | `1:45.32` |
+| `1分30秒5` | `1分`, `30秒`, `5` | `1分30秒5` |
+| `2時間30分`, `2小时30分` | two particulars each | one |
+
+The clock fraction is in the shared pack because a colon belongs to no
+language; **the counter chains are in the Japanese and Chinese packs because
+`分`, `秒`, `時間` and `小时` are those languages'** — a shared rule carrying
+them would have an English document matching them.
+
+Two things it cost, both worth recording.
+
+**The first attempt widened the clock rule's lookahead** and the round-trip
+property answered on its first run with `14:302.4kg`: `14:30` pulled out of the
+middle of a digit run, unable to ground back into the text it came from. The
+original lookahead was right and the fraction goes in front of it. Pinned as an
+`@example`.
+
+**Giving Japanese and Chinese a duration rule emptied `kinds_not_extracted` for
+every language pack**, and three tests were using *DURATION-missing-from-ja* as
+their instance of the property "narrowing the packs widens what no rule covers".
+The property is unchanged and needed a new instance: the shared pack alone still
+misses `duration`, `proper_noun` and `reference`, each because it is spelled in
+something a language owns.
+
 ## Whether a deterministic rule can see two sources disagreeing (#88)
 
 The candidate: **same kind, same shape, different digits, in a different item**.
