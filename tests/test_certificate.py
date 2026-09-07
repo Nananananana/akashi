@@ -367,3 +367,38 @@ def test_the_withheld_note_does_not_read_as_explaining_a_finding() -> None:
     html = certificate(archived(report()))
     if "withheld" in html:
         assert "does not explain any finding" in html
+
+
+def test_the_denial_sits_beside_the_number_and_not_only_below_it() -> None:
+    """Reported by Sora (2026-09-07), who put it there on their own screen and
+    watched what happened: shown to a non-engineer, the first question was "is
+    this a score for being right?" -- so the answer belongs where the question
+    is asked, which is beside the figure.
+
+    akashi had the rule that `limits` travels on the artefact (ADR-0005) and
+    said nothing about *where*. A consumer knew, because a consumer watched
+    somebody read it.
+    """
+    body = report()
+    page = certificate(body)
+    assert body["counts"]["grounded_share"] is not None, "this answer scored nothing to deny"
+
+    row = next(line for line in page.splitlines() if "<th>Grounded</th>" in line)
+    assert "%" in row, "no percentage on the line the denial is meant to qualify"
+    assert "not a faithfulness score" in row, "the denial is not on the line with the number"
+
+    # And still in `limits`, in full. The six words beside the figure are a
+    # summons to the sentence, not a replacement for it.
+    assert any("statement about strings" in line for line in body["limits"])
+    assert "statement about strings" in page
+
+
+def test_nothing_scored_gets_no_denial_because_there_is_no_number_to_deny() -> None:
+    """`share` is None: the row already says nothing could be checked. Adding
+    "not a faithfulness score" to that would be a denial of a claim nobody
+    made, which is how a reader learns to skip the words."""
+    body = report(answer="それは天候によります。")
+    assert body["counts"]["grounded_share"] is None, "this answer scored, so it is the wrong case"
+    row = next(line for line in certificate(body).splitlines() if "<th>Grounded</th>" in line)
+    assert "nothing in this answer could be checked" in row
+    assert "not a faithfulness score" not in row
