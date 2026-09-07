@@ -393,6 +393,57 @@ grounded only in an item whose layer is `interpretation` has
 `in_an_interpretation: true`, and a report that flattened that would launder a
 judgement into a fact.
 
+### `segments[].particulars[].nearby_in_evidence[]`
+
+**Not a finding, not a ranking, and the field most likely to be read as both.**
+
+Present only on a particular that did not ground *and* for which no source could
+be named. It is the values of the same kind the evidence does carry near here,
+in scope order: the sentences the rest of the segment resolved into, then those
+whole items, then everything sent.
+
+No similarity is computed and no entry is claimed to be related to the
+particular. `contradiction` is what akashi says when it can name a source value,
+and it says it only when the digits are identical -- the corpus priced that at
+12/12 and anything looser at 47%, which is why the looser thing is a list and
+not a verdict. **A consumer that reads these as candidate corrections is reading
+something akashi did not say.**
+
+It exists because `floating` alone is a dead end: a reader told only that a
+figure is in none of the text still has to read all of it, and akashi already
+has.
+
+**At most five, and the list does not say when it stopped.** Unlike the bounds
+above this one changes no count and makes no claim, so it produces no receipt --
+but it is a sample and not an inventory, and a reader must not conclude that
+five is how many the evidence carries.
+
+### `judged[]`
+
+What a language model said about claims akashi could not settle, each under the
+name of the model that said it. **Not verdicts, and not in `report_id`.**
+
+akashi's verdicts are decided by comparing strings: the same on every machine on
+every day. These are not, which is why they travel beside the assessment rather
+than inside it and why the id does not move when they change
+([ADR-0017](adr/0017-a-judge-annotates-an-audit-it-does-not-make-one.md)).
+
+A consumer must keep the two words apart. `supported` means a model thought the
+evidence entails the claim. `grounded` means the string is in the text that was
+sent. Empty unless a judge ran.
+
+### `provenance.unrecognised[]`
+
+Dotted paths to fields the `ContextPackage` carried that **its own contract does
+not list**. `tsumugi.context-package/1` is closed -- every object in it sets
+`additionalProperties: false` -- so a package carrying one of these does not
+conform to the contract it names, and akashi audited it anyway
+([ADR-0016](adr/0016-an-unrecognised-field-is-a-fact-about-the-document.md)).
+
+Context about the document, on the same footing as `withheld`: **never an
+explanation of any finding** ([ADR-0012](adr/0012-an-omission-is-a-receipt-not-a-source.md)).
+Empty for a conforming package.
+
 ### `provenance.restoration_asserted`
 
 `true` when `restored_by` is the caller's word rather than something akashi

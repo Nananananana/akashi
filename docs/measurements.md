@@ -1441,3 +1441,76 @@ would be free. It is not done here because `range(3) == (0, 1, 2)` is `False`,
 so `SearchForm.__eq__` would stop agreeing between the two paths, and the
 property test that lets the fast path exist compares exactly that. It is a real
 saving behind a real design question, which is a different change.
+
+## A skip is the same green as a pass
+
+sora reported on 2026-09-16 that it had found its own defect **twice**: the
+`.ok()?` collapse it fixed in one file on 9/11 was still in the file beside it,
+and the test that had gone quiet did not fail when a sibling library changed the
+data it was supposed to check. Its conclusion is worth quoting exactly:
+
+> Being near the correct shape is no guarantee it was applied -- and it may be
+> more dangerous to be near it, because it reads as already fixed.
+
+Asked the same question of akashi in two places.
+
+### The eight skips
+
+`pytest.skip` is a `.ok()?`: it makes "this did not apply" and "this stopped
+working" into the same green. There are eight in the suite, and five had already
+been reasoned about:
+
+| | |
+| --- | --- |
+| `test_layering_config` | a companion test asserts the deferred contracts are in `.importlinter` at all, and says so: "this test would then be guarding nothing" |
+| `test_seam_mamori` | `test_ci_configuration` asserts the job still exports the pin, "so this cannot go quiet by the variable disappearing" |
+| `test_vendored_contracts` | **404 is a `pytest.fail`, not a skip** -- a schema that moved upstream is drift, and only a genuine outage skips |
+| `-m network`, `-m siblings` | deselected by default and run by name in their own CI jobs; `pytest -m siblings` collecting nothing exits 5, so an empty selection is red |
+
+Two had not.
+
+**`test_the_domain_imports_only_the_standard_library` skipped every module when
+`STDLIB_ONLY` named a layer that does not exist.** Measured: renaming the layer
+to `"domains"` took the run from 56 skips to 73 and left **every check green** —
+ADR-0001's central guarantee checked by nothing, and nothing saying so. Now a
+companion test asserts the set selects a layer that exists and that at least ten
+modules reach the assertion.
+
+**`test_a_named_source_is_not_replaced_by_a_list` skipped when its pair produced
+no contradiction.** That is exactly the regression worth failing on: a pair that
+stops producing one has taken the test out of the suite. It is an assertion now.
+
+| poison | before | after |
+| --- | --- | --- |
+| `STDLIB_ONLY` names a layer that does not exist | green | caught |
+| `STDLIB_ONLY` is empty | green | caught |
+| the contradiction rule stops firing | skipped, green | caught |
+
+### Three fields the contract never mentioned
+
+The second place to ask sora's question was the payload. 59 property names in
+the published schema; **three appear nowhere in `docs/audit-report.md`**:
+
+| | what the schema says it is not |
+| --- | --- |
+| `nearby_in_evidence` | not a finding, not a ranking, no similarity computed |
+| `judged` | not verdicts, not in `report_id` |
+| `unrecognised` | never an explanation of any finding |
+
+Each carries a careful `description` in the schema saying precisely what a
+consumer must not conclude from it — and **none of it reached the document a
+consumer reads.** `nearby_in_evidence` is the worst of the three to leave
+undescribed: it is the field most likely to be read as a list of corrections,
+which is the one thing akashi is refusing to say.
+
+The decision was made once and not applied to its sibling, which is the same
+shape as the notation table and as `SOURCE_LIMIT`, in a third material.
+
+All three are documented now, and the general form is a test: **every property
+name the schema publishes is named in the contract.** Presence, not wording —
+pinning the prose would make every edit a failure; what must not happen is a
+field arriving with nothing said about it at all.
+
+Three poisons, three caught, and the guard's own "is it reading something"
+assertion fired on its first run: `published_schema()` returns a *path*, and the
+walk over it found zero names.

@@ -184,6 +184,30 @@ def test_a_module_imports_only_from_layers_it_is_allowed_to(module: Path) -> Non
         )
 
 
+def test_the_stdlib_only_check_is_looking_at_something() -> None:
+    """`STDLIB_ONLY` naming a layer that does not exist skips every module and
+    leaves the suite green -- ADR-0001's guarantee checked by nothing, and
+    nothing saying so.
+
+    Measured rather than supposed: renaming the layer to `"domains"` took the
+    run from 56 skips to 73 and from 1954 passed to 1937, and every check
+    stayed green. A skip is a `.ok()?` -- it turns "this did not apply" and
+    "this stopped working" into one value -- which is what sora reported
+    finding twice in its own tree on 2026-09-16.
+
+    The floor is deliberately loose. It is here to fail when the set stops
+    selecting anything, not to be edited every time a module is added.
+    """
+    layers = {_layer_of(module) for module in ALL_MODULES}
+    unknown = STDLIB_ONLY - layers
+    assert not unknown, (
+        f"STDLIB_ONLY names {sorted(unknown)}, which no module is in. Every module "
+        f"would skip and the layer would be checked by nothing. Layers: {sorted(layers)}"
+    )
+    checked = [module for module in ALL_MODULES if _layer_of(module) in STDLIB_ONLY]
+    assert len(checked) >= 10, f"only {len(checked)} modules reach the stdlib-only check"
+
+
 @pytest.mark.parametrize("module", ALL_MODULES, ids=lambda m: str(m.relative_to(SRC)))
 def test_the_domain_imports_only_the_standard_library(module: Path) -> None:
     if _layer_of(module) not in STDLIB_ONLY:
