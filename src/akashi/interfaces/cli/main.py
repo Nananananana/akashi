@@ -593,9 +593,10 @@ def _errors(arguments: argparse.Namespace, out: TextIO) -> int:
     and a consumer comparing this against their own copy in CI needs a zero.
     """
     if arguments.json:
-        _document(json.dumps(catalogue(), ensure_ascii=False, indent=2) + "\n", out)
+        body = catalogue(by=f"akashi/{__version__}")
+        _document(json.dumps(body, ensure_ascii=False, indent=2) + "\n", out)
         return AUDITED
-    print(CONTRACT, file=out)
+    print(f"{CONTRACT}  akashi/{__version__}", file=out)
     for entry in CATALOGUE:
         retry = "retryable" if entry.retryable else "not retryable"
         print(f"\n  {entry.kind}  ({entry.outcome}, exit {entry.status}, {retry})", file=out)
