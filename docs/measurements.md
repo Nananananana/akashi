@@ -909,6 +909,38 @@ Recorded rather than guessed at. The corpus evaluation is unchanged by every
 fix above: 42/42 fabrication recall, 0/42 false positives, 30/30
 reproducibility.
 
+### A fourth round, and the same half-fix for the third time
+
+24 more drafts. Four misses, and one of them was a repair of mine that had been
+written against the languages that happened to prompt it:
+
+| | |
+| --- | --- |
+| `12英尺 x 8英尺 6英寸` | **feet and inches in Chinese.** The imperial rule landed a batch earlier in English and Japanese and missed `英尺` / `英寸` |
+| `250毫克/片`, `10亩` | `片` and `亩` were absent from the Chinese unit list outright |
+| `1分30秒5` | a compound duration — the same family as `1:45.32`, now seen twice |
+
+**Three times now, in the same shape:**
+
+1. `/` denominators landed in Latin and missed CJK (batch 2 found it)
+2. the Japanese katakana rule was missed **beside the very rule being fixed**
+   (a test written for it found it)
+3. the imperial rule landed in English and Japanese and missed Chinese (this
+   batch found it)
+
+A repair is written against the examples that prompted it, and the examples
+that prompted it are whatever that batch happened to contain. **A rule with a
+script in it needs asking, once, which scripts it is for** — the question is
+cheap and nothing in the corpus asks it, because the corpus has the same author
+as the rule.
+
+`1分30秒5` is now the second sighting of a compound duration and by the rule
+written for `5.5%vol` it has earned a decision. It is **still not closed**, and
+for a different reason: `1:45.32` and `1分30秒5` are two notations for one
+concept, and a rule for either alone would be the third half-fix in a row. It
+is recorded here as a family, waiting for the shape to be built once for all
+three scripts rather than for whichever one appears next.
+
 ## Whether a deterministic rule can see two sources disagreeing (#88)
 
 The candidate: **same kind, same shape, different digits, in a different item**.

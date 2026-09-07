@@ -827,3 +827,29 @@ def test_an_apostrophe_that_is_a_quotation_mark_is_untouched() -> None:
         )
     ]
     assert found == ["12"]
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("集装箱是12英尺 x 8英尺 6英寸。", ["12英尺", "8英尺 6英寸"]),
+        ("高度是6英寸。", ["6英寸"]),
+        ("每次250毫克/片。", ["250毫克/片"]),
+        ("面积是10亩。", ["10亩"]),
+    ],
+)
+def test_chinese_units_the_list_did_not_have(sentence: str, expected: list[str]) -> None:
+    """Feet and inches in Chinese, and two units missing outright.
+
+    The imperial rule landed in English and Japanese a batch earlier and missed
+    `英尺` / `英寸`, which is **the third time a repair here has been written
+    against the languages that happened to prompt it**: `/` denominators landed
+    in Latin and missed CJK, then the Japanese katakana rule was missed beside
+    the very rule being fixed, then this.
+
+    `片` and `亩` were absent from the Chinese unit list altogether. The list
+    was written by whoever wrote the extractor, so it contained no unit its
+    author had not thought of -- which is #55's argument, arriving again.
+    """
+    found = [one.text for one in extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)]
+    assert found == expected

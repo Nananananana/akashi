@@ -137,6 +137,13 @@ _UNIT_TAIL = r"[²³]?(?:/" + _DENOMINATOR + r")?"
 _IMPERIAL = (
     r"(?<!\d)\d+(?:\.\d+)?['′](?:\s*\d+(?:\.\d+)?[\"″])?(?![\d'\"′″A-Za-z])"
     r"|(?<!\d)\d+(?:\.\d+)?フィート(?:\s*\d+(?:\.\d+)?インチ)?"
+    # And in Chinese. Added a batch later than the other two, which is the
+    # third time a repair here has been written against the languages that
+    # prompted it: `/` denominators landed in Latin and missed CJK, then the
+    # Japanese katakana rule was missed beside the one being fixed, then this.
+    # A rule with a script in it needs asking, once, which scripts it is for.
+    r"|(?<!\d)\d+(?:\.\d+)?英尺(?:\s*\d+(?:\.\d+)?英寸)?"
+    r"|(?<!\d)\d+(?:\.\d+)?英寸"
 )
 
 

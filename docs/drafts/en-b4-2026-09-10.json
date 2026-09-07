@@ -1,0 +1,133 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-container-dimensions",
+      "subject": "shipping container",
+      "attribute": "length",
+      "value": "40'0\"",
+      "sentence": "The standard length of this container is 40'0\"",
+      "neighbour": "cargo ship",
+      "superseded_value": "20'0\"",
+      "heading": "Shipping Container Specifications",
+      "paraphrase": "What is the length of the container?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "paraphrase still uses the attribute 'length'"
+      ]
+    },
+    {
+      "key": "pharmacy-prescription-count",
+      "language": "en",
+      "subject": "prescription",
+      "attribute": "refills allowed",
+      "value": "3",
+      "sentence": "This prescription allows for 3 refills.",
+      "neighbour": "over-the-counter medication",
+      "superseded_value": "2",
+      "heading": "Prescription Details",
+      "paraphrase": "How many times can this prescription be refilled?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "allotment-garden-yield",
+      "language": "en",
+      "subject": "garden plot",
+      "attribute": "carrots harvested",
+      "value": "150 lbs",
+      "sentence": "This plot has yielded a total of 150 lbs of carrots this season.",
+      "neighbour": "community garden",
+      "superseded_value": "125 lbs",
+      "heading": "Allotment Garden Report",
+      "paraphrase": "How many carrots did this plot produce?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "motorsport-race-time",
+      "language": "en",
+      "subject": "race",
+      "attribute": "duration",
+      "value": "2:30",
+      "sentence": "The race will run for a total duration of 2:30 hours.",
+      "neighbour": "practice session",
+      "superseded_value": "2:00",
+      "heading": "Race Schedule",
+      "paraphrase": "How long does the race last?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "tailoring-clothing-size",
+      "subject": "suit",
+      "attribute": "waist",
+      "value": "34\"",
+      "sentence": "The waist measurement for this suit is 34 inches.",
+      "neighbour": "shirt",
+      "superseded_value": "32\"",
+      "heading": "Tailoring Measurements",
+      "paraphrase": "What is the waist size of the suit?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '34\"' verbatim",
+        "paraphrase still uses the attribute 'waist'"
+      ]
+    },
+    {
+      "key": "brewing-alcohol-content",
+      "language": "en",
+      "subject": "beer",
+      "attribute": "ABV",
+      "value": "6.5%",
+      "sentence": "The alcohol content of this batch of beer is 6.5% ABV.",
+      "neighbour": "wine",
+      "superseded_value": "5.0%",
+      "heading": "Brewing Analysis",
+      "paraphrase": "How strong is the beer?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "surveying-distance-measurement",
+      "subject": "property boundary",
+      "attribute": "length",
+      "value": "150m",
+      "sentence": "The length of this property boundary is exactly 150 meters.",
+      "neighbour": "land parcel",
+      "superseded_value": "120m",
+      "heading": "Surveying Report",
+      "paraphrase": "How long is this boundary?",
+      "language": "en",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '150m' verbatim"
+      ]
+    },
+    {
+      "key": "aviation-maintenance-checklist",
+      "language": "en",
+      "subject": "aircraft",
+      "attribute": "inspection cycle",
+      "value": "100 hours",
+      "sentence": "This aircraft requires an inspection after every 100 hours of flight.",
+      "neighbour": "helicopter",
+      "superseded_value": "50 hours",
+      "heading": "Maintenance Schedule",
+      "paraphrase": "How often does the aircraft need an inspection?",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    }
+  ]
+}

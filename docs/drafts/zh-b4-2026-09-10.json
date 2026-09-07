@@ -1,0 +1,134 @@
+{
+  "drafts": [
+    {
+      "key": "shipping-container-dimensions",
+      "language": "zh",
+      "subject": "货柜",
+      "attribute": "尺寸",
+      "value": "12英尺 x 8英尺 x 8英尺 6英寸",
+      "sentence": "该货柜的尺寸为12英尺 x 8英尺 x 8英尺 6英寸。",
+      "neighbour": "运输集装箱",
+      "superseded_value": "10英尺 x 7英尺 x 7英尺 3英寸",
+      "heading": "货柜尺寸说明",
+      "paraphrase": "这个货柜的大小是多少？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "pharmacy-prescription-strength",
+      "language": "zh",
+      "subject": "处方",
+      "attribute": "药量",
+      "value": "250毫克/片",
+      "sentence": "该处方所指定的药量为250毫克/片。",
+      "neighbour": "药店药品",
+      "superseded_value": "200毫克/片",
+      "heading": "处方药量明细",
+      "paraphrase": "这种药每片含有多少毫克？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "allotment-garden-plants",
+      "subject": "菜园",
+      "attribute": "植物数量",
+      "value": "10株番茄 + 15株胡萝卜",
+      "sentence": "该菜园内共种植了10株番茄和15株胡萝卜。",
+      "neighbour": "园艺用品",
+      "superseded_value": "8株番茄 + 12株胡萝卜",
+      "heading": "菜园植物配置",
+      "paraphrase": "这个菜园里有多少种蔬菜？",
+      "language": "zh",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '10株番茄 + 15株胡萝卜' verbatim"
+      ]
+    },
+    {
+      "key": "motorsport-race-lap-times",
+      "language": "zh",
+      "subject": "赛车",
+      "attribute": "圈速",
+      "value": "1分30秒57",
+      "sentence": "该赛车在测试中的圈速为1分30秒57。",
+      "neighbour": "赛车配件",
+      "superseded_value": "1分40秒00",
+      "heading": "赛车圈速记录",
+      "paraphrase": "这辆赛车跑一圈用了多长时间？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "tailoring-clothing-measurements",
+      "subject": "服装",
+      "attribute": "尺寸",
+      "value": "M码（胸围：38厘米）",
+      "sentence": "该服装的尺寸为M码，具体胸围为38厘米。",
+      "neighbour": "服装裁剪",
+      "superseded_value": "L码（胸围：42厘米）",
+      "heading": "服装尺寸参考",
+      "paraphrase": "这套衣服适合穿多大尺寸？",
+      "language": "zh",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value 'M码（胸围：38厘米）' verbatim",
+        "paraphrase still uses the attribute '尺寸'"
+      ]
+    },
+    {
+      "key": "brewing-beer-alcohol-content",
+      "language": "zh",
+      "subject": "啤酒",
+      "attribute": "酒精含量",
+      "value": "4.5% ABV",
+      "sentence": "该啤酒的酒精含量为4.5% ABV。",
+      "neighbour": "啤酒配方",
+      "superseded_value": "4.0% ABV",
+      "heading": "啤酒酒精含量说明",
+      "paraphrase": "这种啤酒的酒精浓度是多少？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "surveying-land-area",
+      "language": "zh",
+      "subject": "地块",
+      "attribute": "面积",
+      "value": "10亩",
+      "sentence": "该地块的面积为10亩。",
+      "neighbour": "土地测量",
+      "superseded_value": "8亩",
+      "heading": "地块面积记录",
+      "paraphrase": "这块地有多大？",
+      "origin": "drafted",
+      "drafter": "qwen2.5:14b-instruct",
+      "verdict": "usable",
+      "why": []
+    },
+    {
+      "key": "aviation-maintenance-parts",
+      "subject": "航空器部件",
+      "attribute": "库存",
+      "value": "5件（库存剩余）",
+      "sentence": "该航空器部件的库存量为5件。",
+      "neighbour": "航空器维修手册",
+      "superseded_value": "3件（库存剩余）",
+      "heading": "航空器部件库存",
+      "paraphrase": "这种航空器部件还有多少库存？",
+      "language": "zh",
+      "verdict": "malformed",
+      "why": [
+        "sentence does not contain the value '5件（库存剩余）' verbatim",
+        "paraphrase still uses the attribute '库存'"
+      ]
+    }
+  ]
+}
