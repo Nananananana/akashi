@@ -194,6 +194,28 @@ def test_the_forbidden_vocabulary_is_absent_from_the_readme(word: str) -> None:
     )
 
 
+def _prose(text: str) -> str:
+    r"""``text`` with fenced code blocks removed.
+
+    A link checker that reads a code fence as prose reports the inside of a
+    regular expression as a broken link: `[\d'"]` followed by `(?:...)` is
+    `](...)` to anything looking for one. That happened to `docs/measurements.md`
+    the first time it quoted the feet-and-inches pattern.
+
+    Removing the fences rather than teaching the pattern about escapes: a
+    document's code is not its prose, and every check that reads a document as
+    text has the same question to answer.
+    """
+    out, fenced = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fenced = not fenced
+            continue
+        if not fenced:
+            out.append(line)
+    return "\n".join(out)
+
+
 def test_every_local_link_in_every_document_resolves() -> None:
     """A link whose text is right and whose target is wrong is worse than no
     link: it sends a reader somewhere with confidence.
@@ -214,7 +236,7 @@ def test_every_local_link_in_every_document_resolves() -> None:
     for document in sorted(ROOT.rglob("*.md")):
         if any(part in {".venv", ".git", "node_modules"} for part in document.parts):
             continue
-        for target in re.findall(r"\]\(([^)\s]+)\)", document.read_text(encoding="utf-8")):
+        for target in re.findall(r"\]\(([^)\s]+)\)", _prose(document.read_text(encoding="utf-8"))):
             if target.startswith(("http://", "https://", "#", "mailto:")):
                 continue
             path = target.partition("#")[0]

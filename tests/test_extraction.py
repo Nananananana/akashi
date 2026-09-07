@@ -775,3 +775,55 @@ def test_a_fullwidth_comma_that_is_not_a_thousands_separator_does_not_bind(
     exactly three of them after it. Each row removes one of those conditions."""
     found = [one.text for one in extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)]
     assert not any(must_not_appear in text for text in found), (why, found)
+
+
+# --- feet and inches, which is what a units library would have bought --------
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("The container is 40' x 8'6\" overall.", ["40'", "8'6\""]),
+        ("Plot 25' x 50' fenced.", ["25'", "50'"]),
+        ("A 40' High Cube unit shipped.", ["40'"]),
+        ("コンテナは12フィート6インチです。", ["12フィート6インチ"]),
+        ("全長は8フィートでした。", ["8フィート"]),
+    ],
+)
+def test_feet_and_inches_are_one_measurement(sentence: str, expected: list[str]) -> None:
+    """Four of the seven values drafted vocabulary found akashi could not read
+    were this shape (#55, #67). A trade writes a shipping container this way and
+    nobody in this repository does, which is the blind spot the drafting
+    exercise exists to find.
+
+    The inches belong to the measurement: `8'6"` is one value, and taking `8`
+    and `6` would report two numbers the document does not give and let either
+    ground against something unrelated.
+    """
+    found = [one.text for one in extract_from_answer(segment_answer(sentence, DEFAULT), DEFAULT)]
+    assert found == expected
+
+
+def test_a_possessive_is_not_a_length() -> None:
+    """An apostrophe after digits is a foot mark or a possessive, and only the
+    character after it tells them apart. `40' High Cube` is a container and
+    `1990's` is a decade -- the guard is a letter, and without it the decade
+    became a measurement."""
+    found = [
+        one.text
+        for one in extract_from_answer(
+            segment_answer("Back in the 1990's it was 2.4kg.", DEFAULT), DEFAULT
+        )
+    ]
+    assert "1990'" not in found
+    assert found == ["1990", "2.4kg"]
+
+
+def test_an_apostrophe_that_is_a_quotation_mark_is_untouched() -> None:
+    found = [
+        one.text
+        for one in extract_from_answer(
+            segment_answer("She said 'yes' twice about the 12 boxes.", DEFAULT), DEFAULT
+        )
+    ]
+    assert found == ["12"]

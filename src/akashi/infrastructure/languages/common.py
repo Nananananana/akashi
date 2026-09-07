@@ -115,6 +115,30 @@ _DENOMINATOR = r"(?:" + _SI + r"[²³]?|[一-鿿]{1,3})"
 
 _UNIT_TAIL = r"[²³]?(?:/" + _DENOMINATOR + r")?"
 
+#: Feet and inches, in either notation.
+#:
+#: Four of the seven values that drafted vocabulary found akashi could not read
+#: were this shape (#55, #67): `40' x 8'6"`, `25' x 50'`, `12フィート6インチ`.
+#: The trade writes a shipping container that way and nobody in this repository
+#: does, which is exactly the blind spot the drafting exercise exists to find.
+#:
+#: **The inches are part of the measurement, not a second one.** `8'6"` is one
+#: value; taking `8` and `6` would report two numbers a document does not give
+#: and let either of them ground against something unrelated.
+#:
+#: The guard against a letter is what keeps `the 1990's` from being a length.
+#: An apostrophe after digits is a foot mark or a possessive, and only the
+#: character after it tells them apart -- `40' High Cube` is a container and
+#: `1990's` is a decade. Measured on both.
+#:
+#: This is the whole of what a units library would have bought here, in two
+#: lines of `re`, which is the middle clause of #67's decision rule answering
+#: itself.
+_IMPERIAL = (
+    r"(?<!\d)\d+(?:\.\d+)?['′](?:\s*\d+(?:\.\d+)?[\"″])?(?![\d'\"′″A-Za-z])"
+    r"|(?<!\d)\d+(?:\.\d+)?フィート(?:\s*\d+(?:\.\d+)?インチ)?"
+)
+
 
 COMMON = LanguagePack(
     code="und",
@@ -166,6 +190,20 @@ COMMON = LanguagePack(
             pattern=r"(?<![A-Za-z0-9])[A-Z]{2,6}[ \-]?\d{3,}(?:-\d+)*(?![A-Za-z0-9])",
             priority=60,
             note="ISO 9001, ABC-1234: a letter prefix and a number that belong together",
+        ),
+        ExtractionRule(
+            kind=ParticularKind.QUANTITY,
+            pattern=_IMPERIAL,
+            priority=50,
+            note=(
+                "feet and inches, written with prime marks. The same priority as the "
+                "SI rule because it is the same kind of thing, and because priority "
+                "is not what decides this one: overlaps resolve by earliest start, "
+                "then LONGEST, then priority -- so `40'` beats the number rule's `40` "
+                "on length whatever the number here is. It was 52 for a while, and a "
+                "poison that dropped it to 0 changed nothing, which is how that was "
+                "found. A number a reader would look for meaning in should have some"
+            ),
         ),
         ExtractionRule(
             kind=ParticularKind.QUANTITY,
