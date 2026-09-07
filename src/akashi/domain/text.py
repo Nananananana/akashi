@@ -30,6 +30,7 @@ is a property test rather than an example.
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from dataclasses import dataclass, field
 
@@ -109,6 +110,12 @@ class SearchForm:
         return self.text[span.end] if span.end < len(self.text) else ""
 
 
+#: Text that the reduction below would move: whitespace at either end, a run of
+#: it, or any whitespace that is not already a single space. A text matching
+#: none of these keeps every character exactly where it was.
+_UNTIDY = re.compile(r"^\s|\s$|\s\s|[^\S ]")
+
+
 def search_form(text: str) -> SearchForm:
     """Reduce ``text`` for comparison, keeping the offsets.
 
@@ -117,6 +124,72 @@ def search_form(text: str) -> SearchForm:
 
     Leading and trailing whitespace is dropped: a model that quotes with a
     trailing newline has not made a mistake worth reporting.
+
+    **Most text is not moved by any of this**, and finding that out costs three
+    C calls where reducing it costs one Python loop iteration and two
+    ``unicodedata.normalize`` calls per character. Folding was a third of an
+    audit's time; this is `_unmoved` below, and `_reduced_the_long_way` is what
+    runs when any of its conditions fails. The two must agree on every input,
+    which is a property test rather than a comment
+    (`tests/test_text.py`).
+    """
+    quick = _unmoved(text)
+    return quick if quick is not None else _reduced_the_long_way(text)
+
+
+def _unmoved(text: str) -> SearchForm | None:
+    """The same answer, when the reduction moves nothing. ``None`` otherwise.
+
+    Every condition is necessary and each was put here by a disagreement the
+    property test found:
+
+    * **already tidy** -- otherwise a space is dropped or a run collapses, and
+      positions shift.
+    * **already NFKC** -- and this one is a doorman rather than a check.
+      Removing it leaves the whole suite green: an expansion is caught by the
+      one-to-one condition below, a composition by the combining-mark
+      condition, and a Hangul jamo pair -- which composes with no combining
+      mark anywhere -- by the fold still not being NFKC. A scan of every
+      assigned code point found fifteen that only this condition refuses and
+      **none where the two paths would have differed** (pinned in
+      `tests/test_text_normalization.py`).
+
+      It stays because it cannot produce a wrong answer, only a slower one:
+      what it does is send text to the definition. One C call against a
+      failure that would be silent, unbounded, and in the offsets.
+    * **no combining marks** -- `is_normalized` is *true* for a mark that
+      cannot compose with what precedes it (``字`` + U+3099), and the long way
+      gives both characters the span of the whole cluster where this gives
+      each its own. 776 texts in 60,000 disagreed on exactly that before this
+      condition was added.
+    * **case folding is one-to-one** -- ``ß`` folds to ``ss``, and a text
+      containing one has to take the long way.
+    * **the fold is still NFKC** -- folding can leave a string that is not,
+      which is why `_fold` normalizes twice.
+    """
+    if not text or _UNTIDY.search(text) or not unicodedata.is_normalized("NFKC", text):
+        return None
+    # Only for non-ASCII: no ASCII character has a combining class, so the scan
+    # is skipped for exactly the text where it would be pure overhead.
+    if not text.isascii() and any(unicodedata.combining(character) for character in text):
+        return None
+    folded = text.casefold()
+    if len(folded) != len(text) or not unicodedata.is_normalized("NFKC", folded):
+        return None
+    length = len(text)
+    return SearchForm(
+        original=text,
+        text=folded,
+        origin=tuple(range(length)),
+        extent=tuple(range(1, length + 1)),
+    )
+
+
+def _reduced_the_long_way(text: str) -> SearchForm:
+    """The reduction, character by character. Correct for every input.
+
+    Kept as the definition rather than as a fallback nobody reads: `_unmoved`
+    is only allowed to exist because this says what the answer is.
     """
     # Expand first, collapse second. Doing both in one pass looks tempting and
     # gets the case where a character normalizes *into* whitespace wrong --
