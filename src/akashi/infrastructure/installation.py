@@ -156,11 +156,30 @@ def _sibling(name: str) -> Finding:
     diagnostic that imported five libraries to report on them would be changing
     the machine it is describing, and on a machine somebody is already
     suspicious of that is the wrong trade.
+
+    **An exception is not an absence**, and this used to report it as one.
+    ``find_spec`` returns ``None`` when the name is simply not there; it
+    *raises* when something answered and could not be read -- a package whose
+    parent fails to import, a ``sys.modules`` entry carrying no specification.
+    Both came back as "not installed", which sends a reader to `pip install`,
+    which succeeds and changes nothing while the real fault stays where it was.
+
+    `_contract` above has drawn this distinction since it was written -- absent
+    from the wheel and present but unreadable are two findings there. This is
+    the same distinction, in the function beside it, arrived at late: sora
+    reported the identical collapse on its own side (a parse failure reaching
+    `.ok()?` and reading as "this machine does not have it") on 2026-09-11, and
+    the question it prompted found this.
     """
     try:
         found = find_spec(name) is not None
-    except (ImportError, ValueError):
-        found = False
+    except (ImportError, ValueError) as error:
+        return Finding(
+            name,
+            f"present and not readable ({error.__class__.__name__}): {error}. "
+            f"Installing it again will not change this.",
+            ok=False,
+        )
     return Finding(name, "importable" if found else "not installed", ok=found)
 
 

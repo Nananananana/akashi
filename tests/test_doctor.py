@@ -203,3 +203,41 @@ def test_the_report_it_produces_is_not_a_report(tmp_path: Path) -> None:
     printed = as_diagnosis(looked())
     with pytest.raises(json.JSONDecodeError):
         json.loads(printed)
+
+
+def test_a_sibling_that_answered_and_could_not_be_read_is_not_reported_as_absent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`find_spec` returns None for a name that is not there and *raises* when
+    something answered and could not be read -- a package whose parent fails to
+    import, a `sys.modules` entry with no specification.
+
+    Both used to come back as "not installed", which is a different fact and a
+    worse one: it sends a reader to `pip install mamori`, which succeeds and
+    changes nothing while the real fault stays exactly where it was.
+
+    `_contract` has drawn this distinction since it was written; this is the
+    same distinction in the function beside it. sora reported the identical
+    collapse on its own side on 2026-09-11 -- a parse failure reaching `.ok()?`
+    and reading as "this machine does not have it" -- and the question found
+    this one.
+    """
+    from akashi.infrastructure import installation as module
+
+    def broken(name: str) -> object:
+        if name == "mamori":
+            raise ImportError("its parent package raised on import")
+        return None
+
+    monkeypatch.setattr(module, "find_spec", broken)
+    found = {one.what: one.detail for one in looked().siblings}
+
+    assert "not installed" not in found["mamori"], (
+        f"a sibling that answered unreadably is reported as absent: {found['mamori']!r}"
+    )
+    assert "not readable" in found["mamori"]
+    assert "ImportError" in found["mamori"], "the reader cannot act without the kind"
+    # The other four really are absent under this patch, and must still say so:
+    # a change that reported every sibling as unreadable would pass the two
+    # assertions above and be worse than what it replaced.
+    assert found["tsumugi"] == "not installed"
