@@ -210,7 +210,8 @@ def _load(model: str) -> Any:
         raise ContractError(
             "a local judge needs transformers and torch, which akashi does not install: "
             "`pip install 'akashi[nli]'`. akashi itself has no dependencies; a judge is the "
-            "one thing that changes that, and this one also downloads a model."
+            "one thing that changes that, and this one also downloads a model.",
+            kind="JudgeUnavailable",
         ) from error
 
     loaded = AutoModelForSequenceClassification.from_pretrained(model, trust_remote_code=True)

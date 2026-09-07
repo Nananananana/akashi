@@ -34,6 +34,7 @@ from akashi.domain.package import PLAIN_CONTRACT, ContextPackage, Protection
 from akashi.domain.report import Audited, AuditReport, ReportProvenance, content_hash
 from akashi.domain.segment import segment_answer
 from akashi.domain.verdict import check_segment
+from akashi.errors import SegmentationError
 from akashi.ports import Restorer
 
 from .admit import admit, effective_protection
@@ -63,7 +64,21 @@ def audit(
     protection = effective_protection(package, protection)
     text = admission.answer
 
-    segmentation = segment_answer(text, packs)
+    try:
+        segmentation = segment_answer(text, packs)
+    except ValueError as broken:
+        # The domain raises a built-in, and deliberately: `domain` imports
+        # nothing, not even `errors`, which is what keeps ADR-0001's set
+        # genuinely empty. So the class ADR-0009 describes cannot be raised
+        # where the invariant lives, and for a long time nothing raised it at
+        # all -- it was exported, documented, and dead. The catalogue guard
+        # (Sora R-E1) found that.
+        #
+        # This is the layer that may name it, and it is where the audit
+        # actually stops. Without the wrap a broken tiling left the command
+        # line as a traceback, which reads as a bug in the tool rather than as
+        # a refusal -- the exact thing the CLI's own handler exists to avoid.
+        raise SegmentationError(str(broken)) from broken
     # Built once. Segmenting and extracting the evidence costs the same work the
     # answer already gets, over text that is usually shorter, and it buys the
     # only finding a reader can act on without opening the file themselves.

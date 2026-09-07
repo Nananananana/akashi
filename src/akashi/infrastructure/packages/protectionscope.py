@@ -52,7 +52,8 @@ def read_protection_scope(data: object, where: str = "protection") -> Protection
             f"{where} declares {_SURROGATE_CONTRACT!r}: the text carries surrogates, "
             f"which are designed to be indistinguishable from real values. akashi reads "
             f"tokens only, and auditing surrogate text would report invented names as "
-            f"grounded. Restore it first, or audit the text mamori was given."
+            f"grounded. Restore it first, or audit the text mamori was given.",
+            kind="SurrogateRecord",
         )
     if contract != CONTRACT:
         raise ContractError(
@@ -69,7 +70,8 @@ def read_protection_scope(data: object, where: str = "protection") -> Protection
             f"{where} declares the plain contract and lists {len(protected)} "
             f"surrogate-protected kind{'s' if len(protected) > 1 else ''}. That is a record "
             f"from before the contract split, and it still means the text carries values "
-            f"akashi cannot tell from real ones."
+            f"akashi cannot tell from real ones.",
+            kind="SurrogateRecord",
         )
 
     by = data.get("by")

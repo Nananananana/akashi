@@ -221,7 +221,8 @@ def effective_protection(package: ContextPackage, document: Protection | None) -
             f"reversible={package.protection.reversible}) and the protection record "
             f"says {document.by} (scope {document.scope!r}, "
             f"reversible={document.reversible}). One of the two is about a different "
-            f"document, and akashi will not guess which."
+            f"document, and akashi will not guess which.",
+            kind="ProtectionMismatch",
         )
     return document
 
