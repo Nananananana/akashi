@@ -337,3 +337,49 @@ def test_recheck_reads_the_response_from_standard_input(
     )
     code = main(["recheck", "report.json", "--package", "package.json", "--response", "-"])
     assert code == AUDITED
+
+
+def test_a_field_that_vanished_from_the_re_derivation_is_a_difference() -> None:
+    """The case `_differences` handles with an `<absent>` sentinel and nothing
+    was holding.
+
+    A poison that skipped every path present on one side only left the whole
+    suite green -- so if a future change made `bounds`, a particular, or a
+    whole segment stop being re-derived, `recheck` would have reported the
+    report as matching. That is the failure this command exists to make
+    impossible: a re-derivation that agrees by omitting.
+    """
+    archived = report_of()
+    assert archived["segments"][0]["particulars"], "this answer bore nothing to remove"
+    archived["segments"][0]["particulars"][0]["kind"] = "quantity"
+    del archived["segments"][0]["particulars"][0]["standing"]
+
+    result = recheck(
+        archived,
+        ANSWER,
+        load_package(PACKAGES / "gear-ja.json"),
+        DEFAULT,
+        akashi_version=__version__,
+    )
+    named = [line for line in result.differences if "particulars[0].standing" in line]
+    assert named, f"a vanished field was not reported: {result.differences}"
+    assert "'<absent>'" in named[0], named[0]
+
+
+def test_a_field_that_appeared_in_the_re_derivation_is_a_difference() -> None:
+    """The other direction. An archived report that says less than the
+    re-derivation is as much a mismatch as one that says more, and the union of
+    both key sets is what makes them symmetric."""
+    archived = report_of()
+    archived["segments"][0]["invented_by_nobody"] = "x"
+
+    result = recheck(
+        archived,
+        ANSWER,
+        load_package(PACKAGES / "gear-ja.json"),
+        DEFAULT,
+        akashi_version=__version__,
+    )
+    named = [line for line in result.differences if "invented_by_nobody" in line]
+    assert named, f"an extra field was not reported: {result.differences}"
+    assert "'<absent>'" in named[0], named[0]

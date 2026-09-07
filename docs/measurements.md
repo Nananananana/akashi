@@ -1033,3 +1033,59 @@ Three of the seven remain:
 - `M号`, `纯棉` — a size and a material. Neither is a quantity, a date or a
   name; they are **kinds akashi does not have**, which is a vocabulary question
   and not a library one.
+
+## A defect hunt that mostly found nothing, and the one thing it found
+
+Four surfaces scanned for a critical defect. Three came back clean, which is
+worth recording so the next hunt does not repeat them.
+
+### Hostile input: already bounded, and still bounded
+
+The new extraction rules (`_IMPERIAL`, `_UNIT_TAIL`, `FULLWIDTH_THOUSANDS`)
+were the obvious suspects, since a quadratic in extraction is what v0.5 fixed.
+
+| shape, per doubling | growth |
+| --- | --- |
+| a long digit run then a prime mark | ×2.1 |
+| alternating primes `4'4'4'…` | ×1.8 |
+| slashes in the unit tail | ×2.0 |
+| superscripts, full-width commas | ×2.0 |
+
+Removing `_IMPERIAL` changes those numbers by nothing: **the growth is the
+pre-existing linear cost of a digit run**, already recorded above at ×1.9. On
+extraction alone a 6,400-character digit run costs **62×** what prose of the
+same length costs, and the suffix is irrelevant — `4…4'`, `4…4x` and `4…4kg`
+are within 15% of each other.
+
+### The MCP surface: linear on both axes, and on their product
+
+| | growth per doubling |
+| --- | --- |
+| evidence items, 250 → 2,000 | ×2.0 |
+| one answer, 50k → 200k characters | ×2.0 |
+| **both at once**, 50×50 → 400×400 | ×2.3 to ×3.3 |
+
+Doubling both axes quadruples the product, so ×4.0 would be quadratic in the
+product. It is not: 400 particulars against 400 contexts is 380 ms.
+
+### `recheck`: five guards, all load-bearing
+
+Poisoned the package-id guard, the response-hash guard, the named matcher, the
+unknown-matcher refusal, and the difference computation. Each is caught by a
+test written for it.
+
+### What was actually found
+
+**`_differences` handles a path present on one side only, and nothing was
+holding it.** The code is right — it uses an `<absent>` sentinel over the union
+of both key sets — and a poison that skipped every one-sided path left the whole
+suite green.
+
+That is the failure `recheck` exists to make impossible: **a re-derivation that
+agrees by omitting.** If a future change made `bounds`, a particular, or a whole
+segment stop being re-derived, the archived report would have been reported as
+matching.
+
+Pinned in both directions, and both directions are needed — a poison walking
+only the archived keys hides an appearing field, and one walking only the
+re-derived keys hides a vanished one.
