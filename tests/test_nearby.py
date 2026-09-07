@@ -121,8 +121,17 @@ def test_a_named_source_is_not_replaced_by_a_list() -> None:
         for one in particulars("The dose is 5 grams.", ["The dose is 5mg. Volume 250ml."])
         if one.contradiction is not None
     ]
-    if not found:
-        pytest.skip("this pair produced no contradiction, so it does not exercise the rule")
+    # Not a skip. The skip that stood here said "this pair produced no
+    # contradiction, so it does not exercise the rule" -- which is true, and is
+    # the reason to fail rather than to pass quietly: a pair that stops
+    # producing one has taken this test out of the suite, and a suite that
+    # loses a test without saying so is the failure akashi exists to remove.
+    assert found, (
+        "this pair no longer produces a contradiction, so nothing here exercises "
+        "the rule that a named source is not replaced by a list. Either the pair "
+        "needs replacing or the contradiction rule has regressed -- and the second "
+        "is why this is an assertion and not a skip."
+    )
     assert found[0].nearby == ()
 
 

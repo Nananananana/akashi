@@ -9,6 +9,7 @@ asserted.
 from __future__ import annotations
 
 import ast
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -540,6 +541,61 @@ def test_the_demo_runs_and_still_shows_what_it_claims_to() -> None:
     assert "0.400 over 5 particulars in 2 of 3 rows; 1 refused" in out
     assert "was refused, not dropped" in out
     assert "below at_least=0.900" in out
+
+
+def _schema_property_names() -> set[str]:
+    """Every property name the published schema declares, at any depth."""
+    from conftest import published_schema
+
+    # `published_schema()` gives the *path*, reached the way a consumer reaches
+    # it. Loading it here rather than taking a path from this file is the same
+    # reason: the route is part of what is being checked.
+    schema = json.loads(published_schema().read_text(encoding="utf-8"))
+    found: set[str] = set()
+
+    def walk(node: object) -> None:
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key == "properties" and isinstance(value, dict):
+                    found.update(value)
+                    for sub in value.values():
+                        walk(sub)
+                else:
+                    walk(value)
+        elif isinstance(node, list):
+            for one in node:
+                walk(one)
+
+    walk(schema)
+    return found
+
+
+def test_every_field_the_schema_publishes_is_named_in_the_contract() -> None:
+    """A field in the payload that the prose contract never mentions is a field
+    a consumer meets for the first time in a report.
+
+    Three were: `nearby_in_evidence`, `judged` and `unrecognised`. Each carried
+    a careful `description` in the schema saying what it is *not* -- not a
+    finding, not a verdict, not an explanation -- and none of that reached the
+    document anybody reads. The decision was made once and not applied to its
+    sibling, which is the shape this repository keeps finding (#98, #100) and
+    which sora reported hitting twice in five days on 2026-09-16.
+
+    Presence of the name, not the wording. Pinning the prose would make every
+    edit a failure; what must not happen is a field arriving with nothing said
+    about it at all.
+    """
+    document = (ROOT / "docs" / "audit-report.md").read_text(encoding="utf-8")
+    names = _schema_property_names()
+    assert len(names) >= 40, (
+        f"the walk found only {len(names)} names; it is reading the wrong thing"
+    )
+
+    missing = sorted(name for name in names if name not in document)
+    assert not missing, (
+        f"the schema publishes {missing} and docs/audit-report.md never names them. "
+        f"A consumer meets those fields for the first time in a report."
+    )
 
 
 def test_the_contract_lists_every_field_report_id_actually_hashes() -> None:
