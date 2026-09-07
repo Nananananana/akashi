@@ -167,8 +167,17 @@ COMMON = LanguagePack(
         ),
         ExtractionRule(
             kind=ParticularKind.TIME,
-            pattern=r"(?<![\d:])\d{1,2}:\d{2}(?::\d{2})?(?![\d:])",
+            pattern=r"(?<![\d:])\d{1,2}:\d{2}(?::\d{2})?(?:\.\d{1,3})?(?![\d:])",
             priority=80,
+            note=(
+                "the fractional seconds belong to the value. `1:45.32` was coming "
+                "out as `1:45`, which is a different lap time, and a report citing "
+                "it would point a reader at a number the document does not give. "
+                "The lookahead is unchanged from before the fraction was added: a "
+                "first attempt widened its lookahead and the round-trip "
+                "property answered with `14:302.4kg`, where `14:30` was extracted "
+                "out of the middle of a digit run and could not ground back"
+            ),
         ),
         ExtractionRule(
             kind=ParticularKind.PERCENTAGE,

@@ -154,6 +154,26 @@ CHINESE = LanguagePack(
             priority=90,
         ),
         ExtractionRule(
+            kind=ParticularKind.DURATION,
+            pattern=(
+                r"(?<![\d])\d+小时(?:\s*\d+分)?(?:\s*\d+秒\d?)?"
+                r"|(?<![\d])\d+分\s*\d+秒\d?"
+            ),
+            priority=82,
+            note=(
+                "a duration spelled in counters, chained into one value. Drafted "
+                "vocabulary produced `1分30秒5` and akashi took three "
+                "particulars where the document gives one, any of them free to "
+                "ground against something unrelated.\n"
+                "\n"
+                "In THIS pack rather than the shared one, because the counters are "
+                "this language's -- and written for both CJK packs in one commit, "
+                "after asking once which scripts it is for. The three repairs "
+                "before it were each written against the script that happened to "
+                "prompt them and each was found a batch later by the one left out."
+            ),
+        ),
+        ExtractionRule(
             kind=ParticularKind.MONEY,
             pattern=_UNBRACKETED + r"\s*(?:万|亿)?\s*(?:元|人民币)",
             priority=75,

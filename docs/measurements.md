@@ -941,6 +941,34 @@ concept, and a rule for either alone would be the third half-fix in a row. It
 is recorded here as a family, waiting for the shape to be built once for all
 three scripts rather than for whichever one appears next.
 
+### And then it was, once, for all three
+
+| written | before | now |
+| --- | --- | --- |
+| `1:45.32` | `1:45` — a different lap time | `1:45.32` |
+| `1分30秒5` | `1分`, `30秒`, `5` | `1分30秒5` |
+| `2時間30分`, `2小时30分` | two particulars each | one |
+
+The clock fraction is in the shared pack because a colon belongs to no
+language; **the counter chains are in the Japanese and Chinese packs because
+`分`, `秒`, `時間` and `小时` are those languages'** — a shared rule carrying
+them would have an English document matching them.
+
+Two things it cost, both worth recording.
+
+**The first attempt widened the clock rule's lookahead** and the round-trip
+property answered on its first run with `14:302.4kg`: `14:30` pulled out of the
+middle of a digit run, unable to ground back into the text it came from. The
+original lookahead was right and the fraction goes in front of it. Pinned as an
+`@example`.
+
+**Giving Japanese and Chinese a duration rule emptied `kinds_not_extracted` for
+every language pack**, and three tests were using *DURATION-missing-from-ja* as
+their instance of the property "narrowing the packs widens what no rule covers".
+The property is unchanged and needed a new instance: the shared pack alone still
+misses `duration`, `proper_noun` and `reference`, each because it is spelled in
+something a language owns.
+
 ## Whether a deterministic rule can see two sources disagreeing (#88)
 
 The candidate: **same kind, same shape, different digits, in a different item**.
