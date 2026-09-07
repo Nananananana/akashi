@@ -352,6 +352,19 @@ More than one location is **information, not an error.** A short particular
 genuinely occurs in several, and picking one would imply a precision that is not
 there.
 
+`locations[]` is bounded on two axes, and a report that hits either says so in
+`bounds[]` rather than leaving the reader to notice a round number:
+
+| bound | what it caps | what the receipt says |
+| --- | --- | --- |
+| `LOCATION_LIMIT` | places within one document | the occurrence counts are floors |
+| `SOURCE_LIMIT` | documents one particular is cited from | the document counts are floors |
+
+Both are 32. Neither changes a verdict -- a particular found in the thirty-third
+document is still `grounded`, and was already grounded in the first. What the
+bound removes is *how many more places there were*, which akashi stops counting
+and therefore does not claim to know.
+
 `contradiction` is present only on a particular whose standing is `floating`,
 and is forbidden on a grounded one: a particular that is in the source cannot
 also be a corruption of it. It carries the source's text verbatim, the document

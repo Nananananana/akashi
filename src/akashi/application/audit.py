@@ -13,11 +13,13 @@ them is what keeps a fourth language a data change in one package
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Sequence
 
 from akashi.domain.bounds import (
     from_oversized,
     from_truncated_locations,
+    from_truncated_sources,
     oversized_runs,
 )
 from akashi.domain.contradiction import SourceIndex
@@ -29,7 +31,7 @@ from akashi.domain.coverage import (
 )
 from akashi.domain.extraction import MAX_RUN, extract_from_segment, kinds_not_extracted
 from akashi.domain.language import LanguagePack
-from akashi.domain.matching import DEFAULT_MATCHER, LOCATION_LIMIT, Matcher
+from akashi.domain.matching import DEFAULT_MATCHER, LOCATION_LIMIT, SOURCE_LIMIT, Matcher
 from akashi.domain.package import PLAIN_CONTRACT, ContextPackage, Protection
 from akashi.domain.report import Audited, AuditReport, ReportProvenance, content_hash
 from akashi.domain.segment import segment_answer
@@ -120,19 +122,25 @@ def audit(
     # Bounds are read off the finished audit rather than threaded through it:
     # each one is a fact about what came out, and a bound that had to be passed
     # down every call to be noticed is a bound the next code path will forget.
-    truncated = sum(
-        1
+    #
+    # Counted once per particular rather than once per document per particular.
+    # The first version rebuilt the document set and then rescanned every
+    # location for each document in it, which is quadratic in a particular's
+    # locations -- and a particular's locations are exactly what grows on a
+    # large package. It was the single largest slice of an audit's own time.
+    per_document = [
+        Counter(place.anchor.document_id for place in one.locations)
         for segment in checked
         for one in segment.particulars
-        if any(
-            sum(1 for place in one.locations if place.anchor.document_id == document)
-            >= LOCATION_LIMIT
-            for document in {place.anchor.document_id for place in one.locations}
-        )
+    ]
+    truncated = sum(
+        1 for counts in per_document if max(counts.values(), default=0) >= LOCATION_LIMIT
     )
+    over_sourced = sum(1 for counts in per_document if len(counts) >= SOURCE_LIMIT)
     bounds = (
         *from_oversized(oversized_runs(text, MAX_RUN), MAX_RUN),
         *from_truncated_locations(truncated, LOCATION_LIMIT),
+        *from_truncated_sources(over_sourced, SOURCE_LIMIT),
     )
 
     return AuditReport(

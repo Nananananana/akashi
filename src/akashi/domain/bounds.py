@@ -154,6 +154,37 @@ def from_truncated_locations(count: int, limit: int) -> tuple[Bound, ...]:
     )
 
 
+def from_truncated_sources(count: int, limit: int) -> tuple[Bound, ...]:
+    """A receipt for particulars found in more documents than akashi listed.
+
+    The sibling of `from_truncated_locations` on the axis that had no bound at
+    all. That one was written for a particular occurring forty times in *one*
+    document; a particular occurring once in each of four hundred documents
+    went unbounded, and a package of contracts that all cite the same date
+    produced one location per contract for every such particular in the answer.
+
+    Same shape as its sibling and for the same reason: the count of particulars
+    affected, never a count of documents dropped. akashi stops looking at the
+    limit, so it does not know how many more there were, and a number it did
+    not measure is the failure in the other direction.
+    """
+    if not count:
+        return ()
+    subject = "one particular is" if count == 1 else f"{count} particulars are"
+    those = "that particular" if count == 1 else "those particulars"
+    return (
+        Bound(
+            name="SOURCE_LIMIT",
+            limit=limit,
+            because=(
+                f"{subject} in at least {limit} documents, and akashi stopped listing "
+                f"documents at {limit}. The document counts on {those} are floors, not "
+                f"totals -- akashi stopped looking and does not know how many more hold it."
+            ),
+        ),
+    )
+
+
 def from_unsent_claims(sent: int, total: int, limit: int) -> tuple[Bound, ...]:
     """A receipt for claims a judge was never shown.
 

@@ -1256,3 +1256,103 @@ failure the notation table above exists for, in a different material.
 
 The second poison is there because the first one alone passes on a change that
 reports *everything* as unreadable, which would be worse than what it replaced.
+
+## Where an audit's time and memory actually went
+
+Profiled a synthetic package rather than the corpus, because the corpus is 30
+hand-written cases and the shape being looked for only appears at size. Answers
+of *n* sentences against packages of *m* documents, each sentence carrying a
+quantity, a number and a date:
+
+| answer | documents | characters | before | after |
+| --- | --- | --- | --- | --- |
+| 200 | 200 | 30 KB | 2.10 s, 8.6 MiB | 0.49 s, 2.4 MiB |
+| 400 | 400 | 60 KB | 8.63 s, 32.2 MiB | 1.00 s, 4.7 MiB |
+| 800 | 400 | 121 KB | 29.75 s, 63.6 MiB | 3.14 s, 8.1 MiB |
+| 400 | 800 | 60 KB | 12.79 s, 63.4 MiB | 1.32 s, 5.0 MiB |
+
+Doubling **both** axes went from ×4.1 to ×2.05 — quadratic in the product
+before, linear after. The verdicts are the same on every row.
+
+### The measurement that was wrong
+
+`docs/measurements.md` already carried a scaling table saying ×2.0 to ×3.3 and
+"400 particulars against 400 contexts is 380 ms". That was measured on a
+package where particulars are *distinct*, and it is the wrong population: a real
+package is a set of documents about one matter, and they cite the same dates,
+the same parties and the same figures. On the table above, 400 × 400 produced
+**161,200 locations** — 134 per particular, median 1, max 401.
+
+`tracemalloc` put 29.6 of the 32.5 MiB in `Anchor`, `Location` and `Span`. The
+memory *was* the locations.
+
+### Three findings, in the order they were found
+
+**1. A bound existed on one axis and not on the other.** `LOCATION_LIMIT` (32)
+caps how many places a particular is reported in *within one document*, and its
+comment gives the reason: a particular that occurs everywhere carries no more
+information for being listed everywhere. Nothing capped how many **documents**
+it was cited from. A date every contract in the package mentions produced one
+location per contract, and the answer's four hundred such particulars produced
+the 161,200 above.
+
+The reasoning was written once and applied to the axis that prompted it. Same
+shape as the notation table two sections up, in a different material.
+
+`SOURCE_LIMIT` is that bound, set to the same 32 — a different axis, but no
+measurement says the two should differ, and a second number would be inventing
+a distinction nothing asked for. Like every bound here it is a bound and not a
+threshold: no verdict changes at 32, and a particular that reaches it carries a
+`Bound` saying the document count is a floor.
+
+**2. Every item was searched for every particular.** `pattern_for` builds a
+pattern from the form's non-space runs joined by `\s*`, each escaped — so every
+run occurs verbatim in any match, and an item whose reduced text holds none of
+them cannot match. `required_run` returns the longest, and `Evidence.locate`
+skips on one substring test instead of a regex walk and a tuple. On the profiled
+package the skip fires 65.3% of the time and never wrongly, which was measured
+before it was written: 480,000 calls, 313,521 skippable, 0 that would have
+dropped a real hit.
+
+It lives in `matching` beside `pattern_for` and is derived from the same
+`_RUNS`. A prefilter reasoned about a pattern it no longer shares a derivation
+with is a filter that has quietly stopped being a check.
+
+**3. The bound receipt was computed quadratically.** `audit` counted truncated
+particulars by building the set of document ids and then rescanning every
+location once per document in it. That is quadratic in a particular's
+locations, and a particular's locations are exactly what grows. One `Counter`
+per particular now answers both bounds.
+
+### Poisons
+
+| poison | caught by |
+| --- | --- |
+| the prefilter's probe need not be present | `test_the_skip_and_the_search_agree_on_every_text` (9 failures) |
+| the probe is not one of the pattern's runs | `test_the_required_run_is_one_of_the_runs...` |
+| the prefilter is removed | `test_an_item_that_cannot_hold_a_particular_is_not_searched` |
+| the document cap never fires | the `SOURCE_LIMIT` floor test |
+| the cap fires one document early | the at-the-bound test |
+| the receipt is never emitted | three bound tests |
+| the truncated count counts documents, not occurrences | the `LOCATION_LIMIT` floor test |
+| the cap is removed | `test_a_particular_in_every_document_does_not_grow_without_a_bound` |
+
+### And a poison that found a test rather than the code
+
+The first version of the soundness property was written as
+
+    if find_all(form, hay):
+        assert required_run(form) in hay.text
+
+over hypothesis-generated text. A probe replaced with a literal that need not
+occur at all — `form + "Z"` — **went straight through it.** The generated
+haystacks almost never happened to contain the form, so the assertion was
+reached on hardly any example and the test was green about almost nothing.
+
+Rewritten to *place* the form in the text rather than hope for it. The same
+poison now fails nine tests.
+
+That also surfaced the coupling worth stating: `required_run` must be read off
+the **folded** form, which is what `Evidence.locate` passes. Folding lowercases,
+so the probe for `12 March 2026` read off the raw string is `March`, which
+appears in no reduced text anywhere.

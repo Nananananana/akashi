@@ -23,7 +23,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from .anchor import Anchor, Layer
-from .matching import DEFAULT_MATCHER, Matcher
+from .matching import DEFAULT_MATCHER, SOURCE_LIMIT, Matcher, required_run
 from .particular import Particular
 from .span import Span
 from .text import SearchForm, search_form
@@ -145,6 +145,12 @@ class Evidence:
 
         Ordered by item and then by position, so that a report over the same
         package is the same report every time (ADR-0003).
+
+        Bounded at ``SOURCE_LIMIT`` documents. A particular occurring in every
+        document of a large package produced one location per document and was
+        bounded by nothing, which is where an audit's time and memory went; the
+        count of documents on such a particular is a floor and the report says
+        so (`domain/bounds.py`).
         """
         # Reduced once, not once per item. `Particular.form` is a property that
         # folds the text every time it is read, and this loop read it for every
@@ -152,8 +158,26 @@ class Evidence:
         # reductions of 240 distinct strings, and two thirds of the time an
         # audit spent looking things up.
         form = particular.form
+        # A literal every match must contain, so an item that cannot hold this
+        # particular costs one substring test instead of a regex walk and a
+        # tuple. Derived in `matching` from the same runs the pattern is built
+        # from -- reasoning about the pattern from here would be a filter that
+        # outlives what it was reasoned about.
+        probe = required_run(form)
         found: list[Location] = []
+        documents: set[str] = set()
         for entry in self.items:
+            if probe and probe not in entry.form.text:
+                continue
+            here = entry.locate(form, matcher)
+            if not here:
+                continue
+            # Counted after looking, not before: an item that holds nothing is
+            # not a document this particular was found in, and counting it
+            # would spend the bound on documents the report never mentions.
+            documents.add(entry.anchor.document_id)
+            if len(documents) > SOURCE_LIMIT:
+                break
             found.extend(
                 Location(
                     item_id=entry.item_id,
@@ -161,7 +185,7 @@ class Evidence:
                     layer=entry.layer,
                     producer=entry.producer,
                 )
-                for anchor in entry.locate(form, matcher)
+                for anchor in here
             )
         return tuple(found)
 

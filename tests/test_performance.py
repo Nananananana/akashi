@@ -132,6 +132,53 @@ def test_the_index_is_built_even_when_a_caller_constructs_one_directly() -> None
     assert index.by_digits, "a directly built index has no grouping and would explain nothing"
 
 
+def test_an_item_that_cannot_hold_a_particular_is_not_searched() -> None:
+    """`Evidence.locate` ran a regex and built a tuple for every item and every
+    particular. On a package where most items cannot hold a given particular
+    that is the whole cost of an audit spent proving it.
+
+    Counted rather than timed, and counted at `find_all` -- the call the skip
+    removes. The prefilter's *soundness* is a different question and lives in
+    `tests/test_matching.py`; this only says the skip is reached.
+    """
+    from akashi.domain import matching as matching_module
+
+    answer = "The reading was 2.4kg exactly."
+    matching_ones = ["The reading was 2.4kg in this filing."] * 4
+    unrelated = [f"Filing {n} concerns roofing and says nothing numeric." for n in range(40)]
+
+    with counting(matching_module, "find_all") as calls:
+        evaluate(answer=answer, contexts=matching_ones + unrelated)
+    searched = calls[0]
+
+    assert searched <= 2 * len(matching_ones), (
+        f"{searched} searches for a package whose 40 other documents cannot hold "
+        f"the particular; the skip is not being reached"
+    )
+
+
+def test_a_particular_in_every_document_does_not_grow_without_a_bound() -> None:
+    """The memory an audit actually spends is `Location`, `Anchor` and `Span`,
+    and before `SOURCE_LIMIT` their number was the product of the answer's
+    particulars and the package's documents. 400 x 400 was 161,200 locations
+    and 30 MiB for 60 KB of text.
+
+    Stated as a count because that is the thing that grew; the megabytes follow
+    from it and would be a flaky assertion on a shared runner.
+    """
+    from akashi.domain.matching import SOURCE_LIMIT
+
+    everywhere = [f"Filing {n}: the reading was 2.4kg." for n in range(SOURCE_LIMIT * 4)]
+    report = evaluate(answer="The reading was 2.4kg exactly.", contexts=everywhere).report
+    per = [
+        len(one.locations) for segment in report.assessment.segments for one in segment.particulars
+    ]
+
+    assert max(per) == SOURCE_LIMIT, (
+        f"a particular in {len(everywhere)} documents was reported from {max(per)}"
+    )
+
+
 def test_the_small_case_is_still_the_same_report() -> None:
     """Every change above is a speed change and none of them may be an answer
     change. The suite covers this thoroughly; this is the sentinel that says so

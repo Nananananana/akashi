@@ -57,10 +57,29 @@ _CJK_NUMERALS = frozenset("〇零一二三四五六七八九十百千万億兆�
 #: separators on one side, everything else on the other.
 _RUNS = re.compile(r"[0-9][0-9.,]*|[^0-9\s]+")
 
-#: How many places one particular is reported in. A very short particular
-#: genuinely occurs everywhere, and reporting all of them carries no more
-#: information than reporting that it is common.
+#: How many places one particular is reported in, **within one document**. A
+#: very short particular genuinely occurs everywhere, and reporting all of them
+#: carries no more information than reporting that it is common.
 LOCATION_LIMIT = 32
+
+#: How many documents one particular is reported from.
+#:
+#: The reasoning above, applied to the axis it was not applied to. It was
+#: written for a particular occurring forty times in one document and stopped
+#: there, so a particular occurring once in each of four hundred documents was
+#: bounded by nothing: `12 March 2026` in a package of contracts that all cite
+#: it produced one location per contract, and the answer's four hundred such
+#: particulars produced 161,200 locations for 60 KB of text -- 30 MiB of
+#: `Location`, `Anchor` and `Span`, which is where an audit's memory went.
+#:
+#: Deliberately the same number as `LOCATION_LIMIT`. It is a different axis and
+#: there is no measurement that says the two should differ; picking a second
+#: number would be inventing a distinction nothing has asked for.
+#:
+#: Like every bound here it is a bound and not a threshold: nothing about the
+#: verdict changes at 32, and a particular that reaches it is reported with a
+#: `Bound` saying the count is a floor (ADR-0013, `domain/bounds.py`).
+SOURCE_LIMIT = 32
 
 
 def _class_of(character: str) -> str:
@@ -92,6 +111,26 @@ def pattern_for(form: str) -> re.Pattern[str] | None:
     if not runs:
         return None
     return re.compile(r"\s*".join(re.escape(run) for run in runs))
+
+
+@lru_cache(maxsize=1024)
+def required_run(form: str) -> str:
+    """A literal that has to occur in any text ``pattern_for(form)`` can match.
+
+    The pattern above is the form's non-space runs joined by ``\\s*``, and each
+    run is escaped -- so every run appears in a match verbatim, and a haystack
+    holding none of them cannot match. The longest is returned because it is the
+    most selective; which one is chosen is a speed question and never an answer
+    question.
+
+    **Here rather than in the caller, and derived from the same ``_RUNS``**, so
+    that a change to how a pattern is built cannot leave a caller skipping a
+    haystack the pattern would have matched. A prefilter that outlives the
+    pattern it was reasoned about is a check that has quietly become a filter.
+    ``tests/test_matching.py`` holds the property both directions.
+    """
+    runs = _RUNS.findall(form)
+    return max(runs, key=len) if runs else ""
 
 
 def _continues(left: str, right: str) -> bool:

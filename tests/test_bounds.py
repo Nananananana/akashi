@@ -22,7 +22,7 @@ from akashi import evaluate
 from akashi.application.judging import MAX_CLAIMS, claims_and_total, claims_for
 from akashi.domain.bounds import Bound, from_unsent_claims, oversized_runs
 from akashi.domain.extraction import MAX_RUN
-from akashi.domain.matching import LOCATION_LIMIT
+from akashi.domain.matching import LOCATION_LIMIT, SOURCE_LIMIT
 from akashi.domain.report import AuditReport
 
 TENT = "The tent weighs 2.4kg."
@@ -110,6 +110,71 @@ def test_a_particular_found_more_times_than_the_cap_says_the_count_is_a_floor() 
 def test_a_particular_under_the_cap_reports_no_floor() -> None:
     result = evaluate(answer=TENT, contexts=[" ".join([TENT] * 3)])
     assert bound_lines(result.to_dict(), "LOCATION_LIMIT") == []
+
+
+# --- SOURCE_LIMIT: the axis that had no cap at all ---------------------------
+
+
+def spread(documents: int) -> list[str]:
+    """The same particular in every document, which is what a real package of
+    contracts citing one date looks like."""
+    return [f"Filing {n}: the reading was {TENT} on the day." for n in range(documents)]
+
+
+def documents_cited(result: object) -> int:
+    return len(
+        {
+            place.anchor.document_id
+            for segment in result.report.assessment.segments  # type: ignore[attr-defined]
+            for one in segment.particulars
+            for place in one.locations
+        }
+    )
+
+
+def test_a_particular_found_in_more_documents_than_the_cap_says_the_count_is_a_floor() -> None:
+    """`LOCATION_LIMIT` was written for a particular occurring forty times in
+    *one* document and stopped there. A particular occurring once in each of
+    four hundred documents was bounded by nothing -- the audit produced one
+    location per document, and on 400 documents that was 161,200 locations and
+    30 MiB of `Location`, `Anchor` and `Span` for 60 KB of text.
+    """
+    result = evaluate(answer=TENT, contexts=spread(SOURCE_LIMIT + 8))
+    assert documents_cited(result) == SOURCE_LIMIT, (
+        "the cap was not reached, so this checks nothing"
+    )
+
+    [line] = bound_lines(result.to_dict(), "SOURCE_LIMIT")
+    assert "at least" in line
+    assert "floors" in line
+
+
+def test_a_particular_under_the_document_cap_reports_no_floor() -> None:
+    """The off-by-one `MAX_RUN` had: a receipt at the bound is a receipt for a
+    figure akashi did in fact read whole."""
+    result = evaluate(answer=TENT, contexts=spread(SOURCE_LIMIT - 1))
+    assert documents_cited(result) == SOURCE_LIMIT - 1
+    assert bound_lines(result.to_dict(), "SOURCE_LIMIT") == []
+
+
+def test_a_particular_in_exactly_the_cap_is_reported_whole_and_still_says_so() -> None:
+    """At the bound akashi has seen every document, so nothing is missing --
+    but it cannot distinguish that from having stopped, and saying the count is
+    a floor when it happens to be a total is the safe direction of the two."""
+    result = evaluate(answer=TENT, contexts=spread(SOURCE_LIMIT))
+    assert documents_cited(result) == SOURCE_LIMIT
+    assert len(bound_lines(result.to_dict(), "SOURCE_LIMIT")) == 1
+
+
+def test_the_two_caps_are_counted_off_the_same_locations() -> None:
+    """They were computed by two different walks over one particular's
+    locations, and the second walk was quadratic. Both now read one `Counter`
+    per particular, so a package that trips both reports both."""
+    crowded = " ".join([TENT] * 40)
+    result = evaluate(answer=TENT, contexts=[crowded] * (SOURCE_LIMIT + 4))
+    printed = result.to_dict()
+    assert len(bound_lines(printed, "LOCATION_LIMIT")) == 1
+    assert len(bound_lines(printed, "SOURCE_LIMIT")) == 1
 
 
 # --- MAX_CLAIMS: the judge that was shown a third of it ----------------------
