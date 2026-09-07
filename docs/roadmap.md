@@ -140,6 +140,38 @@ segments carry no name, figure or date to find. GLiNER v1 is CC-BY-NC-4.0 and
 unusable commercially; v2.1 is Apache-2.0. Worth an optional engine on the same
 pattern as the judge, not a default (#67).
 
+### 3.1 A deterministic library — measured, and the door stayed shut (#67)
+
+The owner allowed libraries to be tried. #67 split that into two doors and asked
+for each to be priced separately; the decision rule went into the issue **before**
+the numbers.
+
+**Door A does not open.** Extraction recall is 99.0% and the single remaining
+miss is a company name with no legal form — Door B by construction. Of the seven
+drafted-vocabulary misses, four were feet-and-inches, and **two lines of stdlib
+`re` closed all four**, which is the middle clause of the rule answering itself:
+a library that does what `re` already does is a dependency bought for nothing.
+`regex`, a segmenter and a date parser each had nothing to buy (43 rules compile
+under stdlib, segmenter cut-in-two is 0, dates 9/9).
+
+Cost of the four that closed: extraction 8.27 → 10.01 ms, about +5% of a whole
+audit. `docs/measurements.md` has the full table.
+
+**Door B — a model at audit time — is still ADR-0003 and `proposals/0002` §6**,
+and stays with `bench`. Nothing here moves it.
+
+### 3.2 Two kinds akashi does not have
+
+`M号` and `纯棉` — a size and a material — are not a quantity, a date or a name.
+Drafted vocabulary found both. Adding a kind is a vocabulary decision with a
+report contract behind it, not an extraction rule, and neither has been seen
+twice yet.
+
+`5.5%vol` is deliberately not closed for the same reason: **one observation from
+one batch, and a closed set of percent suffixes chosen from a single draft is
+fitting a rule to the sample** — the exact failure the drafting exercise exists
+to expose.
+
 ## 3.5 Rejected from the original specification
 
 `akashi_specification.md` is the design this was started from. ADR-0018

@@ -956,3 +956,80 @@ evidence: [The tent weighs 3.1kg., Tent, revised spec: 2.8kg.]
 ```
 
 `tools/measure_source_conflict.py` reproduces every number above.
+
+## What a non-stdlib library would buy (#67, Door A)
+
+The owner allowed libraries to be tried; #67 split that into two doors and asked
+for them to be priced separately. **Door A** is a deterministic library — a real
+segmenter, a date parser, `regex`, a units library. **Door B** is a model, which
+is ADR-0003 and stays with `bench`. This measures A.
+
+The decision rule was written into the issue **before** any number was taken:
+*Door A opens only if a candidate closes at least three of the seven drafted
+misses, AND the same three cannot be closed by a stdlib rule of comparable size,
+AND latency stays inside 2×.*
+
+### What the population is now
+
+The issue was filed against 95% recall with five misses. It is **99.0% — 95 of
+96 marked particulars**, and the single remaining miss is:
+
+```
+en-contract-01: missed proper_noun 'Borden Systems' at [48:62]
+```
+
+A company name with no title, honorific or legal form. Nothing deterministic
+finds that; it is Door B by construction. **So Door A's ceiling on the
+hand-marked corpus is zero by arithmetic**, and the population with anything
+left in it is the seven drafted misses from #55.
+
+### Candidate by candidate
+
+| candidate | asked | answer |
+| --- | --- | --- |
+| `regex` | is any shipped rule shaped around a stdlib limitation? | **no.** All 43 rules compile under stdlib `re`; no `\p{...}`, no variable-width lookbehind, no comment admitting a workaround |
+| a sentence segmenter | boundaries the shipped one gets wrong? | **none to buy.** `plants the segmenter cut in two: 0` |
+| a date parser | date forms the shipped rules miss? | **none to buy.** date 9/9, duration 7/7, reference 12/12, zero misses |
+| a units library | the four feet-and-inches misses | **closed by stdlib**, below |
+
+### The middle clause decided it
+
+Four of the seven drafted misses are feet and inches — `40' x 8'6"`,
+`25' x 50'`, `12フィート6インチ`. That is the one place a units library had a
+real claim, and **two lines of stdlib `re` close all four**:
+
+```
+(?<!\d)\d+(?:\.\d+)?['′](?:\s*\d+(?:\.\d+)?["″])?(?![\d'"′″A-Za-z])
+|(?<!\d)\d+(?:\.\d+)?フィート(?:\s*\d+(?:\.\d+)?インチ)?
+```
+
+The guard against a letter is what keeps `the 1990's` from being a length: an
+apostrophe after digits is a foot mark or a possessive, and only the character
+after it tells them apart. Measured on both.
+
+**Cost, isolated to the stage it touches:** extraction goes from **8.27 ms to
+10.01 ms** on a 120-sentence answer, best of fifteen — about +21% of extraction,
+roughly +5% of a whole audit. Well inside the 2× clause. Measured on extraction
+alone rather than end to end, because the end-to-end difference sat inside this
+machine's noise (one reading had the *slower* build finishing first, which is
+how the noise announced itself).
+
+### Result: Door A does not open
+
+Zero candidates closed three misses that stdlib could not. The units library was
+the only one with a claim and stdlib answered it. **No dependency is added, the
+zero-dependency promise stands, and no ADR is amended.**
+
+This is the null result #67 predicted and asked to have published either way.
+
+### What is still open, and deliberately not fitted
+
+Three of the seven remain:
+
+- `5.5%vol` — a word glued to a percent sign. **Not closed on purpose.** It is
+  one observation from one batch, and a closed set of percent suffixes chosen
+  from a single draft is fitting a rule to the sample — the exact failure the
+  drafting exercise exists to expose. It waits for a second sighting.
+- `M号`, `纯棉` — a size and a material. Neither is a quantity, a date or a
+  name; they are **kinds akashi does not have**, which is a vocabulary question
+  and not a library one.
